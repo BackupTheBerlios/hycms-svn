@@ -1,0 +1,16 @@
+{
+	__def:	"|?article < ?page < list",
+	__value:
+	[
+		{__def:		"|?headline < ?paragraph < list",
+		 __value:	[ "Eine kleine Überschrift" ]
+		},
+	
+		{__def:		"|?paragraph < list",
+		 __value:
+			[
+				"Ein kleiner Absatz in einem kurzen Text!"
+			]
+		}
+	]
+}

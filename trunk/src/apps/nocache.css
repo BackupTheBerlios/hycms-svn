@@ -1,0 +1,212 @@
+table {
+	border: 1px solid black;
+}
+
+th {
+	font-weight: bold;
+	background-color: #eeeeee;
+}
+
+td {
+	border: 1px solid black;
+}
+
+.abstract {
+	font-style: italic;
+}
+
+span.code {
+	font-family: monospace;
+	margin-left: 0.4em;
+	margin-right: 0.4em;
+}
+
+h1 {
+	text-align: center;
+}
+
+/*
+ * Code view
+ *
+ */
+div.code {
+	font-family: monospace;
+	border: 1px dashed #a0a0a0;
+	margin-left: 4em;
+	margin-right: 4em;	
+	background-color: #f4f4f4;
+	padding: 0.8em;
+	line-height: 1.8em;
+}
+
+.code_tab_span {
+	margin-left: 4em;
+}
+
+.code_highlight_label {
+	color: #be0031;
+}
+
+.code_highlight_expression {
+	color: #be0031;
+	font-weight: bold;
+}
+
+.code_highlight_type {
+	color: green;
+	font-weight: bold;
+}
+
+.code_highlight_operator {
+	color: #be0031;
+	font-weight: bold;
+}
+
+.code_highlight_literal {
+	color: #24008a;
+}
+
+.code_highlight_comment {
+	color: gray;
+	font-weight: bold;
+}
+
+.code_highlight_comment > span {
+	color: inherit;
+	font-weight: inherit;
+}
+
+.code_highlight_literal > span {
+	color: inherit;
+	font-weight: inherit;
+}
+
+
+.code_highlight_parenthesis {
+	font-weight: bold;
+}
+
+.code_line_nr {
+	display:inline-block;
+	color: gray;
+	font-weight: bold;
+	min-width: 2em;
+	max-width: 2em;
+	
+	margin-left: 0.5em;
+	margin-right: 0.5em;	
+}
+
+/*
+ * Tree view
+ *
+ */
+div.tree {
+	border: none;
+	background-color: #f4f4f4;
+	vertical-align: top;
+	padding: 0.4em;
+	margin-left: 0;
+}
+
+span.tree_toggle {
+	display:inline-block;
+	margin-right: 0.5em;	
+	min-width: 1.5em;
+	min-height: 1em;
+	text-align: center;
+
+	font-weight: none;
+	cursor: pointer;
+	background-color: #545454;
+	color: #f4f4f4;
+}
+
+span.tree_name {
+	display:inline-block;
+	text-align: left;
+	border: none;
+	font-weight: bold;
+	margin-left: none;
+	width: 12em;
+}
+
+span.tree_comment {
+	text-align: left;
+	border: none;
+	font-style: italic;
+	margin-left: 1em;
+}
+
+div.tree_list {
+	border: none;
+	margin: none;
+	background-color: #f4f4f4;
+	padding-top: 0.5em;
+	padding-left: 2.0em;
+}
+
+div.tree_list_item_even {
+	border: none;
+	margin: none;
+	background-color: #efefef;
+}
+
+div.tree_list_item_odd {
+	border: none;
+	margin: none;
+	background-color: #e4e4e4;
+}
+
+div.tree_node {
+	line-height: 1.5em;
+}
+
+/*
+ * Table view
+ *
+ */
+table.table {
+	border: none;
+	background-color: #f4f4f4;
+	vertical-align: top;
+}
+
+th.std_table_even {
+	border: none;
+	margin: none;
+	padding: 0.4em;
+	background-color: #6F6F6F;
+	color: #f4f4f4;
+}
+
+th.std_table_odd {
+	border: none;
+	margin: none;
+	padding: 0.4em;
+	background-color: #646464;
+	color: #f4f4f4;
+}
+
+
+td.std_table_odd {
+	border: none;
+	margin: none;
+	padding: 0.4em;
+	background-color: #e4e4e4;
+}
+
+td.std_table_even {
+	border: none;
+	margin: none;
+	padding: 0.4em;
+	background-color: #efefef;
+}
+
+/*
+ * Document information
+ *
+ */
+div.document_information {
+	text-align: center;
+}

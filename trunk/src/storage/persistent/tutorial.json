@@ -1,0 +1,1713 @@
+{
+	__def:	"|?article < ?page < list",
+	__value:
+[
+	{__def:		"|?headline < ?paragraph < list",
+	 __value:	[ "How-to: Relational Dispatch in JavaScript" ]
+	},
+
+	{__def:		"|?document_information < list",
+	 __value:	
+		 [
+			{__def:		"|?author < ?person < structure; [~name, ~mail_address, ?*]; ?name < text; ?mail_address < text",
+			 "|?name < text":			"Friedrich Gräter",
+			 "|?mail_address < text":	"graeter@hydrixos.org"
+			},
+	
+			{__def:		"|?german_date < ?date < text",
+			 __value:	"26.3.2008"
+			},
+	
+			{__def:		"|?version < text",
+			 __value:	"1.1"
+			},
+	
+			{__def:		"|?abstract < ?paragraph < list",
+			 __value:
+				[
+					"Relational Dispatch ist eine Erweiterung des Dispatchings in objektorientierten Programmiersprachen. Dabei ist es möglich Methoden ",
+					"nicht nur anhand von Vererbungsbeziehungen und der Struktur von Datentypen auszuwählen, sondern anhand ",
+					"beliebiger, benutzerdefinierter Relationen. Zusätzlich erlaubt das System dabei die Spezifikation von Pflicht- und Wunschkriterien, ",
+					"so dass es in der Lage ist, ein fehlendes Spezialwerkzeug durch ein allgemeineres Werkzeug automatisch zu ersetzen. ",
+					"Dieses Dokument ist primär als kleines Tutorial für den Relational Dispatcher für JavaScript gedacht, der von hyCMS ",
+					"eingesetzt wird. Es geht dabei primär nur auf den praktischen Einsatz des Dispatchers und des CMS-Frameworks ein. ",
+				]
+			},
+		]
+	},
+	
+	{__def:		"|?chapter < ?section < list",
+	 __value:
+		[		
+			{__def: 	"|?headline < ?paragraph < list",
+			 __value:	[ "Was ist Relational Dispatch?" ]
+			},
+
+			{__def:		"|?chapter < ?section < list",
+			 __value:
+				[		
+					{__def: 	"|?headline < ?paragraph < list",
+					 __value:	[ "Das Problem" ]
+					},
+
+					{__def:		"|?paragraph < list",
+					 __value:
+						[
+							"Wer kennt nicht die vielen Science-Fiction-Serien, in denen Menschen mühelos Computer programmieren, ",
+							"indem sie diesen einfach mündlich mitteilen können, was getan werden soll und sich um das 'Wie' und all die kleinen ",
+							"Details aus API-Referenzen und Handbüchern keine Sorgen machen müssen? Auch wenn wir schon sehr große ",
+							"Fortschritte in diese Richtung gemacht haben - es gibt beim Programmieren immer wieder Dinge, die man eigentlich gerne weiter ",
+							"automatisieren würde. Aktuelle objektorientierte Programmiersprachen helfen uns schon sehr dabei. ",
+							"Will man eine bestimmte Methode aufrufen, wählen viele Programmiersprachen automatisch diejenige Implementierung aus, ",
+							"die wirklich zu dem jeweiligen Objekt passt (z.B. wenn für die Objekte vom Typ Button, Image oder TextBox jeweils ",
+							"unterschiedliche Implementierungen der gleich benannten Methode draw() existieren). Manche Programmiersprachen erlauben ",
+							"auch das Überladen der Parameter einer Methode, so dass je nach Typ der Parameter eine unterschiedliche Variante automatisch ",
+							"ausgewählt wird."
+						]
+					},
+					
+					{__def:		"|?paragraph < list",
+					 __value:
+					 	[
+					 		"Normalerweise orientieren sich Programmiersprachen beim sog. Dispatching, also dem Auswählen der richtigen ",
+					 		"Implementierung einer Methode, immer an dem Typ des Objektes und der Parameter der Methode. Es gibt aber ",
+					 		"neben Vererbung und Struktur auch andere Beziehungen zwischen Objekten und Beziehungen mit dem Zustand eines ",
+					 		"Systems, die man zur Wahl einer Methode verwenden könnte. Nehmen wir ein Weblog: auf der Übersichtsseite sollte von ",
+					 		"einem Artikel jeweils nur die Überschrift angezeigt werden. Betrachtet man dagegen einen Artikel alleine, so soll er ",
+					 		"komplett dargestellt werden. Trotzdem soll für die Darstellung selbst immer der gleiche Befehl 'show' verwendet werden und nur ",
+					 		"die Implementierung des Befehls variiert werden, so dass dem Programmierer ein lästiges Nachschlagen nach ",
+					 		"komplexen Funktionsnamen wie showOverviewArticle und showFullArticle oder die Verwendung von Strategy-Objekten ",
+					 		"erspart bleibt. Dazu müsste man aber eine allgemeinere Form finden, um Beziehungen zwischen Objekten ausdrücken zu ",
+					 		"können, als die reine Vererbungs- und Strukturbeziehungen, die gängige Programmiersprachen bieten."
+					 	]
+					},
+					
+					{__def:		"|?paragraph < list",
+					 __value:
+					 	[
+					 		"Darüber hinaus fehlt allen Programmiersprachen die Möglichkeit Optimalität beim Dispatching auszudrücken. Nicht immer ",
+					 		"ist die ideale Implementierung zur Lösung eines Problems verfügbar - aber vielleicht steht immer noch eine sehr gute zur Verfügung. ",
+					 		"Vielleicht steht auf einem System ein Werkzeug nicht zur Verfügung und man möchte, dass dann wenistens automatisch ",
+					 		"auf ein primitiveres Werkzeug zurückgegriffen wird. Gibt es beispielsweise kein Adressbuch, so soll eine Datei doch ",
+					 		"wenigstens in eine Tabellenansicht geladen werden! Dazu müsste aber die Programmiersprache über eine ",
+					 		"Ausdrucksmöglichkeit verfügen können, um wichtige und unwichtige Fähigkeiten einer Methode auszuzeichnen."					 		
+					 	]
+					},
+				]
+			},
+
+			{__def:		"|?chapter < ?section < list",
+			 __value:
+				[		
+					{__def: 	"|?headline < ?paragraph < list",
+					 __value:	[ "Relational Dispatch" ]
+					},
+					
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+					 		"Relational Dispatch versucht diese Probleme zu lösen, indem es dem Programmierer erlaubt komplexere Kriterien beim Aufruf ",
+					 		"und in der Deklaration einer Methode in Form von Relationen anzugeben. Neben den üblichen Vererbungs- und Strukturbeziehung ",
+					 		"eines Typs kann man bei Relational-Dispatch beliebige andere Beziehungen mit Hilfe von Relationen formulieren. Zusätzlich ",
+					 		"erlaubt Relational Dispatch auch die Formulierung von Muss- und Wunschkriterien. Findet die Auswertung der Anforderungen ",
+					 		"erst zur Laufzeit statt, ist es dabei insbesondere möglich, den Zustand des Systems und die Verfügbarkeit von ",
+					 		"Werkzeugen im System zu berücksichtigen. "
+					 	]
+					},
+
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+					 		"In diesem Text soll nun eine kurze Einführung in dieses Verfahren anhand einer Implementierung von Relational Dispatch ",
+					 		"in JavaScript gegeben werden."
+					 	]
+					},
+				]
+			}	
+		]
+	},
+	
+	{__def:		"|?chapter < ?section < list",
+	 __value:
+		[		
+			{__def: 	"|?headline < ?paragraph < list",
+			 __value:	[ "Typisierung im Relational Dispatch" ]
+			},
+
+
+			{__def:		"|?paragraph < list",
+			 __value:	
+			 	[
+			 		"Relation Dispatch erfordert, dass jedes Objekt mit beliebigen Metadaten typsiert werden kann. ",
+			 		"Diese Metadaten werden in Form von Relationen ausgedrückt. In diesem Kapitel soll erläutert werden, wie eine solche ",
+			 		"erweiterte Typisierung in JavaScript möglich ist."
+			 	]
+			},	
+	
+			{__def:		"|?chapter < ?section < list",
+			 __value:
+				[					
+					{__def: 	"|?headline < ?paragraph < list",
+					 __value:	[ "Deklarieren von Typen" ]
+					},
+					
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+					 		"Da JavaScript selbst keine Meta-Daten für Typen bereitstellt, wurde ein eigenes Typsystem eingeführt, das ",
+					 		"auf JavaScript aufsetzt. Dieses Typsystem erlaubt es, einem beliebigen JavaScript-Objekt Typmetadaten beizufügen. ",
+					 		"Dies geschiet durch den Aufruf des Operators _as() an einem beliebigen Objekt: "
+					 	]
+					},
+					
+					{__def:		"|?hyObject < ?javascript < ?code < ?lines < list",
+					 __value:
+					 	[
+					 		"\"Beliebiger Text\"._as(\"|?important_text < text\");",
+					 		"[1,2,3,4]._as(\"|?number_list < list\");",
+					 		"({name: \"Hans Mustermann\", street: \"Mustermannstraße\"})._as(\"|?person < structure; [~name, ~street]; name < text; street < text\");",
+					 		"\"Beliebiger Text\"._as();"
+					 	]
+					},
+					
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+					 		"Variablen vom Typ string, number, boolean werden dabei automatisch in ein Objekt vom Typ String, Number oder Boolean ",
+					 		"umgewandelt. Dem Aufruf _as kann zur besseren Lesbarkeit ",
+					 		"auch ein Array von Strings übergeben werden, die alle dann automatisch zu einer einzigen Definition konkateniert werden."
+					 	]
+					},
+
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+					 		"In der letzten Zeile des Beispiels wird dem Operator keine Typbeschreibung übergeben. In diesem Fall leitet das ",
+					 		"System den Typ des Objekts aus dem JavaScript-Typen ab. So wird für ein String-Objekt automatisch die Relation ",
+					 		{__def:	"|?code < text", __value: "|text"}, "zur Beschreibung des Objekts festgelegt. Es gibt noch weitere ",
+					 		"Regeln zur Herleitung des Typs, die jedoch erst später erläutert werden."
+					 	]
+					}
+				]
+			},
+
+			{__def:		"|?chapter < ?section < list",
+			 __value:
+				[					
+					{__def: 	"|?headline < ?paragraph < list",
+					 __value:	[ "Relationen" ]
+					},
+					
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+					 		"Eine Typdefinition fängt immer mit einem |-Symbol an, um sie von anderen Strings zu unterscheiden. Wie man erkennen ",
+					 		"kann, besteht eine Definition aus mehreren Teilen, die durch ein Semikolon ; getrennt sind. Jeder dieser Teile entspricht ",
+					 		"einer Relation. Eine Relation setzt mehrere Begriffe, sog. Terme, in einen logischen Zusammenhang. Beispielsweise drückt ",
+					 		
+					 		{__def:	"|?code < text", __value: "headline < paragraph < list"},
+					 		
+					 		" aus, dass der Term", {__def:	"|?code < text", __value: "headline"} ,"vom Term ", {__def:	"|?code < text", __value: "paragraph"}, 
+					 		" und ",{__def:	"|?code < text", __value: "list"}," erbt. Die Vererbungsrelation wird dabei durch das Symbol < ",
+					 		"ausgedrückt. Genauso sagt ",
+
+					 		{__def:	"|?code < text", __value: "[name, street]"},
+					 		
+					 		" aus, dass das Objekt aus den Elementen ",{__def:	"|?code < text", __value: "name"}," und ",
+					 		{__def:	"|?code < text", __value: "street"}," besteht."
+					 	]
+					 },
+					 
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+					 		"An diesen beiden Beispielen ist zu erkennen, dass es zwei Arten von Relationen gibt: geordnete Relationen, bei denen ",
+					 		"die Reihenfolge der Begriffe eine Rolle spielt und ungeordnete, bei der die Reihenfolge egal ist. Für die Vererbungsrelation ",
+					 		"ist die Reihenfolge wichtig - während sie für die Besteht-aus-Relation (sog. Strukturrelation) unwichtig ist. Von der ",
+					 		"Syntax her steht bei geordneten Relationen das Relationssymbol zwischen den Termen, während es bei ungeordneten Relationen ",
+					 		"die Terme umgibt und die Terme durch ein Komma getrennt werden."
+					 	]
+					 },
+					 
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+					 		"Die Besonderheit von Relational Dispatch ist es nun, dass beliebige Relationen festgelegt werden können und die Semantik ",
+					 		"der Relationen vollkommen dem Programmierer überlassen wird. So sind z.B. auch folgende Relationen geläufig:"
+					 	]
+					},
+					
+					{__def:		"|?hyObject < ?javascript < ?code < ?lines < list",
+					 __value:
+					 	[
+					 		"a << b << c",
+					 		">(a, b, c)<",
+					 		"<(a, b, c)>"
+					 	]
+					},					
+					
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+					 		"Die erste Relation wird verwendet, um auszudrücken dass ein Objekt 'a' im Kontext von Objekt 'b' zu betrachten ist, ",
+					 		"wobei 'b' wiederum im Kontext von 'c' steht. Die zweite Relation wird verwendet, um die Eingabeparameter einer ",
+					 		"Funktion zu spezifizieren - die letztere für den Rückgabewert. "
+					 	]
+					},
+
+				]
+			},
+
+			{__def:		"|?chapter < ?section < list",
+			 __value:
+				[					
+					{__def: 	"|?headline < ?paragraph < list",
+					 __value:	[ "Optionen und Variationen" ]
+					},
+										
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+					 		"In Beispiel 1 stand vor manchen Termen ein ?-Symbol, der sog. Option-Operator. Dieser Operator drückt aus, dass ein Element der ",
+					 		"Relation optional ist. D.h., wer auch immer diesen Datentyp verarbeiten soll, kann den Sachverhalt ignorieren, ",
+					 		"dass dieser Term ein Element der Relation ist. Beispielsweise bedeutet ",
+					 		
+					 		{__def:	"|?code < text", __value: "|?headline < ?paragraph < list"},
+					 		
+					 		"dass ein Objekt mit diesem Typ auf jeden Fall als Liste zu betrachten ist, es aber natürlich wünschenswert wäre, ",
+					 		"wenn das Objekt als Absatz oder Überschrift betrachtet werden kann. Wird nun nach einer Darstellungsfunktion ",
+					 		"für dieses Objekt gesucht, so kann auf jedenfall jede Funktion verwendet werden, die Listen darstellen kann. ",
+					 		"Gibt es jedoch eine Funktion, die mit Absätzen oder gar Überschriften zurecht kommt, wird diese verwendet. "
+					 	]
+					},
+					
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+					 		"Ferner taucht in Beispiel 1 auch das ~ Symbol auf. Hierbei handelt es sich um den Variation-Operator. Manchmal ",
+					 		"is es erforderlich, dass in einer Relation nicht ein Term an sich als Element gesehen wird, sondern auch ",
+					 		"alle Terme, von denen dieser Term geerbt hat. Beispielsweise drückt ",
+					 		
+					 		{__def:	"|?code < text", __value: "|>[~name; ~street]<; ?name < text; ?street < text"},
+					 		
+					 		"aus, dass das Element 'name' und 'street' Teil einer Datenstruktur sind. Für Funktionen, die jedoch mit diesen ",
+					 		"Begriffen nichts anfangen können, wäre das Objekt vielleicht aber noch als ein Objekt verständlich, das aus zwei Text-Elementen ",
+					 		"besteht. Der Variation-Operator führt dazu, dass der Interpreter automatisch alle Vererbungsrelationen eines ",
+					 		"Terms in der Definition durchprobiert. Aus diesem Grund kommt der Vererbungsrelation auch als einziger Relation ",
+					 		"in dieser Implementierung von Relational Dispatch eine Sonderrolle zu."
+					 	]
+					},										
+					 		
+				]
+			},
+			
+			{__def:		"|?chapter < ?section < list",
+			 __value:
+				[					
+					{__def: 	"|?headline < ?paragraph < list",
+					 __value:	[ "Wildcards" ]
+					},
+
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+					 		"Zusätzlich gibt es auch noch sog. Wildcards. Ähnlich wie in der Kommandozeile, sind dies Platzhalter für ",
+					 		"Terme. Die Bedeutung der Wildcards sei an folgenden Beispielen erklärt:"
+					 	]
+					},
+					
+					{__def:		"|?hyObject < ?javascript < ?code < ?lines < list",
+					 __value:
+					 	[
+					 		"a < ?* < b",
+					 		"a < b < + < c",
+					 		"[a, b, ?*]",
+					 		". << a",
+					 		"a"
+					 	]
+					},		
+					
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[									
+					 		"Die erste Zeile drückt aus, dass in der Vererbungshierarchie zwischen a und b beliebige Elemente liegen ",
+					 		"können. Die zweite Zeile besagt, dass zwischen b und c ein unbekanntes Element in der Hierarchie liegt. ",
+					 		"und schließlich drückt die dritte Zeile aus, dass eine Struktur mindestens aus den Elementen a und b, ",
+					 		"aber noch beliebig vielen weiteren Elementen bestehen kann. Für ungeordnete Relationen ist der +-Wildcard nicht ",
+					 		"definiert."
+					 	]
+					},
+					
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[									
+					 		"Die vierte Zeile deckt schließlich noch einen Sondernfall der Sprache ab: was ist, wenn eine geordnete ",
+					 		"Relation nur aus einem einzigen Element besteht - wenn mam beispielsweise ausdrücken will, dass der einzige ",
+					 		"Term in der Relation << der Term a ist? Damit das Symbol nicht ins leere läuft, wurde der Term '.' eingeführt, ",
+					 		"der nach dem Parsen der Definition einfach ignoriert wird."
+					 	]
+					},	
+					
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[									
+							"Die fünfte Zeile zeigt schließlich eine besondere Abkürzung für die Vererbungsrelation an. Ist kein Symbol ",
+							"erkennbar, wird der Ausdruck als einzelnes Element einer Vererbungsrelation betrachtet. Das Beispiel aus Zeile ",
+							"5 entspricht also dem Ausdruck ", {__def:	"|?code < text", __value: "|. < a"} ,"."
+					 	]
+					},						
+				
+				]
+			}
+		]
+	},
+	
+	{__def:		"|?chapter < ?section < list",
+	 __value:
+		[		
+			{__def: 	"|?headline < ?paragraph < list",
+			 __value:	[ "Funktionen im Relational Dispatch" ]
+			},	
+
+			{__def:		"|?paragraph < list",
+			 __value:	
+			 	[
+			 		"Nachdem wir nun in der Lage sind, Typen zu deklarieren, stellt sich die Frage, wie man diese Typdefinitionen ",
+			 		"einsetzen kann. Das wichtigste dabei ist natürlich der Dispatch selbst - d.h. die Möglichkeit Funktionen ",
+			 		"aufzurufen, wobei der Dispatcher nur die Implementierung einer Funktion wählen soll, die für einen bestimmten Typ passt. "
+			 	]
+			},		
+	
+			{__def:		"|?chapter < ?section < list",
+			 __value:
+				[					
+					{__def: 	"|?headline < ?paragraph < list",
+					 __value:	[ "Deklarieren von Funktionen" ]
+					},
+
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+					 		"Soll nun eine Funktion dem Dispatcher bereitgestellt werden, geschiet dies durch den Operator '_' an ",
+					 		"einem String-, Array oder Hash-Objekt. Dieser Operator hat einen so merkwürdigen Namen, um die Syntax ein wenig ",
+					 		"zu vereinfachen und die Lesbarkeit des Codes zu fördern. Eine Deklaration einer Funktion mit diesem Operator kann auf folgende ",
+					 		"Arten erfolgen:"
+					 	]
+					},						
+
+					{__def:		"|?hyObject < ?javascript < ?code < ?lines < list",
+					 __value:
+					 	[
+					 		"/* Definition mit einem String */",
+					 		"\"|?TextView < View; >(list)<; <(text)>\"._(",
+					 		"",
+					 		"	function(input, def)",
+					 		"	{",
+					 		"		return 1234;",
+					 		"	}",
+					 		"",
+					 		");",
+					 		"",
+					 		"/* Definition mit einem Objekt (entspricht \"?TextView < View; >(list)<; <(text)>\") */",
+					 		"({",
+					 		"	name:	\"|?TextView < View;\"",
+					 		"	input:	\">(list)<\"",
+					 		"	output:	\"<(text)>\"",
+					 		")}._(",
+					 		"",
+					 		"	function(input, def)",
+					 		"	{",
+					 		"		return 1234;",
+					 		"	}",
+					 		"",
+					 		");"					 		
+					 	]
+					},
+					
+
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+					 		"Beide Varianten sind äquivalent. Die zweite Variante soll nur die Lesbarkeit des Codes verbessern. Intern ",
+					 		"werden bei der zweiten Variante einfach alle Elemente des Objekts über ein Semikolon konkateniert. Die Bezeichner ",
+					 		"werden verworfen und dienen nur dazu, die Lesbarkeit des Codes zu erhöhen. Der Programmierer soll damit leichter ",
+					 		"erkennen können, wofür die einzelenen Relationen in der Definition gedacht waren."
+					 	]
+					},	
+				]
+			},
+	
+			{__def:		"|?chapter < ?section < list",
+			 __value:
+				[					
+					{__def: 	"|?headline < ?paragraph < list",
+					 __value:	[ "Funktionsaufrufe" ]
+					},
+
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+					 		"Was hat nun eine solche Funktionsdeklaration aus dem vorherigen Abschnitt zu bedeuten? Dazu muss man zunächst ",
+					 		"verstehen, wie ein Funktionsaufruf funktioniert: will man eine Funktion aufrufen, so beschreibt man ",
+					 		"den Typ der Funktion die man aufrufen möchte und übergibt diese Beschreibung zusammen mit den Parametern ",
+					 		"dem Operator _send. Dieser ermittelt dann mit Hilfe des Dispatchers die passende Implementierung. Aber wie ",
+					 		"kann man die aufzurufende Methode beschreiben? In anderen Programmiersprachen geschiet dies mit dem Methodennamen ",
+					 		"- beim Relational Dispatch dagegen auch mit einer Typbeschreibung:"
+					 	]
+					},	
+					
+					{__def:		"|?hyObject < ?javascript < ?code < ?lines < list",
+					 __value:
+					 	[
+					 		"\"|?TextView < View; <(~ascii_text)>; ?ascii_text < text\"._send(my_address)"
+					 	]
+					},
+
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+					 		"Diese Zeile besagt, dass eine Methode View gesucht wird. Der Option-Operator drückt hier aus: falls möglich, ",
+					 		"sollte diese Methode ein TextView sein, wenn sie aber etwas anderes ist, ist dies nicht so wichtig. Die Relation ",
+					 		
+					 		{__def:	"|?code < text", __value: "<(~ascii_text)>"},
+					 		
+					 		"besagt, dass die Methode am Besten etwas vom Typ 'ascii_text' zurückgeben soll. Da ein Variations-Operator ",
+					 		"eingesetzt wird, ist der Aufrufer aber auch mit einem anderen Text-Objekt zufrieden."
+					 	]
+					},	
+					
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+					 		"Der _send-Operator analysiert anschließend den Datentyp des Parameters. Nehmen wir an, unser Parameter ",
+					 		{__def:	"|?code < text", __value: "my_address"}, "hat den Typ "
+					 	]
+					},					
+					
+					{__def:		"|?hyObject < ?javascript < ?code < ?lines < list",
+					 __value:
+					 	[
+					 		"my_address._as(",
+					 		"	[\"|?address < list\",",
+					 		"	 \"[~name, ~street, ~phone_number, ?*]\",",
+					 		"	 \"?name < text; ?street < text; ?phone_number < text\"",
+					 		"	]",
+					 		");"
+					 	]
+					},					
+
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+					 		"Diesen Typ könnte man interpretieren als ein Adressbucheintrag, das auf jeden Fall als Liste betrachtet werden soll.",
+					 		"Es besteht aus einem Namen, einer Straße und einer Telefonnummer, sowie beliebigen weiteren Elementen. Der ",
+					 		"Name, die Straße und die Telefonnummer sind Texte."
+					 	]
+					},					
+
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+					 		"Der _send-Operator wird nun die Definition des Parameters an unsere Methoden-Anfrage anfügen und eine ",
+					 		"weitere Relation für die Eingabeparameter einführen, die ", 
+					 		{__def:	"|?code < text", __value: ">(~address_book)<"}, "lautet. Diese Relation bedeutet so viel wie: ",
+					 		"Die Methode soll ein address_book als Parameter nehmen und ggf. Elemente seiner Vererbungshierarchie. ",
+					 		"Den Typ des Parameters hat er automatisch aus der Beschreibung des Objekt bezogen, indem er einfach ",
+					 		"die erste Vererbungsrelation der Beschreibung extrahiert hat. Alles in allem wird durch den _send-Operator ",
+					 		"nun die folgende Anfrage an den Dispatcher gestellt: "
+					 	]
+					},		
+					
+					{__def:		"|?hyObject < ?javascript < ?code < ?lines < list",
+					 __value:
+					 	[
+							"[",
+							"	 \"|?TextView < View; <(~ascii_text)>; ?ascii_text < text\",",
+							"	 \">(~address)<\",",
+					 		"	 \"?address < list;\",",
+					 		"	 \"[~name, ~street, ~phone_number, ?*];\",",
+					 		"	 \"?name < text; ?street < text; ?phone_number < text\"",
+					 		"]",
+					 	]
+					},
+
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+					 		"In Worten bedeutet diese automatisch generierte Anfrage: Gebe mir ein View, besser noch ein TextView, das mir ",
+					 		"einen ascii_text oder zumindest einen text zurückgibt. Als Eingabe hat es eine Addresse anzunehmen, wobei ",
+					 		"auch eine Liste zufriedenstellend wäre. Eine Adresse besteht dabei mindestens aus einem Namen, einer Straße ",
+					 		"und einer Telephonnummer, wobei - je nach Verfügbarkeit - wir bei jedem Element auch zufrieden wären, wenn ",
+					 		"das View einfach einen Text darstellen kann."
+					 	]
+					},
+					
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+					 		"Der Dispatcher sucht nun in allen Funktionen, die mit dem _-Operator deklariert wurden. Dabei wird für alle ",
+					 		"Funktionen geprüft, ob sie alle notwendigen Bedingungen aus der obigen Anfrage erfüllen. Anschließend wird gemessen, ",
+					 		"wieviele Optionen aus der Anfrage erfüllt wurden. Der Dispatcher ruft schließlich die Funktion auf, die alle ",
+					 		"notwendigen Bedingungen erfüllt und welche die meisten Optionen erfüllt. Dadurch ist er in der Lage, die ",
+					 		"beste verfügbare Implementierung auszuwählen."
+					 	]
+					},						
+
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+					 		"Dabei ist zu beachten, dass alle Optionen gleichwertig betrachtet werden. Umgekehrt prüft der Dispatcher zudem ",
+					 		"auch, ob die Anfrage die Beschreibung der Funktion erfüllt. D.h. ob für jede notwendige Bedingung in der Funktionsdeklaration ",
+					 		"auch etwas entsprechendes in der Anfrage existiert - damit kann der Programmierer der Funktion sicherstellen, ",
+					 		"dass seine Funktion nur genau dann gewählt wird, wenn bestimmte Features angefragt wurden."
+					 	]
+					},
+				]
+			},			
+			
+	
+			{__def:		"|?chapter < ?section < list",
+			 __value:
+				[					
+					{__def: 	"|?headline < ?paragraph < list",
+					 __value:	[ "Funktionen implementieren" ]
+					},
+	
+
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+					 		"Jetzt stellt sich natürlich noch die Frage, wie man eine Funktion wirklich implementiert. Nehmen wir einmal an, wir ",
+					 		"wollen ein einfaches HTML-View für ein Objekt vom Typ url entwickeln:"
+					 	]
+					},	
+
+					{__def:		"|?hyObject < ?javascript < ?code < ?lines < list",
+					 __value:
+					 	[
+					 		"({",
+					 		"	name:	\"View;\"",
+							"",
+					 		"	input:	\">(url)<; url < text\"",
+					 		"	output:	\"<(~html)>\"; ?html < text",
+					 		")}._(",
+					 		"",
+					 		"	function(input, def)",
+					 		"	{",
+					 		"		var url = input._get(\"url\");",
+					 		"		return \"<a href='\"+url+\"'>url</a>\"._as(\"?html < text\");",
+					 		"	}",
+					 		"",
+					 		");"					 		
+					 	]
+					},
+
+
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+					 		"Zunächst einmal muss jede Funktion, die der Dispatcher ansteuern kann, den Parameter input und def annehmen. Der ",
+					 		"Parameter def enthält einfach die Anfrage des Nutzers, die dazu geführt hat, diese Funktion zu starten. Der Parameter ",
+					 		"input ist dagegen ein Objekt, das alle Eingabeparameter der Funktion enthält. Auf die einzelnen Parameter kann man ",
+					 		"mit dem _get-Operator zugreifen. Was es mit diesem Operator auf sich hat, erfahren Sie im nächsten Abschnitt. ",
+					 		"Der Rückgabewert sollte selbst auch ein Objekt sein - folglich sollte man bei der Return-Anweisung den as-Operator ",
+					 		"auf seinen Rückgabewert anwenden. Nach Möglichkeit mit dem Typ, den man in der Ausgabe-Relation <()> verwendet hat. "
+					 	]
+					},	
+				]
+			}					
+					
+			
+		]			
+	},
+	
+	{__def:		"|?chapter < ?section < list",
+	 __value:
+		[		
+			{__def: 	"|?headline < ?paragraph < list",
+			 __value:	[ "Ein paar Worte zu Objekten" ]
+			},	
+
+			{__def:		"|?chapter < ?section < list",
+			 __value:
+				[					
+					{__def: 	"|?headline < ?paragraph < list",
+					 __value:	[ "Initialisieren von Objekten" ]
+					},
+
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+					 		"Wird der Operator _as() auf ein JavaScript-Objekt angewendet, geschiet noch ein wenig mehr, als nur das Hinzufügen ",
+					 		"einer Typspezifikation. Die Funktion schaut sich alle Elemente des Objekts an, deren Name mit einem |-Zeichen beginnen ",
+					 		"und wendet dann den Namen des Elements als Definition für das Element an. Somit können Objekte einfach in JSON-Notation ",
+					 		"niedergeschrieben werden und mit einem Aufruf von _as() wird automatisch die Definition auf alle Kindelemente rekursiv angewandt: "
+					 	]
+					},	
+			
+					{__def:		"|?hyObject < ?javascript < ?code < ?lines < list",
+					 __value:
+					 	[
+					 		"var my_address = ",
+							"	({",
+							"		 __def:					\"|?address < ?structure; [~name, ~street, ~city]; ?name < ?text; ?street < ?text; ?city < ?text\",",
+							"		\"|?name < text\":		\"Max Mustermann\",",
+							"		\"|?street < text\":	\"Musterstraße 123\",",
+							"		\"|?city < text\":		\"Musterstadt\",",
+					 		"	})._as();",
+					 	]
+					},
+
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+							"Wird nun _as() ausgeführt, entsteht ein Objekt, dessen Elemente automatisch voll typisiert sind. Alle Elemente des Objekts, ",
+							"die nicht mit dem |-Symbol anfangen wurden ignoriert - insbesondere um keine Konflikte mit nativen JavaScript-Objekten zu ",
+							"erzeugen. Das Element __def speichert bei diesem Objekt die Definition des Objekts selbst. Wird an as kein Parameter übergeben, ",
+							"verwendet _as() automatisch diese Eigenschaft als Definition für das Objekt."
+					 	]
+					},	
+
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+							"Gelegentlich möchte man auch Value-Types eine Definition bei der Initialisierung mitgeben - insbesondere wenn man Daten im JSON-Format ",
+							"speichert oder Arrays initialsieren möchte. Auch dies ist möglich, durch folgende Syntax:"
+					 	]
+					},	
+
+					{__def:		"|?hyObject < ?javascript < ?code < ?lines < list",
+					 __value:
+					 	[
+					 		"var my_address = ",
+							"	({",
+							"		 __def:					\"|?phone_numbers < list\",",
+							"		__value:",
+							"			[",
+							"				{__def: \"?phone_number < text\", __value: \"555-1234567\"}",
+							"				{__def: \"?phone_number < text\", __value: \"555-7654321\"}",
+							"			]",
+					 		"	})._as()",
+					 	]
+					},
+
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+							"Hierbei wird automatisch ein neues Objekt erzeugt, das die entsprechende Definition hat. Der Inhalt von __value wird direkt ",
+							"auf das neue Objekt angewandt. D.h. bei einem Array sind alle unter __value zu findenden Objekte später Teil des Arrays. ",
+							"Genauso ist bei einem String oder Zahlenwert später anstelle des Tupels __def/__value ein String oder Number-Objekt ",
+							"vorzufinden, das die entsprechende Definition und Wert hat. In folgendem Beispiel sind somit also die Zeilen 1 und 2 ",
+							"äquivalent:"
+					 	]
+					},	
+
+					{__def:		"|?hyObject < ?javascript < ?code < ?lines < list",
+					 __value:
+					 	[
+							"	var a = {__def: \"?phone_number < text\", __value: \"555-1234567\"}._as();",
+							"	var a = \"555-1234567\"._as();",
+						]
+					}
+				
+				]
+			},
+			
+
+			{__def:		"|?chapter < ?section < list",
+			 __value:
+				[					
+					{__def: 	"|?headline < ?paragraph < list",
+					 __value:	[ "Get-Zugriff auf Elemente" ]
+					},
+					
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+							"Nehmen wir das address-Objekt aus dem vorigen Abschnitt. Wie kann man auf die Elemente dieses Objekts sinnvoll zugreifen. ",
+							"Natürlich zunächst, wie bei jedem JavaScript-Objekt über den vollständigen Namen:"
+					 	]
+					},	
+					
+					{__def:		"|?hyObject < ?javascript < ?code < ?lines < list",
+					 __value:
+					 	[
+							"var name = my_address[\"|?name < text\"];"
+						]
+					},
+					
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+							"Dies ist natürlich ganz offensichtlich sehr umständlich, denn man muss immer die exakte Definition jedes Elements kennen. ",
+							"Oft weiß man diese aber nicht einmal - nehmen wir ein einfaches Tabellenwerkzeug, dem unser Adressbuch vorgesetzt wurde: ",
+							"dieses Werkzeug kennt nur text-Elemente und keine name, street oder city-Objekte. Aus diesem Grund ist es möglich ",
+							"auf Objekte mit einer Auswahlfunktion zuzugreifen. Bei dieser Funktion spezifiziert man, welchem Term ein Element ",
+							"genügen soll:"
+					 	]
+					},						
+
+					{__def:		"|?hyObject < ?javascript < ?code < ?lines < list",
+					 __value:
+					 	[
+							"var street = my_address._get(\"street\");",
+							"var text = my_address._get(\"text\");"
+						]
+					},
+
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+							"In der ersten Zeile wird der erste Term zurückgegeben, der in seiner Vererbungshierarchie als 'street' beschrieben ",
+							"wurde. In der zweiten Zeile der erste Term, der als 'text' beschrieben wurde - in unserem Beispiel der Name. Muss ",
+							"man befürchten, dass ein Objekt mehrere Elemente besitzt, die durch den gleichen Term beschrieben werden, kann ",
+							"man mit dem Operator _getAll() eine Liste aller Elemente zurückerhalten, die diesem Term genügen."
+					 	]
+					},			
+
+				]
+			},
+			
+			{__def:		"|?chapter < ?section < list",
+			 __value:
+				[					
+					{__def: 	"|?headline < ?paragraph < list",
+					 __value:	[ "Iteratoren" ]
+					},
+					
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+							"Manchmal möchte man die Elemente eines Objekts Schritt für Schritt durchgehen und für jedes Element eine Aktion ausführen. Hierfür ",
+							"gibt es den Operator _iterate, der für jedes Element des Objekts einen Callback startet:"
+					 	]
+					},	
+					
+					{__def:		"|?hyObject < ?javascript < ?code < ?lines < list",
+					 __value:
+					 	[
+					 		"var output = \"\"",
+					 		"",
+							"my_address._iterate( function (element, key) {",
+							"	if (element == \"Musterstadt\")",
+							"		return -1;",
+							"",
+							"	if (element._instanceOf(\"text\"))",
+							"		output += element;",
+							"})"
+						]
+					},
+					
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+							"Dieser Iterator ruft für jedes Element den übergebenen Callback auf und sendet dem Callback das Element und ",
+							"seinen Schlüssel (bei Objekten ist dies die Definition des Objekts, bei Arrays die Position in der Liste). Gibt ",
+							"der Callback -1 zurück, so wird das Iterieren gestoppt - es entspricht also einem 'break' bei normalen Schleifen. ",
+							"Wie bei allen Funktionsobjekten in JavaScript kann der Callback auf alle Variablen im Scope seiner Deklaration ",
+							"zugreifen - also auch auf die Variable 'output' aus dem übergeordneten Block."
+					 	]
+					},						
+
+				]
+			},
+			
+			{__def:		"|?chapter < ?section < list",
+			 __value:
+				[					
+					{__def: 	"|?headline < ?paragraph < list",
+					 __value:	[ "Modifizieren von Objekten" ]
+					},
+					
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+							"Schließlich kommt man auch nicht darum herum, gelegentlich ein Objekt nach seiner Initialisierung zu verändern. ",
+							"Hierfür gibt es die Operatoren _set() und _append(). Der Operator _set() funktioniert analog zu _get() und modifiziert ",
+							"das erste Objekt, das einer Definition genügt. Existiert jedoch ein solches Objekt nicht, scheitert die Funktion. Beim ",
+							"Aufruf von _set() wird automatisch die Definition des vorherigen Elements an das neue Kind-Element mit _as() weitergereicht - ",
+							"es sei denn, das Objekt hat schon eine Definition. Bei _append() wird hingegen ein neues Element an das Objekt angefügt."
+					 	]
+					},						
+				]
+			},
+			
+			{__def:		"|?chapter < ?section < list",
+			 __value:
+				[					
+					{__def: 	"|?headline < ?paragraph < list",
+					 __value:	[ "Reflection" ]
+					},
+					
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+							"Ein so umfangreiches Typsystem, sollte natürlich auch sehr umfangreiche Mechanismen zur Reflection anbieten. Da das ",
+							"System sich noch in einer frühen Entwicklungsphase befindet, fehlt noch die ein oder andere Funktion. Trotzdem ",
+							"gibt es bereits folgende Methoden, deren Funktionsweise an anderer Stelle näher dokumentiert ist (z.B. im Quelltext ",
+							"des Frameworks im engine-Verzeichnis): "
+					 	]
+					},
+					
+					{__def:		"|?table < list; [?~headline, ?*]; ?headline < list",
+					 __value:						
+					 	[	
+					 		{__def:		"|?headline < list",
+					 		 __value:
+					 		 	[
+					 		 		"Funktionsame", "Aufgabe", "Implementiert in"
+					 		 	]
+					 		 },
+
+					 		{__def:		"|?table_line < list",
+					 		 __value:
+					 		 	[
+					 		 		{__def: "|?code < text", __value: "_getClassName"}, "Gibt den Namen einer Klasse zurück", "relation.js"
+					 		 	]
+					 		 },
+
+					 		{__def:		"|?table_line < list",
+					 		 __value:
+					 		 	[
+					 		 		{__def: "|?code < text", __value: "_instanceOf"}, "Prüft, ob ein Term in der Vererbungshierarchie eines Objekts liegt", "relation.js"
+					 		 	]
+					 		 },
+
+					 		{__def:		"|?table_line < list",
+					 		 __value:
+					 		 	[
+					 		 		{__def: "|?code < text", __value: "_getOrderedRelationElement"}, "Gibt ein Element einer geordneten Relation zurück", "relation.js"
+					 		 	]
+					 		 },
+
+					 		{__def:		"|?table_line < list",
+					 		 __value:
+					 		 	[
+					 		 		{__def: "|?code < text", __value: "_getUnorderedRelationElement"}, "Gibt ein Element einer ungeordneten Relation zurück", "relation.js"
+					 		 	]
+					 		 },
+
+					 		 
+					 		{__def:		"|?table_line < list",
+					 		 __value:
+					 		 	[
+					 		 		{__def: "|?code < text", __value: "_relationToArray"}, "Bildet eine Relation in ein Array ab", "relation.js"
+					 		 	]
+					 		 },
+					 		 
+					 		{__def:		"|?table_line < list",
+					 		 __value:
+					 		 	[
+					 		 		{__def: "|?code < text", __value: "_arrayToRelationString"}, "Erzeugt eine String-Darstellung einer Relation aus einem Array", "relation.js"
+					 		 	]
+					 		 },	
+					 		 
+					 		{__def:		"|?table_line < list",
+					 		 __value:
+					 		 	[
+					 		 		{__def: "|?code < text", __value: "_relationToString"}, "Gibt eine String-Darstellung einer Relation zurück", "relation.js"
+					 		 	]
+					 		 },
+					 		 
+					 		{__def:		"|?table_line < list",
+					 		 __value:
+					 		 	[
+					 		 		{__def: "|?code < text", __value: "_variationsToArrays"}, "Gibt alle Variationen eines Terms zurück", "relation.js"
+					 		 	]
+					 		 },	
+					 		 
+					 		{__def:		"|?table_line < list",
+					 		 __value:
+					 		 	[
+					 		 		{__def: "|?code < text", __value: "_hasTerm"}, "Prüft, ob ein Term teil einer Relation ist", "relation.js"
+					 		 	]
+					 		 },
+					 		 
+					 		{__def:		"|?table_line < list",
+					 		 __value:
+					 		 	[
+					 		 		{__def: "|?code < text", __value: "_inOrderOf"}, "Prüft, ob ein Term teil einer geordneten Relation ist", "relation.js"
+					 		 	]
+					 		 },
+					 		 
+					 		{__def:		"|?table_line < list",
+					 		 __value:
+					 		 	[
+					 		 		{__def: "|?code < text", __value: "_insideOf"}, "Prüft, ob ein Term teil einer ungeordneten Relation ist", "relation.js"
+					 		 	]
+					 		 }			 		 			 		 			 		 			 		 		 		 			 		
+					 	]
+					}
+
+				]
+			}			
+
+		]
+	},
+	
+	{__def:		"|?chapter < ?section < list",
+	 __value:
+		[		
+			{__def: 	"|?headline < ?paragraph < list",
+			 __value:	[ "Aspektorientierte Programmierung" ]
+			},	
+
+			{__def:		"|?paragraph < list",
+			 __value:	
+			 	[
+			 		"Bevor wir nun zu einem konkreten Beispiel übergehen, sollen noch die Fähigkeiten zur aspektorientierten Programmierung ",
+			 		"mit Hilfe des Relational Dispatch vorgestellt werden. Da es beim Relational Dispatch ohnehin möglich ist, Methoden ",
+			 		"anhand beliebiger Ausdrücke zu suchen und dabei der Einsatz von Optionen, Wildcards und Variationen ein Grundfeature ist ",
+			 		"verfügt die JavaScript-Implementierung auch über Fähigkeiten zur Aspektorientierten Programmierung (AOP)."
+			 	]
+			},
+
+			{__def:		"|?paragraph < list",
+			 __value:	
+			 	[
+			 		"Nehmen wir an, der Editor in einem Content-Managment-System soll immer Warnung ausgeben, sobald der Benutzer versucht, ",
+			 		"Daten zu editieren, auf denen er keine Schreibrechte hat. Normalerweise würde die Überprüfung nur Serverseitig stattfinden ",
+			 		"und die grafische Benutzeroberfläche müsste noch zusätzlich ungültige Zugriffe überprüfen, um den Anwender zu warnen. ",
+			 		"Diese Prüfung zieht sich durch viele Schichten des Programms, die alle voneinander unabhängig sind. Es betrifft einfache ",
+			 		"Routinen zum Editieren von Texten ebenso, wie ein Programm zum Editieren der Galerie. Ein solcher Cross-Cutting-Concern ",
+			 		"ist sehr problematisch, da er es erfordert, bestimmte Code-Blöcke immer und immer wieder in völlig unabhängigen ",
+			 		"Modulen zu verteilen. Was ist, wenn eine Instanz des CMS überhaupt keine Zugriffskontrollen benötigt - sie müssten ",
+			 		"dennoch für alle anderen Fälle, im Code aller Views auftauchen!"
+			 	]
+			},
+			
+			{__def:		"|?paragraph < list",
+			 __value:	
+			 	[
+			 		"Um dies zu Vermeiden ermöglicht es die AOP, Funktionen um bestimmte Aspekte zu erweitern. Der Aspekt selbst wird dabei ",
+			 		"nicht in der Funktion implementiert, sondern nachträglich der Funktion beigefügt. So kann man beispielsweise die Sprache ",
+			 		"anweisen, dass alle Editor-Objekte automatisch um Zugriffsprüfung oder Logging erweitert werden. Damit die Erweiterung ",
+			 		"funktioniert, muss es Stellen in jeder Funktion geben, an die ein Aspekt gekoppelt werden kann. Die derzeitige Implementierung ",
+			 		"gestattet es, Aspekte vor und nach dem Aufruf einer Funktion zu setzen. Hierfür ist der _observe-Operator zuständig. Einen ",
+			 		"Aspekt deklariert man mit folgender Syntax:"
+			 	]
+			},
+			
+			{__def:		"|?hyObject < ?javascript < ?code < ?lines < list",
+			 __value:
+			 	[
+			 		"function before_aspect(receiver, input)",
+			 		"{",
+			 		"	/* Mache irgendwas */",
+			 		"}",
+			 		"",
+			 		"before_aspect._observe(\"View; <(~html)>; ?html < text\", \":before\");",
+			 		"",
+			 		"function after_aspect(receiver, output)",
+			 		"{",
+			 		"	/* Mache irgendwas */",
+			 		"}",
+			 		"",
+			 		"after_aspect._observe(\"|View; <(~html)>; ?html < text \", \":before\");"
+				]
+			},
+			
+			{__def:		"|?paragraph < list",
+			 __value:	
+			 	[
+			 		"Die Funktion before_aspect wird nun immer vor einem Aufruf eines View aufgerufen, das HTML-Daten zurückliefert. Der Aspekt erhält ",
+			 		"als Eingabeparameter die konkrete View-Implementierung (receiver), sowie die Eingbe, die dem View übermittelt werden soll. Mit ihrem ",
+			 		"Rückgabewert kann sie die Parameter für das View modifizieren. Analog dazu wird after_aspect immer aufgerufen, wenn ",
+			 		"ein View die return-Anweisung ausführt. Als Parameter erhält diese Funktion den Rückgabewert des Views, den sie ",
+			 		"ebenso verändern kann."
+			 	]
+			},					
+		]
+	},
+		
+	{__def:		"|?chapter < ?section < list",
+	 __value:
+		[		
+			{__def: 	"|?headline < ?paragraph < list",
+			 __value:	[ "Das hyCMS-Framework im Einsatz" ]
+			},		
+
+			{__def:		"|?paragraph < list",
+			 __value:	
+			 	[
+			 		"Wie kann nun Relational Dispatch wirklich eingesetzt werden? Stellen wir uns einfach einmal vor, wir möchten für das ",
+			 		"Content-Managment-System hyCMS eine einfaches Applikation zum Betrachten von Inhalten in HTML entwickeln. ",
+			 		"Das Content-Managment-System stellt uns dazu ",
+			 		"ein Framework bereit, um Daten im JSON-Format von einem PHP-Server abzurufen und automatisch alle im System ",
+			 		"verfügbaren JavaScript-Methoden dem Dispatcher bereitzustellen. Dazu kommen noch einige Hilfsfunktionen zum Implementieren ",
+			 		"von HTML-Views und natürlich der Dispatcher selbst. Betrachten wir dazu die Ordnerstruktur von hyCMS: "
+			 	]
+			},
+			
+			{__def:		"|?directory < ?tree < structure; [~dir_name, ~comment, ~raised, ~files]; ?dir_name < ?node_name < ?text; ?files < ?child_nodes < ?list; ?comment < ?text; ?raised < ?boolean",
+			 "|?dir_name < ?node_name < text":	"hyCMS/src",
+			 "|?comment < text":				"Das Source-Verzeichnis von hyCMS",
+			 "|?raised < text":					true,
+			 "|?files < ?child_nodes < list":
+			 	[
+					{__def:		"|?directory < ?tree < structure; [~dir_name, ~comment, ~raised, ~files]; ?dir_name < ?node_name < ?text; ?files < ?child_nodes < ?list; ?comment < ?text; ?raised < ?boolean",
+					 "|?dir_name < ?node_name < text":	"apps",
+					 "|?comment < text":				"Anwendungen basierend auf dem Framework",
+					 "|?raised < text":					true,
+					 "|?files < ?child_nodes < list":
+					 	[
+							{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+							 "|?dir_name < ?node_name < text":	"nocache.php",
+							 "|?comment < text":				"Ein einfacher Betrachter für die Seiteninhalte ohne Caching",
+							},
+						]
+					},			 	
+			 	
+					{__def:		"|?directory < ?tree < structure; [~dir_name, ~comment, ~raised, ~files]; ?dir_name < ?node_name < ?text; ?files < ?child_nodes < ?list; ?comment < ?text; ?raised < ?boolean",
+					 "|?dir_name < ?node_name < text":	"engine",
+					 "|?comment < text":				"Enthält interne Dateien des Dispatcher",
+					 "|?raised < text":					false,
+					 "|?files < ?child_nodes < list":
+					 	[
+							{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+							 "|?dir_name < ?node_name < text":	"definition.js",
+							 "|?comment < text":				"Definitionen-Parser",
+							},
+
+							{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+							 "|?dir_name < ?node_name < text":	"dispatcher.js",
+							 "|?comment < text":				"Dispatcher",
+							},
+					 		
+							{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+							 "|?dir_name < ?node_name < text":	"object.js",
+							 "|?comment < text":				"Objekt-Erweiterungen",
+							},
+					 		
+							{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+							 "|?dir_name < ?node_name < text":	"relation.js",
+							 "|?comment < text":				"Relation-Operationen",
+							}
+						]
+					},
+
+					{__def:		"|?directory < ?tree < structure; [~dir_name, ~comment, ~raised, ~files]; ?dir_name < ?node_name < ?text; ?files < ?child_nodes < ?list; ?comment < ?text; ?raised < ?boolean",
+					 "|?dir_name < ?node_name < text":	"packages",
+					 "|?comment < text":				"Enthält alle JavaScript-Module, die für den Dispatcher in Frage kommen",
+					 "|?raised < text":					true,
+					 "|?files < ?child_nodes < list":
+					 	[
+							{__def:		"|?directory < ?tree < structure; [~dir_name, ~comment, ~raised, ~files]; ?dir_name < ?node_name < ?text; ?files < ?child_nodes < ?list; ?comment < ?text; ?raised < ?boolean",
+							 "|?dir_name < ?node_name < text":	"htmlView",
+							 "|?comment < text":				"Views für HTML",
+							 "|?raised < text":					false,
+							 "|?files < ?child_nodes < list":
+							 	[
+									{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+									 "|?dir_name < ?node_name < text":	"article.js",
+									 "|?comment < text":				"Artikel-Klasse",
+									},
+									
+									{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+									 "|?dir_name < ?node_name < text":	"author.js",
+									 "|?comment < text":				"Autor-Klasse",
+									},									
+
+									{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+									 "|?dir_name < ?node_name < text":	"basic.js",
+									 "|?comment < text":				"Allgemeine HTML-Darstellung",
+									},
+
+									{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+									 "|?dir_name < ?node_name < text":	"page.js",
+									 "|?comment < text":				"Page Klasse",
+									},
+
+									{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+									 "|?dir_name < ?node_name < text":	"paragraph.js",
+									 "|?comment < text":				"Absatz-Klassen",
+									},									
+									
+									{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+									 "|?dir_name < ?node_name < text":	"lines.js",
+									 "|?comment < text":				"Zeilen-Stile",
+									},
+									
+									{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+									 "|?dir_name < ?node_name < text":	"tree.js",
+									 "|?comment < text":				"Baum-Ansicht",
+									},									
+									
+									{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+									 "|?dir_name < ?node_name < text":	"htmlViewHelper.js",
+									 "|?comment < text":				"Hilfsfunktionen zum Entwickeln von HTML-Views",
+									}							
+								]
+							},
+
+							{__def:		"|?directory < ?tree < structure; [~dir_name, ~comment, ~raised, ~files]; ?dir_name < ?node_name < ?text; ?files < ?child_nodes < ?list; ?comment < ?text; ?raised < ?boolean",
+							 "|?dir_name < ?node_name < text":	"textView",
+							 "|?comment < text":				"Views für Textausgabe",
+							 "|?raised < text":					false,
+							 "|?files < ?child_nodes < list":
+							 	[
+									{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+									 "|?dir_name < ?node_name < text":	"textView.js",
+									 "|?comment < text":				"Text-View",
+									},
+								]
+							},
+							
+							{__def:		"|?directory < ?tree < structure; [~dir_name, ~comment, ~raised, ~files]; ?dir_name < ?node_name < ?text; ?files < ?child_nodes < ?list; ?comment < ?text; ?raised < ?boolean",
+							 "|?dir_name < ?node_name < text":	"persistence",
+							 "|?comment < text":				"Zugriff auf den PHP-Server",
+							 "|?raised < text":					false,
+							 "|?files < ?child_nodes < list":
+							 	[
+									{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+									 "|?dir_name < ?node_name < text":	"data_provider.js",
+									 "|?comment < text":				"Zugriff auf die Dokumente über AJAX",
+									},
+								]
+							},							
+
+							{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+							 "|?dir_name < ?node_name < text":	"viewHelper.js",
+							 "|?comment < text":				"Hilfsfunktionen zum Entwickeln von Views",
+							}
+						]
+					},
+					
+					{__def:		"|?directory < ?tree < structure; [~dir_name, ~comment, ~raised, ~files]; ?dir_name < ?node_name < ?text; ?files < ?child_nodes < ?list; ?comment < ?text; ?raised < ?boolean",
+					 "|?dir_name < ?node_name < text":	"services",
+					 "|?comment < text":				"Interne Dienste des PHP-Servers",
+					 "|?raised < text":					false,
+					 "|?files < ?child_nodes < list":
+					 	[
+								{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+								 "|?dir_name < ?node_name < text":	"content.php",
+								 "|?comment < text":				"Zugriff auf JSON-Daten",
+								},
+
+								{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+								 "|?dir_name < ?node_name < text":	"packages.php",
+								 "|?comment < text":				"Automatisches Laden von JavaScript-Modulen",
+								},
+								
+								{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+								 "|?dir_name < ?node_name < text":	"setup.php",
+								 "|?comment < text":				"Systemeinstellungen für JavaScript-Module",
+								},								
+						]
+					},
+					
+					{__def:		"|?directory < ?tree < structure; [~dir_name, ~comment, ~raised, ~files]; ?dir_name < ?node_name < ?text; ?files < ?child_nodes < ?list; ?comment < ?text; ?raised < ?boolean",
+					 "|?dir_name < ?node_name < text":	"storage",
+					 "|?comment < text":				"Enthält die gespeicherten Inhalte im JSON-Format",
+					 "|?raised < text":					true,
+					 "|?files < ?child_nodes < list":
+					 	[
+								{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+								 "|?dir_name < ?node_name < text":	"tutorial.json",
+								 "|?comment < text":				"Dieses Tutorial",
+								},
+						]
+					}
+			 	]
+			},			
+			
+			{__def:		"|?paragraph < list",
+			 __value:	
+			 	[
+			 		"Soll ein neues View - oder eine andere Methode - dem System bereitgestellt werden, so fügt man es einfach in den Ordner packages ein. ",
+			 		"Wichtig ist hierbei nur, dass die Datei auf .js endet. Neben den JavaScript-Methoden gibt es auch noch sog. Applikationen im Framework. ",
+			 		"Diese sind im Ordner apps angesiedelt und enthalten beispielsweise Anwendungen, um die Inhalte der Website darzustellen oder zu ",
+			 		"editieren. Diese Anwendungen sind schließlich die Komponenten, welche verschiedene Dienste des Frameworks kombinieren und dem ",
+			 		"Benutzer nach außen zur Verfügung stellen. "
+			 	]
+			},
+
+			{__def:		"|?paragraph < list",
+			 __value:	
+			 	[
+			 		"Um zu verstehen, wie das Betrachten eines Inhalts in HTML funktioniert, analysieren wir einmal eine einfache Anwendung - nocache.php. ",
+			 		"Diese Anwendung öffnet eine beliebige JSON-Datei im Ordner storage und versucht ihren Inhalt als HTML darzustellen. Dies gelingt ",
+			 		"z.B. mit dem Aufruf von ", {__def: "|?url < text", __value: "http://localhost/hycms/src/views/nocache.php?hycms_content=tutorial"}, ". ",
+			 		"Diesem Aufruf wird eine GET-Variable hycms_content übergeben, die den Dateinamen des Inhalts ohne die Dateiendung .json enthält. ",
+			 		"Unterverzeichnisse im Ordner storage sind dabei ebenfalls erreichbar. "
+			 	]
+			},
+
+			{__def:		"|?paragraph < list",
+			 __value:	
+			 	[
+			 		"Wie arbeitet nun diese Anwendung? Nun zunächst muss sie dafür sorgen, dass das Framework alle verfügbaren JavaScript-Module ",
+			 		"lädt und diese konfiguriert. Dies geschieht durch Einbinden der Dienste setup.php und packages.php im Kopf der PHP-Anwendung: ",
+			 	]
+			},
+	
+			{__def:		"|?hyObjectApp < ?javascript < ?code < ?lines < list",
+			 __value:
+			 	[			
+					"<html>",
+					"<head>",
+					"	...",
+					"",
+					"	<? include \"../services/setup.php\" ?>	",
+					"	<? include \"../services/packages.php\" ?>"
+				]
+			},
+			
+			{__def:		"|?paragraph < list",
+			 __value:	
+			 	[
+			 		"Haben wir dies erledigt, können wir nun unser eigentliches Programm schreiben. Unsere Anwendung besteht im wesentlichen ",
+			 		"aus zwei JavaScript-Funktionen - viewFunction und main, wobei main unsere Anwendung startet: "
+			 	]
+			},
+			
+			{__def:		"|?hyObjectApp < ?javascript < ?code < ?lines < list",
+			 __value:
+			 	[			
+					"	<script type='text/javascript' charset='UTF-8'>",
+					"		function viewFunction(content)",
+					"		{",
+					"			var html = \"|View; <(~html)>; ?html < text\"._send ( content );",
+					"",
+					"			document.body.innerHTML =html;",
+					"",
+					"		}",
+					"",
+					"		function main(content_path) {",
+					"			\"|DataProvider\"._send ( content_path._as(\"|path < text\"), ",
+					"									  viewFunction._as(\"|callback < function\") ",
+					"								    );",
+					"",
+					"		}",
+					"	</script>",
+					"",
+					"</head>",
+					"<body onload=\"main('<?=$_GET['hycms_content']?>')\">",
+					"</body>",
+					"</html>"
+				]
+			},	
+			
+			{__def:		"|?paragraph < list",
+			 __value:	
+			 	[
+			 		"Als erstes betrachten wir die Hauptroutine main. Gestartet wird diese Routine auf das onload-Ereignis der Seite, also ",
+			 		"direkt beim Öffnen derselben. Diese main-Funktion macht nichts anderes, als das System nach einer Methode DataProvider ",
+			 		"zu fragen, das uns die darzustellenden Daten vom Server liefern kann. Diese Funktion soll als Parameter etwas kriegen, das ",
+			 		"als Pfad aufgefasst wird. Zusätzlich erhält es einen Callback. Der Zugriff auf den Server erfolgt mit AJAX und ist somit ",
+			 		"asynchron, weswegen ein Callback erforderlich ist. Sind also unsere Daten vom Server angekommen, sollte automatisch die ",
+			 		"viewFunction gestartet werden, um sie darzustellen."
+			 	]
+			},	
+
+			{__def:		"|?paragraph < list",
+			 __value:	
+			 	[
+			 		"Die Funktion viewFunction stellt schließlich den Inhalt dar. Dazu fragt sie einfach das System nach einem Werkzeug, ",
+			 		"welches in der Lage ist, die empfangenen Daten darzustellen. Nach Möglichkeit soll dieses View HTML Daten zurückgeben, ",
+			 		"es genügt aber auch schon ein Text. Anschließend kümmert sich der Relational Dispatch automatisch ",
+			 		"darum die passenden Werkzeuge zu finden. Die Darstellung findet rekursiv statt: Nehmen wir an, die Wurzel unseres Dokuments ",
+			 		"ist eine Liste. Dann wird ein View für Listen aufgerufen, das seinerseits wieder für jedes Element der Liste nach einem ",
+			 		"passenden View sucht. So entsteht sukzessive ein String, der unsere Daten im HTML-Format enthält. Ist der View-Prozess ",
+			 		"beendet, müssen wir diese Daten nur noch in unser Body-Element einfügen, was durch setzen der innerHTML-Eigenschaft ",
+			 		"gelingt."
+			 	]
+			},
+			
+			{__def:		"|?paragraph < list",
+			 __value:
+			 	[
+			 		"Werfen wir doch nun noch einmal einen Blick in den Darstellungsprozess, um ein Gefühl zu bekommen, wie ein View ",
+			 		"implementiert werden muss. Die Inhalte unserer Seite sind in einem JSON-Format gespeichert. Versuchen wir ",
+			 		"es also mit einem einfachen Dokument - speichern Sie es im Ordner storage unter dem Namen simple.json ab: "
+			 	],
+			},
+
+			{__def:		"|?hyObject < ?javascript < ?code < ?lines < list",
+			 __value:
+			 	[			
+					"{",
+					"	__def:	\"|?article < ?page < list\",",
+					"	__value:",
+					"	[",
+					"		{__def:		\"|?headline < ?paragraph < list\",",
+					"		 __value:	[ \"Eine kleine Überschrift\" ]",
+					"		},",
+					"",
+					"		{__def:		\"|?paragraph < list\"",
+					"		 __value:",
+					"			[ \"Ein kleiner Absatz in einem kurzen Text!\" ]",
+					"		}",
+					"	]",
+					"}"
+				]
+			},
+			
+			{__def:		"|?paragraph < list",
+			 __value:
+			 	[
+			 		"Wenn Sie es mit der Standard-Version des CMS betrachten, sehen Sie eine Seite mit einer dick gedruckten Überschrift ",
+			 		"und einem einzelnen Absatz. Nichts Besonderes also - aber für unsere Zwecke ist es einfach genug. Versuchen wir nun ein ",
+			 		"ein paar einfache Views zu schreiben. Entfernen Sie dazu aus dem Verzeichnis packages/htmlView alle js-Dateien mit ",
+			 		"Ausnahme der htmlViewHelper.js - diese benötigen wir später für das Tutorial noch. Es ",
+			 		"genügt die Dateien in das Stammverzeichnis von hyCMS zu verschieben. Wenn Sie nun die Anwendung über die URL ",
+			 		{__def: "|?url < text", __value: "http://localhost/hycms/src/views/nocache.php?hycms_content=simple"},
+			 		"aufrufen, erscheint ein flacher Text ohne Formatierungen."
+			 	],
+			 },
+			 
+			{__def:		"|?paragraph < list",
+			 __value:
+			 	[
+			 		"Was ist geschehen? Nun, der Dispatcher hat kein View für HTML mehr gefunden - in unserer viewFunction haben wir aber ",
+			 		"erklärt, dass es uns genügt, wenn das View einen text zurückgibt. Ein solches View ist im Ordner packages/textView ",
+			 		"immer noch enthalten und somit für den Dispatcher verfügbar. D.h. das System kann hier automatisch auf ein primitives ",
+			 		"Werkzeug zurückgreifen, wenn das bessere Werkzeug fehlt."
+			 	],
+			 },
+
+			{__def:		"|?paragraph < list",
+			 __value:
+			 	[
+			 		"Nun geben wir uns aber natürlich mit dem primitiven Werkzeug nicht zufrieden und erstellen ein einfaches HTML-View ",
+			 		"für Listen. Keine Schönheit, aber erst einmal ausreichend. Legen Sie dazu eine datei 'example.js' in ihrem Ordner ",
+			 		"packages an und füllen Sie diese mit dem folgenden Inhalt:"
+				]
+			},	
+			
+			{__def:		"|?hyObject < ?javascript < ?code < ?lines < list",
+			 __value:
+			 	[				
+					"//",
+					"// List view",
+					"//",
+					"({",
+					"	purpose:	\"|View\",",
+					"",
+					"	input:		\">(list)<; list\",",
+					"	output:		\"<(~html)>; ?html < text\"",
+					"})._(",
+					"",
+					"	function HtmlView_List(input)",
+					"	{",
+					"		var output = \"<table>\";",
+					"",
+					"		input._get(\"list\")._iterate( function (element, key) {",
+					"			output += \"<tr><td>\";",
+					"			output += \"|View; <(?html, ?text)>; ?html < text\"._send( element );",
+					"			output += \"</td></tr>\";",
+					"		});",
+					"",
+					"		output += \"</table>\";",
+					"",
+					"		return output._as();",
+					"	}",
+					"",
+					");"
+				]
+			},
+
+			{__def:		"|?paragraph < list",
+			 __value:
+			 	[
+			 		"Diese Funktion wird nun für jedes Objekt aufgerufen, das vom Typ list ist. Glücklicherweise sind in unserer Beispieldatei ",
+			 		"alle Daten vom Typ list oder text. Für den Typ text haben wir bereits im TextView eine Routine, die uns genügt - fügen ",
+			 		"wir nun aber unsere Datei example.js in den Ordner packages ein und laden wir die Anwendung im Browser neu, so erscheinen ",
+			 		"nicht mehr lose Zeilen, sondern eine kleine Tabelle mit allen Inhalten."
+				]
+			},	
+
+			{__def:		"|?paragraph < list",
+			 __value:
+			 	[
+			 		"Wie macht diese Funktion das? Nun in der Deklaration der Funktion haben wir sie als View definiert und festgelegt, ",
+			 		"dass sie als Eingabe eine Liste erwartet und HTML-Text zurückgibt. Der Dispatcher bewertet sie also bei einem Aufruf ",
+			 		"des _send-Operators günstiger, als das reine TextView. Die ",
+			 		"Darstellung selbst erfolgt durch ein Iterieren über alle Elemente der Liste mit dem _iterate-Operator und einer inneren ",
+			 		"Callback-Funktion. Diese Funktion stellt nun wieder rekursiv für jedes Element der Liste eine Anfrage an den Dispatcher, ",
+			 		"ein entsprechendes View zu starten und HTML-Daten zu genrieren. Die dabei generierten HTML-Daten ",
+			 		"werden dann von unserem list-View in eine einfache HTML-Tabelle eingepflegt."
+				]
+			},
+			
+			{__def:		"|?paragraph < list",
+			 __value:
+			 	[
+			 		"Auch unser Listen-Werkzeug ist noch ziemlich primitiv. Wir wollen gerne Absätze als richtige HTML-Absätze darstellen. ",
+			 		"Das gleiche gilt für Überschriften. Außerdem wollen wir nicht für jede rekursive Datenstruktur immer diesen aufwendigen ",
+			 		"Aufruf von _iterate starten. Um uns diesen zu ersparen bietet die Datei htmlViewHelper.js eine kleine Funktion: ",
+			 		{__def: "|?code < text", __value: "HtmlView_listInside(input, def)"},
+			 		"Diese Funktion fragt automatisch für jedes Kindobjekt der Liste den Dispatcher nach der richtigen ",
+			 		"View-Methode und gibt uns anschließend die HTML-Ausgabe zurück. Sie hängt dabei einfach den Text der Kindelemente direkt ",
+			 		"aneinander oder kann, falls gewünscht, eine zusätzliche Konkatenations-Funktion als Parameter erhalten. ",
+			 		"Wir wollen nun ein einfaches Absatz-View schreiben - erweitern Sie dazu Ihre example.js: "
+			 	]
+			},
+
+			{__def:		"|?hyObject < ?javascript < ?code < ?lines < list",
+			 __value:
+			 	[
+					"//",
+					"// Paragraph view",
+					"//",
+					"({",
+					"	purpose:	\"View\",",
+					"	input:		\">(paragraph)<; paragraph < list\",",
+					"	output:		\"<(~html)>; ?html < text\",",
+					"})._(",
+					"",
+					"	function HtmlView_Paragraph(input, def)",
+					"	{",
+					"		var output = \"<p>\"+HtmlView_listInside(input, def)+\"</p>\";",
+					"",
+					"		return output._as();",
+					"	}",
+					"",
+					");"			 	
+			 	]
+			},
+			
+			{__def:		"|?paragraph < list",
+			 __value:
+			 	[
+			 		"Wenn Sie nun die Seite im Browser neu laden, wurde sowohl die Überschrift, als auch der Absatz als normaler HTML-Absatz ",
+			 		"dargestellt. Die Funktion HtmlView_listInside hat sich dabei automatisch darum gekümmert, dass die Kindelemente der Absätze ",
+			 		"mit dem richtigen Werkzeug dargestellt werden. Nun brauchen wir noch eine Funktion für die Überschrift: "
+				]
+			},		
+			
+			{__def:		"|?hyObject < ?javascript < ?code < ?lines < list",
+			 __value:
+			 	[
+					"//",
+					"// Headline view",
+					"//",
+					"({",
+					"	purpose:	\"View\",",
+					"	input:		\">(headline)<; headline < paragraph < list\",",
+					"	output:		\"<(~html)>; ?html < text\",",
+					"})._(",
+					"",
+					"	function HtmlView_Headline(input, def)",
+					"	{",
+					"		var output = \"<h3>\"+HtmlView_listInside(input, def)+\"</h3>\";",
+					"",
+					"		return output._as();",
+					"	}",
+					"",
+					");"			 	
+			 	]
+			},
+			
+			{__def:		"|?paragraph < list",
+			 __value:
+			 	[
+			 		"Nun wird unsere Überschrift als h3-Überschrift dargestellt. Wir wollen aber, dass bei größeren Texten ",
+			 		"automatisch die Seitenüberschrift als h1-Überschrift dargestellt wird. Wir könnten natürlich einfach obige ",
+			 		"Funktion verändern - das hätte aber zur Folge, dass auch untergeordnete Überschriften zu h1-Überschriften werden würden. "
+				]
+			},					
+
+			{__def:		"|?paragraph < list",
+			 __value:
+			 	[
+			 		"Die Funktion HtmlView_listInside bietet hier Abhilfe. Denn diese Funktionen fügen bei jeder ",
+			 		"Rekursionsebene den Darstellungskontext automatisch an die Anfrage für den Dispatcher an. Befindet sich unsere Überschrift ",
+			 		"Beispielsweise innerhalb einer section und die section wiederum in einer page, so wird unsere Anfrage um folgende ",
+			 		"Relationen ergänzt:"
+				]
+			},		
+			
+			{__def:		"|?hyObject < ?javascript < ?code < ?lines < list",
+			 __value:
+			 	[
+					"?~headline << ?~section << ?~page"
+				]
+			},
+			
+			{__def:		"|?paragraph < list",
+			 __value:
+			 	[
+			 		"D.h. in unserer Anfrage wird nun auch noch nach einem Werkzeug gefragt, dass dafür geeignet ist, eine Überschrift ",
+			 		"im Kontext einer Section und diese wiederum im Kontext einer Page zu betrachten. Das Ergebnis wäre vermutlich ein Werkzeug ",
+			 		"zur Darstellung von Kapitelüberschriften. Damit der Variation-Operator zufriedenstellend funktioniert, werden der Anfrage ",
+			 		"noch die Definitionen der Begriffe headline, section und page beigefügt:"
+				]
+			},		
+
+			{__def:		"|?hyObject < ?javascript < ?code < ?lines < list",
+			 __value:
+			 	[
+					"?headline < ?paragraph < ?list",
+					"?section < ?paragraph < ?list",
+					"?page < list"
+				]
+			},
+
+			
+			{__def:		"|?paragraph < list",
+			 __value:
+			 	[
+			 		"In unserer Beispieldatei haben wir ein ähnliches Szenario - wir haben eine Überschrift, die Teil einer Page ist. Also ",
+			 		"könnten wir doch sagen, dass dies eine Seitenüberschrift ist und folglich als h1 gerendert werden soll. Nichts leichter ",
+			 		"als das - ergänzen wir unsere example.js um ein weiteres View:"
+				]
+			},
+			
+			{__def:		"|?hyObject < ?javascript < ?code < ?lines < list",
+			 __value:
+			 	[
+					"//",
+					"// Page headline view",
+					"//",
+					"({",
+					"	purpose:		\"View\",",
+					"	conditions:		\"{?recursive_context, ?keep_method_conditions}\",",		
+					
+					"	input:			\">(headline)<; headline < paragraph < list\",",
+					"	view_context:	\"headline << page; page < list\",",
+					"	output:			\"<(~html)>; ?html < text\",",
+					"})._(",
+					"",
+					"	function HtmlView_PageHeadline(input, def)",
+					"	{",
+					"		var output = \"<h1>\"+HtmlView_listInside(input, def)+\"</h1>\";",
+					"",
+					"		return output._as();",
+					"	}",
+					"",
+					");"			 	
+			 	]
+			},
+			
+			{__def:		"|?paragraph < list",
+			 __value:
+			 	[
+			 		"Im Unterschied zum Headline-View verfügt dieses View noch um zwei weitere Relationen, die ausdrücken, dass dieses ",
+			 		"Werkzeug nur für Überschriften geeignet ist, die direkt einem Page-Objekt untergeordnet sind. Laden Sie die Seite neu ",
+			 		"so erscheint automatisch die Überschrift in einer h1-Umgebung."
+				]
+			},
+
+			{__def:		"|?paragraph < list",
+			 __value:
+			 	[
+			 		"Neu in diesem View sind die Relationen in der Zeile 'conditions' und 'view_context'. Wie bereits gesagt, haben die ",
+			 		"Beschriftungen dieser Zeilen nicht zu bedeuten - wohl aber ihr Inhalt. Der Inhalt der {}-Relation wird dauz verwendet, ",
+			 		"um weitere Randbedingungen der Funktion auszudrücken, die über die Struktur ihrer Parameter hinausgehen. ",
+			 		" Beispielsweise soll 'recursive_context' ausdrücken, dass die Funktion, ",
+			 		"bei der Anfrage nach einem View für jedes Kindelement die Kontext-Relation '<<' einbaut. Der Term 'keep_method_conditions', ",
+			 		"drückt dagegen aus, dass die Conditions-Relation aus der Anfrage, die zum Aufruf unserer Funktion geführt hat, auch bei der ",
+			 		"Anfrage an jedes Kindelement weitergereicht werden soll. ",
+			 		"Randbedingungen sind wichtig, wenn es Anwendungen gibt, die darauf beruhen, dass unser View bestimmte Kriterien erfüllt. Beispielsweise ",
+			 		"könnte eine Editor verlangen, dass das HTML-View alle erzeugen HTML-Nodes mit einem Marker versieht und entsprechend ",
+			 		"die Bedingung set_uuid_attribute von jedem View verlangen.",
+			 		"Auf Seite der Funktion sind diese Randbedingungen meistens als Optional gekennzeichnet, da es der Funktion meist egal ist, ob die ",
+			 		"Anwendung sich für diese Randbedingungen interessiert oder nicht."
+				]
+			},
+
+			{__def:		"|?paragraph < list",
+			 __value:
+			 	[
+			 		"Die Relation in der Zeile view_context drückt dagegen aus, in welchem Zusammenhang unsere Überschrift nun bei der Darstellung ",
+			 		"stehen soll. Da htmlView_listInside diesen Kontext bei jeder Anfrage als optionale Relation beifügt, wird der Dispatcher ",
+			 		"nun bei Überschriften, die unmittelbarer Bestandteil einer Page sind, unser neues View aufrufen. "
+				]
+			},
+			
+			{__def:		"|?paragraph < list",
+			 __value:
+			 	[
+			 		"Wie man an diesem Beispiel erkennen kann, erlaubt das Hinzufügen von weiteren Relationen an einen Typ, komplexere ",
+			 		"anfragen an das System. In anderen Programmiersprachen hätte der Sachverhalt, dass ein Objekt im Kontext eines anderen ",
+			 		"betrachtet werden soll, nur durch einen spezifischen Funktionsaufruf ausgedrückt werden können. Es wäre eine ",
+			 		"manuelle Prüfung dieses Kriteriums erforderlich gewesen. Ebenso wären andere Programmiersprachen nicht ohne eine ",
+			 		"manuelle Prüfung in der Lage, auf fehlende Features einer Methode zu verzichten."
+				]
+			}								
+			
+		]
+	},
+
+	{__def:		"|?chapter < ?section < list",
+	 __value:
+		[		
+			{__def: 	"|?headline < ?paragraph < list",
+			 __value:	[ "Hilfestellungen für Html-Views" ]
+			},	
+
+			{__def:		"|?paragraph < list",
+			 __value:
+			 	[
+			 		"Damit die Programmierung von Html-Views ein wenig leichter wird, gibt es eine Reihe von Hilfsfunktionen, die Ihnen ",
+			 		"das Entwickeln von Views erleichtern. Die wichtigsten dieser Funktionen seien hier einmal genannt, nähere Informationen ",
+			 		"können Sie aus der im Quelltext von viewHelper.js und htmlViewHelper.js enthaltenen Dokumentation entnehmen: "
+				]
+			},
+			
+					{__def:		"|?table < list; [?~headline, ?*]; ?headline < list",
+					 __value:						
+					 	[	
+					 		{__def:		"|?headline < list",
+					 		 __value:
+					 		 	[
+					 		 		"Funktionsame", "Aufgabe", "Implementiert in"
+					 		 	]
+					 		 },
+
+					 		{__def:		"|?table_line < list",
+					 		 __value:
+					 		 	[
+					 		 		{__def: "|?code < text", __value: "View_renderChild"}, "Sendet eine View-Anfrage für ein Element. Dabei werden alle Randbedingungen aus der {}-Relation des Aufrufers weitergereicht.", "viewHelper.js"
+					 		 	]
+					 		 },
+
+					 		{__def:		"|?table_line < list",
+					 		 __value:
+					 		 	[
+					 		 		{__def: "|?code < text", __value: "View_contextIterate"}, "Iteriert über jedes Kind-Element eines Objekts mit einer Iterationsfunktion. Für jedes Element wird dieser Iterationsfunktion eine Kontext-Beschreibung in Form einer <<-Relation mitgeteilt.", "viewHelper.js"
+					 		 	]
+					 		 },
+
+					 		{__def:		"|?table_line < list",
+					 		 __value:
+					 		 	[
+					 		 		{__def: "|?code < text", __value: "HtmlView_renderChild"}, "Wie View_renderChild, es wird nur zusätzlich sichergestellt, dass das View HTML-Daten zurückgibt.", "htmlViewHelper.js"
+					 		 	]
+					 		 },
+
+					 		{__def:		"|?table_line < list",
+					 		 __value:
+					 		 	[
+					 		 		{__def: "|?code < text", __value: "HtmlView_listInside"}, "Iteriert über jedes Kind-Element eines Objekts und ruft dafür ein HTML-View auf. Dem dabei verwendeten View wird der Kontext so wie ale {}-Randbedingungen mitgeteilt.", "htmlViewHelper.js"
+					 		 	]
+					 		 },
+
+					 		{__def:		"|?table_line < list",
+					 		 __value:
+					 		 	[
+					 		 		{__def: "|?code < text", __value: "HtmlView_tag"}, "Umklammert einen String mit einem HTML-Tag, der als CSS-Klasse den Namen des Objekts verwendet und ein UUID-Attribute für ein Objekt umfasst. Dieser Aufruf sollte immer für das Wurzel-Element eines HTML-Views verwendet werden.", "htmlViewHelper.js"
+					 		 	]
+					 		 },
+
+					 		{__def:		"|?table_line < list",
+					 		 __value:
+					 		 	[
+					 		 		{__def: "|?code < text", __value: "HtmlView_autotag"}, "Wie HtmlView_tag, jedoch werden die Parameter automatisch aus den Argumenten der Aufrufer-Funktion bezogen. Der Aufruf dieser Funktion erleichtert also die Verwendung von HtmlView_tag.", "htmlViewHelper.js"
+					 		 	]
+					 		 },
+					 		 
+					 		{__def:		"|?table_line < list",
+					 		 __value:
+					 		 	[
+					 		 		{__def: "|?code < text", __value: "String.html_text"}, "Erzeugt aus einem beliebigen String einen gültigen HTML-Text. Bei diesem werden alle problematischen Zeichen durch HTML-Zeichen ersetzt und alle Newlines durch <br/>", "htmlViewHelper.js"
+					 		 	]
+					 		 }
+					 	]
+					}
+				
+		]
+	}
+]}
+

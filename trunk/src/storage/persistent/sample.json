@@ -1,0 +1,263 @@
+{
+	__def:	"|?article < ?page < list",
+	__value:
+[
+	{__def:		"|?headline < ?paragraph < list",
+	 __value:	[ "How-to: Relational Dispatch in JavaScript" ]
+	},
+
+	{__def:		"|?document_information < list",
+	 __value:	
+		 [
+			{__def:		"|?author < ?person < structure; [~name, ~mail_address, ?*]; ?name < text; ?mail_address < text",
+			 "|?name < text":			"Friedrich Gräter",
+			 "|?mail_address < text":	"graeter@hydrixos.org"
+			},
+	
+			{__def:		"|?german_date < ?date < text",
+			 __value:	"25.3.2008"
+			},
+	
+			{__def:		"|?version < text",
+			 __value:	"1.0"
+			},
+	
+			{__def:		"|?abstract < ?paragraph < list",
+			 __value:
+				[
+					"Relational Dispatch ist eine Erweiterung des Dispatchings in objektorientierten Programmiersprachen. Dabei ist es möglich Methoden ",
+					"nicht nur anhand von Vererbungsbeziehungen und der Struktur von Datentypen auszuwählen, sondern anhand ",
+					"beliebiger, benutzerdefinierter Relationen. Zusätzlich erlaubt das System dabei die Spezifikation von Pflicht- und Wunschkriterien, ",
+					"so dass es in der Lage ist, ein fehlendes Spezialwerkzeug durch ein allgemeineres Werkzeug automatisch zu ersetzen. ",
+					"Dieses Dokument ist primär als kleines Tutorial für den Relational Dispatcher für JavaScript gedacht, der von hyCMS ",
+					"eingesetzt wird. Es geht dabei primär nur auf den praktischen Einsatz des Dispatchers und des CMS-Frameworks ein. ",
+				]
+			},
+		]
+	},
+	
+	{__def:		"|?chapter < ?section < list",
+	 __value:
+		[		
+			{__def: 	"|?headline < ?paragraph < list",
+			 __value:	[ "Was ist Relational Dispatch?" ]
+			},
+
+			{__def:		"|?chapter < ?section < list",
+			 __value:
+				[		
+					{__def: 	"|?headline < ?paragraph < list",
+					 __value:	[ "Das Problem" ]
+					},
+
+					{__def:		"|?paragraph < list",
+					 __value:
+						[
+							"Wer kennt nicht die vielen Science-Fiction-Serien, in denen Menschen mühelos Computer programmieren, ",
+							"indem sie diesen einfach mündlich mitteilen können, was getan werden soll und sich um das 'Wie' und all die kleinen ",
+							"Details aus API-Referenzen und Handbüchern keine Sorgen machen müssen? Auch wenn wir schon sehr große ",
+							"Fortschritte in diese Richtung gemacht haben - es gibt beim Programmieren immer wieder Dinge, die man eigentlich gerne weiter ",
+							"automatisieren würde. Aktuelle objektorientierte Programmiersprachen helfen uns schon sehr dabei. ",
+							"Will man eine bestimmte Methode aufrufen, wählen viele Programmiersprachen automatisch diejenige Implementierung aus, ",
+							"die wirklich zu dem jeweiligen Objekt passt (z.B. wenn für die Objekte vom Typ Button, Image oder TextBox jeweils ",
+							"unterschiedliche Implementierungen der gleich benannten Methode draw() existieren). Manche Programmiersprachen erlauben ",
+							"auch das Überladen der Parameter einer Methode, so dass je nach Typ der Parameter eine unterschiedliche Variante automatisch ",
+							"ausgewählt wird."
+						]
+					},
+					
+					{__def:		"|?paragraph < list",
+					 __value:
+					 	[
+					 		"Normalerweise orientieren sich Programmiersprachen beim sog. Dispatching, also dem Auswählen der richtigen ",
+					 		"Implementierung einer Methode, immer an dem Typ des Objektes und der Parameter der Methode. Es gibt aber ",
+					 		"neben Vererbung und Struktur auch andere Beziehungen zwischen Objekten und Beziehungen mit dem Zustand eines ",
+					 		"Systems, die man zur Wahl einer Methode verwenden könnte. Nehmen wir ein Weblog: auf der Übersichtsseite sollte von ",
+					 		"einem Artikel jeweils nur die Überschrift angezeigt werden. Betrachtet man dagegen einen Artikel alleine, so soll er ",
+					 		"komplett dargestellt werden. Trotzdem soll für die Darstellung selbst immer der gleiche Befehl 'show' verwendet werden und nur ",
+					 		"die Implementierung des Befehls variiert werden, so dass dem Programmierer ein lästiges Nachschlagen nach ",
+					 		"komplexen Funktionsnamen wie showOverviewArticle und showFullArticle oder die Verwendung von Strategy-Objekten ",
+					 		"erspart bleibt. Dazu müsste man aber eine allgemeinere Form finden, um Beziehungen zwischen Objekten ausdrücken zu ",
+					 		"können, als die reine Vererbungs- und Strukturbeziehungen, die gängige Programmiersprachen bieten."
+					 	]
+					},
+					
+					{__def:		"|?paragraph < list",
+					 __value:
+					 	[
+					 		"Darüber hinaus fehlt allen Programmiersprachen die Möglichkeit Optimalität beim Dispatching auszudrücken. Nicht immer ",
+					 		"ist die ideale Implementierung zur Lösung eines Problems verfügbar - aber vielleicht steht immer noch eine sehr gute zur Verfügung. ",
+					 		"Vielleicht steht auf einem System ein Werkzeug nicht zur Verfügung und man möchte, dass dann wenistens automatisch ",
+					 		"auf ein primitiveres Werkzeug zurückgegriffen wird. Gibt es beispielsweise kein Adressbuch, so soll eine Datei doch ",
+					 		"wenigstens in eine Tabellenansicht geladen werden! Dazu müsste aber die Programmiersprache über eine ",
+					 		"Ausdrucksmöglichkeit verfügen können, um wichtige und unwichtige Fähigkeiten einer Methode auszuzeichnen."					 		
+					 	]
+					},
+				]
+			},
+
+			{__def:		"|?chapter < ?section < list",
+			 __value:
+				[		
+					{__def: 	"|?headline < ?paragraph < list",
+					 __value:	[ "Relational Dispatch" ]
+					},
+					
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+					 		"Relational Dispatch versucht diese Probleme zu lösen, indem es dem Programmierer erlaubt komplexere Kriterien beim Aufruf ",
+					 		"und in der Deklaration einer Methode in Form von Relationen anzugeben. Neben den üblichen Vererbungs- und Strukturbeziehung ",
+					 		"eines Typs kann man bei Relational-Dispatch beliebige andere Beziehungen mit Hilfe von Relationen formulieren. Zusätzlich ",
+					 		"erlaubt Relational Dispatch auch die Formulierung von Muss- und Wunschkriterien. Findet die Auswertung der Anforderungen ",
+					 		"erst zur Laufzeit statt, ist es dabei insbesondere möglich, den Zustand des Systems und die Verfügbarkeit von ",
+					 		"Werkzeugen im System zu berücksichtigen. "
+					 	]
+					},
+
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+					 		"In diesem Text soll nun eine kurze Einführung in dieses Verfahren anhand einer Implementierung von Relational Dispatch ",
+					 		"in JavaScript gegeben werden."
+					 	]
+					},
+				]
+			}	
+		]
+	},
+	
+	{__def:		"|?chapter < ?section < list",
+	 __value:
+		[		
+			{__def: 	"|?headline < ?paragraph < list",
+			 __value:	[ "Typisierung im Relational Dispatch" ]
+			},
+
+
+			{__def:		"|?paragraph < list",
+			 __value:	
+			 	[
+			 		"Relation Dispatch erfordert, dass jedes Objekt mit beliebigen Metadaten typsiert werden kann. ",
+			 		"Diese Metadaten werden in Form von Relationen ausgedrückt. In diesem Kapitel soll erläutert werden, wie eine solche ",
+			 		"erweiterte Typisierung in JavaScript möglich ist."
+			 	]
+			},	
+	
+			{__def:		"|?chapter < ?section < list",
+			 __value:
+				[					
+					{__def: 	"|?headline < ?paragraph < list",
+					 __value:	[ "Deklarieren von Typen" ]
+					},
+					
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+					 		"Da JavaScript selbst keine Meta-Daten für Typen bereitstellt, wurde ein eigenes Typsystem eingeführt, das ",
+					 		"auf JavaScript aufsetzt. Dieses Typsystem erlaubt es, einem beliebigen JavaScript-Objekt Typmetadaten beizufügen. ",
+					 		"Dies geschiet durch den Aufruf des Operators _as() an einem beliebigen Objekt: "
+					 	]
+					},
+					
+					{__def:		"|?hyObject < ?javascript < ?code < ?lines < list",
+					 __value:
+					 	[
+					 		"\"Beliebiger Text\"._as(\"|?important_text < text\");",
+					 		"[1,2,3,4]._as(\"|?number_list < list\");",
+					 		"({name: \"Hans Mustermann\", street: \"Mustermannstraße\"})._as(\"|?person < structure; [~name, ~street]; name < text; street < text\");",
+					 		"\"Beliebiger Text\"._as();"
+					 	]
+					},
+					
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+					 		"Variablen vom Typ string, number, boolean werden dabei automatisch in ein Objekt vom Typ String, Number oder Boolean ",
+					 		"umgewandelt. Dem Aufruf _as kann zur besseren Lesbarkeit ",
+					 		"auch ein Array von Strings übergeben werden, die alle dann automatisch zu einer einzigen Definition konkateniert werden."
+					 	]
+					},
+
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+					 		"In der letzten Zeile des Beispiels wird dem Operator keine Typbeschreibung übergeben. In diesem Fall leitet das ",
+					 		"System den Typ des Objekts aus dem JavaScript-Typen ab. So wird für ein String-Objekt automatisch die Relation ",
+					 		{__def:	"|?code < text", __value: "|null < text"}, "zur Beschreibung des Objekts festgelegt. Es gibt noch weitere ",
+					 		"Regeln zur Herleitung des Typs, die jedoch erst später erläutert werden."
+					 	]
+					}
+				]
+			},
+
+			{__def:		"|?chapter < ?section < list",
+			 __value:
+				[					
+					{__def: 	"|?headline < ?paragraph < list",
+					 __value:	[ "Relationen" ]
+					},
+					
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+					 		"Eine Typdefinition fängt immer mit einem |-Symbol an, um sie von anderen Strings zu unterscheiden. Wie man erkennen ",
+					 		"kann, besteht eine Definition aus mehreren Teilen, die durch ein Semikolon ; getrennt sind. Jeder dieser Teile entspricht ",
+					 		"einer Relation. Eine Relation setzt mehrere Begriffe, sog. Terme, in einen logischen Zusammenhang. Beispielsweise drückt ",
+					 		
+					 		{__def:	"|?code < text", __value: "headline < paragraph < list"},
+					 		
+					 		" aus, dass der Term", {__def:	"|?code < text", __value: "headline"} ,"vom Term ", {__def:	"|?code < text", __value: "paragraph"}, 
+					 		" und ",{__def:	"|?code < text", __value: "list"}," erbt. Die Vererbungsrelation wird dabei durch das Symbol < ",
+					 		"ausgedrückt. Genauso sagt ",
+
+					 		{__def:	"|?code < text", __value: "[name, street]"},
+					 		
+					 		" aus, dass das Objekt aus den Elementen ",{__def:	"|?code < text", __value: "name"}," und ",
+					 		{__def:	"|?code < text", __value: "street"}," besteht."
+					 	]
+					 },
+					 
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+					 		"An diesen beiden Beispielen ist zu erkennen, dass es zwei Arten von Relationen gibt: geordnete Relationen, bei denen ",
+					 		"die Reihenfolge der Begriffe eine Rolle spielt und ungeordnete, bei der die Reihenfolge egal ist. Für die Vererbungsrelation ",
+					 		"ist die Reihenfolge wichtig - während sie für die Besteht-aus-Relation (sog. Strukturrelation) unwichtig ist. Von der ",
+					 		"Syntax her steht bei geordneten Relationen das Relationssymbol zwischen den Termen, während es bei ungeordneten Relationen ",
+					 		"die Terme umgibt und die Terme durch ein Komma getrennt werden."
+					 	]
+					 },
+					 
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+					 		"Die Besonderheit von Relational Dispatch ist es nun, dass beliebige Relationen festgelegt werden können und die Semantik ",
+					 		"der Relationen vollkommen dem Programmierer überlassen wird. So sind z.B. auch folgende Relationen geläufig:"
+					 	]
+					},
+					
+					{__def:		"|?hyObject < ?javascript < ?code < ?lines < list",
+					 __value:
+					 	[
+					 		"a << b << c",
+					 		">(a, b, c)<",
+					 		"<(a, b, c)>"
+					 	]
+					},					
+					
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+					 		"Die erste Relation wird verwendet, um auszudrücken dass ein Objekt 'a' im Kontext von Objekt 'b' zu betrachten ist, ",
+					 		"wobei 'b' wiederum im Kontext von 'c' steht. Die zweite Relation wird verwendet, um die Eingabeparameter einer ",
+					 		"Funktion zu spezifizieren - die letztere für den Rückgabewert. "
+					 	]
+					},
+
+				]
+			}
+		]
+	}
+]}
+

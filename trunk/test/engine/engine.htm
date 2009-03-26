@@ -1,0 +1,31 @@
+<html>
+<head>
+	<title>Test of the hyObject(js) engine</title>
+</head>
+
+<script src="../test.js"></script>
+
+<script src="../../src/engine/definition.js"></script>
+<script src="../../src/engine/object.js"></script>
+<script src="../../src/engine/dispatcher.js"></script>
+<script src="../../src/engine/relation.js"></script>
+
+<script src="./definition.test.js"></script>
+<script src="./object.test.js"></script>
+<script src="./dispatcher.test.js"></script>
+<script src="./relation.test.js"></script>
+
+<script>
+
+	doTest( {
+				"Definition interpreter":		definitionTest,
+				"Object accessors":				objectTest,
+				"Function dispatcher":			dispatcherTest,
+				"Relation handling":			relationTest
+			 }
+		   );
+
+</script>
+
+</html>
+
