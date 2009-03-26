@@ -3,7 +3,7 @@
 	__value:
 [
 	{__def:		"|?headline < ?paragraph < list",
-	 __value:	[ "How-to: Relational Dispatch in JavaScript" ]
+	 __value:	[ "Just a simple text for testing" ]
 	},
 
 	{__def:		"|?document_information < list",

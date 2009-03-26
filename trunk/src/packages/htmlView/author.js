@@ -31,6 +31,7 @@
 			
 		// Mail address as link, if given
 		if (author._get("mail_address")) {
+			// This is bad ... normally we have to call a Mail-Address-View !!!
 			main_info = "<a href='mailto:"+author._get("mail_address")+"'>"+main_info+"</a>";
 		}
 			
