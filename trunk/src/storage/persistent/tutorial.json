@@ -649,12 +649,12 @@
 					 __value:
 					 	[
 					 		"var my_address = ",
-							"	({",
-							"		 __def:					\"|?address < ?structure; [~name, ~street, ~city]; ?name < ?text; ?street < ?text; ?city < ?text\",",
-							"		\"|?name < text\":		\"Max Mustermann\",",
-							"		\"|?street < text\":	\"Musterstraße 123\",",
-							"		\"|?city < text\":		\"Musterstadt\",",
-					 		"	})._as();",
+							"  ({",
+							"	 __def:			\"|?address < ?structure; [~name, ~street, ~city]; ?name < ?text; ?street < ?text; ?city < ?text\",",
+							"	\"|?name < text\":	\"Max Mustermann\",",
+							"	\"|?street < text\":	\"Musterstraße 123\",",
+							"	\"|?city < text\":	\"Musterstadt\",",
+					 		"  })._as();",
 					 	]
 					},
 
@@ -680,14 +680,14 @@
 					 __value:
 					 	[
 					 		"var my_address = ",
-							"	({",
-							"		 __def:					\"|?phone_numbers < list\",",
-							"		__value:",
-							"			[",
-							"				{__def: \"?phone_number < text\", __value: \"555-1234567\"}",
-							"				{__def: \"?phone_number < text\", __value: \"555-7654321\"}",
-							"			]",
-					 		"	})._as()",
+							"  ({",
+							"	 __def:	\"|?phone_numbers < list\",",
+							"	__value:",
+							"		[",
+							"			{__def: \"?phone_number < text\", __value: \"555-1234567\"}",
+							"			{__def: \"?phone_number < text\", __value: \"555-7654321\"}",
+							"		]",
+					 		"  })._as()",
 					 	]
 					},
 
@@ -705,8 +705,8 @@
 					{__def:		"|?hyObject < ?javascript < ?code < ?lines < list",
 					 __value:
 					 	[
-							"	var a = {__def: \"?phone_number < text\", __value: \"555-1234567\"}._as();",
-							"	var a = \"555-1234567\"._as();",
+							"var a = {__def: \"?phone_number < text\", __value: \"555-1234567\"}._as();",
+							"var a = \"555-1234567\"._as();",
 						]
 					}
 				
@@ -1275,8 +1275,8 @@
 					"",
 					"		function main(content_path) {",
 					"			\"|DataProvider\"._send ( content_path._as(\"|path < text\"), ",
-					"									  viewFunction._as(\"|callback < function\") ",
-					"								    );",
+					"						  viewFunction._as(\"|callback < function\") ",
+					"						);",
 					"",
 					"		}",
 					"	</script>",
@@ -1335,8 +1335,7 @@
 					"		},",
 					"",
 					"		{__def:		\"|?paragraph < list\"",
-					"		 __value:",
-					"			[ \"Ein kleiner Absatz in einem kurzen Text!\" ]",
+					"		 __value:	[ \"Ein kleiner Absatz in einem kurzen Text!\" ]",
 					"		}",
 					"	]",
 					"}"
@@ -1565,7 +1564,7 @@
 					"	conditions:		\"{?recursive_context, ?keep_method_conditions}\",",		
 					
 					"	input:			\">(headline)<; headline < paragraph < list\",",
-					"	view_context:	\"headline << page; page < list\",",
+					"	view_context:		\"headline << page; page < list\",",
 					"	output:			\"<(~html)>; ?html < text\",",
 					"})._(",
 					"",

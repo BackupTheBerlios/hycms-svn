@@ -45,7 +45,7 @@ Editor.prototype.viewContent = function(content)
 	this.contentHash.nextID = 0;
 
 	// We only accept those HTML views, that can set us the uuid_attribute
-	var html = "|View; <(~html)>; ?html < text; {set_uuid_attribute}"._send ( content );
+	var html = "|View; <(~html)>; ?html < text; {set_uuid_attribute, ?span_per_glyph}"._send ( content );
 
 	this.viewContainer.innerHTML = html;
 }
@@ -102,6 +102,11 @@ Editor.prototype.htmlRenderAspect = function(receiver, result, input, def)
  */
 Editor.prototype.onClick = function(event)
 {
-	alert(event.target.getAttribute("uuid"));
+	event.target.style["border"] = "1px solid black";
+
+	var sel = window.getSelection().getRangeAt(0);
+	console.log(window.getSelection(), window.getSelection().getRangeAt(0));
+	
+	console.log(event.target.getAttribute("uuid"));
 }
 

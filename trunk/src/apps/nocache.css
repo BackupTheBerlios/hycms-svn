@@ -37,6 +37,7 @@ div.code {
 	background-color: #f4f4f4;
 	padding: 0.8em;
 	line-height: 1.8em;
+	white-space: pre-wrap;
 }
 
 .code_tab_span {

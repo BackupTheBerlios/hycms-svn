@@ -51,10 +51,6 @@
 function HtmlView_renderLine(element, replacements) {
 		var code_line = element.valueOf().replace(/\&/g, "&&").replace(/\</g, "&lt;").replace(/\>/g, "&gt;");
 
-		while (code_line.indexOf("\t") != -1) {
-			code_line = code_line.replace(/\t(.*)/, "<span class='code_tab_span'>$1</span>");
-		}
-
 		for (var idx = 0; idx < replacements.length; idx ++) {
 			var replacement = replacements[idx];
 			var css_type = "code_highlight_"+replacement.type.toLowerCase();
