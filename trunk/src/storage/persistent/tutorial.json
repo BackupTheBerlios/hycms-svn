@@ -416,7 +416,16 @@
 					 		"Mailadresse darstellen kann. Haben wir dagegen ein solches Werkzeug nicht, müssen diese Bedingungen auch nicht ",
 					 		"erfüllt sein."
 					 	]
-					}				
+					},
+					
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[									
+					 		"Eine Vorbedingung bezieht sich dabei immer auf die Vererbungsrelation. D.h. sie ist genau dann erfüllt, wenn ",
+					 		"die Gegenseite (also z.B. die Methode, die behauptet, für das Objekt zuständig zu sein), den Term in einer ",
+					 		"Vererbungsrelation enthält."
+					 	]
+					},									
 				
 				]
 			}
