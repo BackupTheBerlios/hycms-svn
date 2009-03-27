@@ -24,7 +24,7 @@ function Editor(viewContainer)
 	this.viewContainer = viewContainer;
 
 	// Register events Handlers
-	viewContainer.addEventListener("click", function(event) { self.onClick(event); } , true);
+	viewContainer.addEventListener("click", function(event) { try { self.onClick(event); } catch(e) { console.log(e) } } , true);
 
 	// Register all aspects
 	function aspectCallback() { self.htmlRenderAspect.apply(self, arguments); }
@@ -45,7 +45,7 @@ Editor.prototype.viewContent = function(content)
 	this.contentHash.nextID = 0;
 
 	// We only accept those HTML views, that can set us the uuid_attribute
-	var html = "|View; <(~html)>; ?html < text; {set_uuid_attribute, ?span_per_glyph}"._send ( content );
+	var html = "|View; <(~html)>; ?html < text; {set_uuid_attribute, ?not_editable_attribute}"._send ( content );
 
 	this.viewContainer.innerHTML = html;
 }
@@ -102,11 +102,49 @@ Editor.prototype.htmlRenderAspect = function(receiver, result, input, def)
  */
 Editor.prototype.onClick = function(event)
 {
-	event.target.style["border"] = "1px solid black";
-
-	var sel = window.getSelection().getRangeAt(0);
-	console.log(window.getSelection(), window.getSelection().getRangeAt(0));
+	var parent_node = event.target;
+	var selection = window.getSelection();
+	var uuid;
+	var ex_node;
 	
-	console.log(event.target.getAttribute("uuid"));
+	var text_coordinates = { "|?anchor_node < ?dom_node < native":	 	new Native(selection.anchorNode), 
+							 "|?anchor_offset < number": 				selection.anchorOffset
+						   }._as("|?selection_coordinates < structure");
+
+	// Get associated parent node
+	while ((uuid = parent_node.getAttribute("uuid")) == null) {
+		parent_node = parent_node.parentNode;
+		
+		// Event not going to a tagged node
+		if (parent_node == null)
+			return;
+	}
+
+	// Objectify node
+	parent_node = (new Native(parent_node))._as("|?focussed < ?dom_node < native");
+	
+	// Get unfocussed node
+	if (this.focussed_node != null) {
+		ex_node = (new Native(this.focussed_node.valueOf()))._as("|?unfocussed < ?dom_node < native");
+
+		// Send stop edit, to currently focussed node
+		var lost_accepted =
+			"|StopEditHandler; {use_uuid_attribute, unset_is_focussed}; <(accepted)>; accepted < boolean"._send(ex_node, parent_node);
+
+		// Change of focus was not accepted
+		if (!lost_accepted)
+			return;
+	}
+	 else {
+	 	ex_node = null;
+	}
+
+	// Send begin edit to newly focussed node
+	"|BeginEditHandler; {use_uuid_attribute, set_is_focussed}; <(accepted)>; accepted < boolean"._send(parent_node, 
+																									   ex_node,
+																									   this.contentHash[uuid], 
+																									   text_coordinates
+																									  );
+	this.focussed_node = parent_node;
 }
 

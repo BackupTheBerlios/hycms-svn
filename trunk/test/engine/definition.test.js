@@ -139,6 +139,16 @@ var definitionTest =
 			
 			// No variadic inheritance
 			assertException( function() { var a = "my_text"; a._as("|~p < q") }, VariadicInheritanceError );
+			
+			// Invalid preconditions
+			assertException( function() { var a = "my_text"; a._as("|a < b : c") }, InvalidDefinitionError );
+			assertException( function() { var a = "my_text"; a._as("|a : < b : c") }, InvalidDefinitionError );
+			assertException( function() { var a = "my_text"; a._as("|:: < b < c") }, InvalidDefinitionError );
+			assertException( function() { var a = "my_text"; a._as("|(a): < b < c") }, InvalidDefinitionError );
+			assertException( function() { var a = "my_text"; a._as("|a,,b: < b < c") }, InvalidDefinitionError );
+			assertException( function() { var a = "my_text"; a._as("|,b: < b < c") }, InvalidDefinitionError );
+			assertException( function() { var a = "my_text"; a._as("|a,: < b < c") }, InvalidDefinitionError );
+			assertException( function() { var a = "my_text"; a._as("|,: < b < c") }, InvalidDefinitionError );
 		},
 
 	"Parsing ordered relations":
@@ -421,7 +431,43 @@ var definitionTest =
 			console.assert(obj.__unorderedRelations["[]"][0][4].name == "d");
 			console.assert(obj.__unorderedRelations["[]"][0][4].is_option == false);
 		},		
-		
+	
+	"Parsing preconditions":
+		function()
+		{
+			var a = "my_text";
+			var obj = a._as("|a < b; a,b: [e, f]; f: c < d; q < u; :l < m");
+			
+			console.assert(obj.__orderedRelations["<"][0].length == 2);
+			console.assert(obj.__orderedRelations["<"][0][0].name == "a");
+			console.assert(obj.__orderedRelations["<"][0][1].name == "b");
+			console.assert(obj.__orderedRelations["<"][0].conditions == null);			
+
+			console.assert(obj.__unorderedRelations["[]"][0].length == 2);
+			console.assert(obj.__unorderedRelations["[]"][0][0].name == "e");
+			console.assert(obj.__unorderedRelations["[]"][0][1].name == "f");
+			console.assert(obj.__unorderedRelations["[]"][0].conditions.length == 2);				
+			console.assert(obj.__unorderedRelations["[]"][0].conditions[0] == "a");	
+			console.assert(obj.__unorderedRelations["[]"][0].conditions[1] == "b");				
+
+			console.assert(obj.__orderedRelations["<"][1].length == 2);
+			console.assert(obj.__orderedRelations["<"][1][0].name == "c");
+			console.assert(obj.__orderedRelations["<"][1][1].name == "d");
+			console.assert(obj.__orderedRelations["<"][1].conditions.length == 1);			
+			console.assert(obj.__orderedRelations["<"][1].conditions[0] == "f");			
+
+			console.assert(obj.__orderedRelations["<"][2].length == 2);
+			console.assert(obj.__orderedRelations["<"][2][0].name == "q");
+			console.assert(obj.__orderedRelations["<"][2][1].name == "u");
+			console.assert(obj.__orderedRelations["<"][2].conditions.length == 1);	
+			console.assert(obj.__orderedRelations["<"][2].conditions[0] == "f");			
+
+			console.assert(obj.__orderedRelations["<"][3].length == 2);
+			console.assert(obj.__orderedRelations["<"][3][0].name == "l");
+			console.assert(obj.__orderedRelations["<"][3][1].name == "m");
+			console.assert(obj.__orderedRelations["<"][3].conditions == null);			
+		},
+	
 	"Cleaning definitions":
 		function()
 		{
@@ -449,12 +495,15 @@ var definitionTest =
 		{
 			var test_object = {"a": "bc"};
 			var other_object = {"a": "bc"};
+			var third_object = {"a": "bc"};
 			
-			test_object._as("|x < y; [[q, ?p, r]]");
+			test_object._as("|x < y; [[q, ?p, ~r]]");
 			other_object._as("|x < y; [[q, ?p, r]]; l < u; [[q, m, r]]");
+			third_object._as("|x < y; x: p < c; m,n: q < u");
 
-			console.assert(test_object._def_string() == "|x < y; [[?p, q, r]]");
+			console.assert(test_object._def_string() == "|x < y; [[?p, q, ~r]]");
 			console.assert(other_object._def_string() == "|x < y; l < u; [[?p, q, r]]; [[m, q, r]]");
+			console.assert(third_object._def_string() == "|x < y; x: p < c; m, n: q < u");
 		},
 	
 	"Implicit definitions":
@@ -767,8 +816,27 @@ var definitionTest =
 		{
 			console.assert("|a < b < c; [~p, f]; ?p < ?q < ?r < ?e < ?s < ?t"._satisfies("|a < b < c; [~m, f]; ?m < e < s < t") == 0);
 			console.assert("|a < b < c; [~p, f]; ?p < ?q < ?r < ?e < ?s < ?t"._satisfies("|a < b < c; [?~m, f]; ?m < e < s < t") == 1);
+		},
+		
+	"Evaluation of preconditions":
+		function()
+		{
+			// Simple preconditions
+			console.assert("|a < b; c < d"._satisfies("|a < b; c: q < u") == -1);
+			console.assert("|a < b; c < d; [e, f]"._satisfies("|a < b; c: [e, f]") == 0);
+
+			// Multiple preconditions
+			console.assert("|a < b; d; [e, f]"._satisfies("|a < b; c: [?e, f]") == 0);			
+						
+			// Options and preconditions
+			console.assert("|a < b; d; [e, f]"._satisfies("|a < b; c, d: [?e, f]") == 1);
+			console.assert("|a < b; c < d; [e, f]"._satisfies("|a < b; c: [?e, f]") == 1);
+			console.assert("|a < b"._satisfies("|a < b; c: [e, f]") == 0);
+			console.assert("|a < b"._satisfies("|a < b; c: [?e, f]") == 0);
+			console.assert("|a < b"._satisfies("|a < ?b; c: [?e, f]") == 1);			
+
+			// Ignore preconditions on the ier-side			
+			console.assert("|a < b; m: c < d"._satisfies("|a < b; c < d") == 0);
 		}
-		
-		
 }
 

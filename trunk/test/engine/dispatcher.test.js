@@ -135,7 +135,21 @@ var dispatcherTest =
 				
 				console.assert( dispatcher.send( ["|a < b"], ["xyz"._as("|?foo < text"), "pqr"._as("|?goo < text")] ) == "xyz+pqr" );
 				console.assert( dispatcher.send( ["|a < b"], ["xyz"._as("|bar"), "pqr"._as("|gar")] ) == "xyz-pqr" );				
-			},			
+			},	
+			
+		"Sending a message to a function (inheriting parameter preconditions)":
+			function()
+			{
+				var dispatcher = new Dispatcher();
+				
+				function f_a(input) { input._get("foo"); return input._get("foo"); }
+				
+				f_a._as("|a < b", ">(~faa)<; ?faa < text");
+
+				dispatcher.register(f_a);
+				
+				console.assert( dispatcher.send( ["|a < b"], ["xyz"._as("|?foo < text; foo: [q,d]")] ) == "xyz" );
+			},					
 			
 		"Watching a function call":
 			function()

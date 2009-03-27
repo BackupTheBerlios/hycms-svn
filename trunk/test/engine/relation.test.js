@@ -70,6 +70,19 @@ var relationTest =
 			console.assert(test_object_unordered._relationToString("[]", 0, false, "?~") == "[?~a, ?~b, ?~c]");
 		},
 		
+	"Convert a relation to string (preconditions)":
+		function()
+		{
+			var test_object_ordered = {a: "b"};
+			var test_object_unordered = {a: "b"};
+			
+			test_object_ordered._as("|a: a << ?b << c");
+			test_object_unordered._as("|b,c: [a, ?b, c]");
+			
+			console.assert(test_object_ordered._relationToString("<<", 0, true, "?~") == "a: ?~a << ?~b << ?~c");
+			console.assert(test_object_unordered._relationToString("[]", 0, false, "?~") == "b, c: [?~a, ?~b, ?~c]");
+		},		
+		
 	"hasTerm":
 		function()
 		{

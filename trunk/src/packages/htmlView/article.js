@@ -70,7 +70,7 @@
 //
 ({
 	purpose:	"View",
-	conditions:	"{?recursive_context, ?keep_method_conditions, ?set_uuid_attribute}",
+	conditions:	"{?recursive_context, ?keep_method_conditions, ?set_uuid_attribute, ?not_editable_attribute}",
 
 	input:		">(~version)<; version < text",
 	output:		"<(~html)>; ?html < text"
@@ -78,7 +78,7 @@
 
 	function HtmlView_Abstract(input, def) 
 	{
-		return HtmlView_autotag("span", arguments, "Version: "+input._get("version"));
+		return HtmlView_autotag("span", arguments, "<span not_editable='true'>Version:&nbsp;</span>"+input._get("version"));
 	}
 
 );

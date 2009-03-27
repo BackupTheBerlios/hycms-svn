@@ -94,6 +94,28 @@ Array.prototype._arrayToRelationString = function(symbol, is_ordered)
 }
 
 /*
+ * Object::_preconditionsToString(symbol, idx, is_ordered)
+ *
+ * Converts all preconditions of the given relation to a string representation.
+ *
+ */
+Object.prototype._preconditionsToString = function(symbol, idx, is_ordered)
+{
+	var relation = is_ordered ? this.__orderedRelations : this.__unorderedRelations;
+	var preconditions = "";
+
+	if ((relation != null) && (relation[symbol] != null) && (relation[symbol][idx] != null)) {
+		var conditions = relation[symbol][idx].conditions;
+		
+		if (conditions != null) {
+			preconditions = conditions.join(", ");
+		}
+	}
+	
+	return preconditions;
+}
+
+/*
  * Object::_relationToString(symbol, idx, is_ordered, option_state)
  *
  * Converts a relation of the current object to a string representation. The
@@ -106,6 +128,8 @@ Array.prototype._arrayToRelationString = function(symbol, is_ordered)
  *	"?"				All optional
  *	"!"				All non-optional
  *
+ * All preconditions will be appended to the string.
+ *
  * Return value:
  *		string			Representation of the relation
  *		null			Relation does not exist
@@ -115,7 +139,12 @@ Object.prototype._relationToString = function(symbol, idx, is_ordered, option_st
 	var list = this._relationToArray(symbol, idx, is_ordered, option_state);
 	
 	if (list != null) {
-		return list._arrayToRelationString(symbol, is_ordered);
+		var preconds = this._preconditionsToString(symbol, idx, is_ordered);
+		
+		if (preconds != "")
+			preconds += ": ";
+	
+		return preconds + list._arrayToRelationString(symbol, is_ordered);
 	}
 
 	return null;

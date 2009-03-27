@@ -257,6 +257,10 @@ Dispatcher.prototype.send = function(definitions, params)
 	for (var idx = 0; idx < params.length; idx++) {
 		var param = params[idx];
 	
+		// Is it null? => ignore it
+		if (param == null)
+			continue;
+	
 		// Is it a usable object?
 		if (param.__orderedRelations == null)
 			param = param._as();
@@ -312,7 +316,7 @@ Dispatcher.prototype.send = function(definitions, params)
 	
 	// Call function
 	var result = func(input, found.definition);
-	
+		
 	// Call after observers
 	if (func[":after"] != null) {
 		for (var idx = 0; idx < func[":after"].length; idx ++) {

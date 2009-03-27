@@ -9,7 +9,7 @@
 	{__def:		"|?document_information < list",
 	 __value:	
 		 [
-			{__def:		"|?author < ?person < structure; [~name, ~mail_address, ?*]; ?name < text; ?mail_address < text",
+			{__def:						"|?author < ?person < structure; author, person: [~name, ~mail_address, ?*]; ?name < text; ?mail_address < text",
 			 "|?name < text":			"Friedrich Gräter",
 			 "|?mail_address < text":	"graeter@hydrixos.org"
 			},
@@ -358,7 +358,69 @@
 					},						
 				
 				]
+			},
+			
+			{__def:		"|?chapter < ?section < list",
+			 __value:
+				[					
+					{__def: 	"|?headline < ?paragraph < list",
+					 __value:	[ "Vorbedingungen" ]
+					},
+
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[
+					 		"Gelegentlich ist es wichtig, dass eine Bedingung in einer Anfrage nur dann beachtet wird, wenn eine bestimmte ",
+					 		"andere Vorbedingung erfüllt ist. Nehmen wir an, wir haben ein Objekt Autor, das folgende Definition hat:"
+					 	]
+					},
+					
+					{__def:		"|?hyObject < ?javascript < ?code < ?lines < list",
+					 __value:
+					 	[
+					 		"\"|?author < ?person < structure\",",
+					 		"\"[name, mailaddress, ?*]\",",
+					 		"\"name < text, mailaddress < text\"",
+					 	]
+					},		
+					
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[									
+					 		"Diese Beschreibung bedeutet so viel: Das Objekt ist eine Struktur. Wenn du kannst, verstehe es als Person - oder ",
+					 		"noch besser: als Autor. Es besteht aus einem Namen und einer Mailadresse. ",
+					 		"Wenn wir nun das System nach einem Werkzeug fragen wollen, das uns dieses Autor-Objekt darstellen kann, ",
+					 		"haben wir ein Problem: nehmen wir an, es ist nur ein Werkzeug installiert, das Strukturen darstellen kann. ",
+					 		"Unsere Anfrage könnte von diesem Werkzeug nicht verarbeitet werden, die wir fordern ja, dass es Strukturen ",
+					 		"darstellen kann, die mindestens aus einem Namen und einer Mailadresse bestehen. Um dieses Dilemma zu lösen, ",
+					 		"gibt es Vorbedingungen: "
+					 	]
+					},
+
+					
+					{__def:		"|?hyObject < ?javascript < ?code < ?lines < list",
+					 __value:
+					 	[
+					 		"\"|?author < ?person < structure\",",
+					 		"\"author, person: [name, mailaddress, ?*]\",",
+					 		"\"name < text, mailaddress < text\"",
+					 	]
+					},					
+						
+					{__def:		"|?paragraph < list",
+					 __value:	
+					 	[									
+					 		"Der Ausdruck ", {__def:	"|?code < text", __value: "author, person:"}, " bewirkt, dass alle Relationen, die ",
+					 		"nach dem Doppelpunkt stehen nur für diejenigen Werkzeuge eine Rolle spielen, die behaupten, mit Autoren oder Personen ",
+					 		"umgehen zu können. D.h. wenn wir ein Autoren-Werkzeug haben, bestehen wir darauf, dass es seinen Namen und die ",
+					 		"Mailadresse darstellen kann. Haben wir dagegen ein solches Werkzeug nicht, müssen diese Bedingungen auch nicht ",
+					 		"erfüllt sein."
+					 	]
+					}				
+				
+				]
 			}
+			
 		]
 	},
 	

@@ -147,10 +147,8 @@ Object.prototype.__parseOrdered = function(relation_string)
 		for (var idx = 0; idx < symbols.length; idx ++) {
 			var list_sym = symbols[idx];
 
-			if (list_sym != symbol) {
-	console.log(relation_string);			
+			if (list_sym != symbol)
 				throw new InvalidDefinitionError("Changing symbol in ordered relation: "+symbol+" <> "+list_sym);
-			}
 		}
 	
 		// Get all term expressions
@@ -179,6 +177,8 @@ Object.prototype.__parseOrdered = function(relation_string)
 
 		this.__orderedRelations[symbol].variations["#"+list[r_idx].name].push ( {"list": list, "position": r_idx} );
 	}
+	
+	return list;	
 }
 
 /*
@@ -224,6 +224,8 @@ Object.prototype.__parseUnordered = function(relation_string)
 		this.__unorderedRelations[symbol] = new Array();
 		
 	this.__unorderedRelations[symbol].push(list);
+	
+	return list;
 }
 
 /*
@@ -330,16 +332,43 @@ Object.prototype._as = function()
 	this.__orderedRelations = new Array();
 	this.__unorderedRelations = new Array();	
 
+	var precondition = null;
+
 	// Build relations
 	relation_strings.__each( function(relation_string) {
+		var relation = null;
+	
 		if (relation_string == "")
 			throw new InvalidDefinitionError("Empty relation - "+relation_string);
 
+		// Has it a precondition?
+		if (relation_string.indexOf(":") != -1) {
+			var precondition_list = relation_string.split(":");
+			
+			if (precondition_list.length > 2)
+				throw new InvalidDefinitionError("Multiple preconditions detected - "+relation_string);
+				
+			relation_string = precondition_list[1];
+			
+			// Set or delete precondition for all following relations
+			if (precondition_list[0] == "")
+				precondition = null;
+			else {
+				// Is it really a list of terms?
+				if (/[^A-Za-z0-9\_\-\,]/.test(precondition_list[0]))
+					throw new InvalidDefinitionError("Invalid precondition term - "+precondition_list[0]);
+			
+				precondition = precondition_list[0].split(",");
+			}
+		}
+
 		// Is it an ordered relation?
 		if (/[?*~_\-0-9a-zA-Z.]/.test(relation_string.charAt(0)))
-			self.__parseOrdered(relation_string);
+			relation = self.__parseOrdered(relation_string);
 		else
-			self.__parseUnordered(relation_string);
+			relation = self.__parseUnordered(relation_string);
+			
+		relation.conditions = precondition;
 	});
 
 	// Apply definitions recursivley to all |-prefixed elements,
@@ -464,39 +493,17 @@ Object.prototype._clean = function()
 Object.prototype._def_string = function()
 {
 	var relations = new Array();
+	var self = this;
 
 	this.__orderedRelations.__each( function(relation, key) {
 		for (var idx = 0; idx < relation.length; idx++) {
-			var relation_names = new Array();	
-
-			for (var r_idx = 0; r_idx < relation[idx].length; r_idx ++) {
-				var element = relation[idx][r_idx];
-				var option_sign = (element.is_option) ? "?" : "";
-				var variadic_sign = (element.is_variadic) ? "~" : "";
-
-				relation_names.push(option_sign + variadic_sign + element.name); 
-			}
-
-			if (relation_names.length == 1)
-				relations.push( ". "+key+" "+relation_names[0] );
-			else	
-				relations.push( relation_names.join(" "+key+" ") );
+			relations.push( self._relationToString(key, idx, true) );
 		}
 	});
 	
 	this.__unorderedRelations.__each( function(relation, key) {
 		for (var idx = 0; idx < relation.length; idx++) {
-			var relation_names = new Array();
-
-			for (var r_idx = 0; r_idx < relation[idx].length; r_idx ++) {
-				var element = relation[idx][r_idx];
-				var option_sign = (element.is_option) ? "?" : "";
-				var variadic_sign = (element.is_variadic) ? "~" : "";
-
-				relation_names.push(option_sign + variadic_sign + element.name); 
-			}
-
-			relations.push( key.substr(0, key.length/2) + relation_names.join(", ") + key.substr(key.length/2) );
+			relations.push( self._relationToString(key, idx, false) );
 		}
 	});
 
@@ -735,6 +742,39 @@ function __orderedSatisfied(satisfier, satisfyee, ier_variations, yee_variations
 }
 
 /*
+ * __test_precondition(list, ier_variations)
+ *
+ * Helper function
+ *
+ * See:
+ *	String::_satisfies
+ *
+ */
+function __test_precondition(list, ier_variations)
+{
+	if (list.conditions != null) {
+		var conditions = list.conditions;
+		var condition_met = false;
+				
+		for (var c_idx = 0; c_idx < conditions.length; c_idx ++) {
+			
+			if (   (ier_variations["<"] != null)
+				&& (ier_variations["<"].variations != null)			    
+				&& (ier_variations["<"].variations["#"+conditions[c_idx]] != null)
+			   )
+			{
+				condition_met = true;
+				break;
+			}
+		}
+
+		return condition_met;
+	}
+	
+	return true;	
+}
+
+/*
  * __check_lists(satisfier_baselist, satisfyee_baselist, handler, ier_variations, yee_variations)
  *
  * Helper function
@@ -755,8 +795,13 @@ function __check_lists(satisfier_baselist, satisfyee_baselist, handler, ier_vari
 		{
 			var all_optional = true;
 		
-			// Is every satisfyee relation optional?
+			// Is every satisfyee relation optional or has it a precondition?
 			for (var idx = 0; idx < list.length; idx ++) {
+			
+				// Is the yee-precondition satisfied?
+				if (!__test_precondition(list[idx], ier_variations))
+					continue;
+			
 				for (var r_idx = 0; r_idx < list[idx].length; r_idx ++) {
 					if (list[idx][r_idx].is_option == false) {
 						all_optional = false;
@@ -779,6 +824,10 @@ function __check_lists(satisfier_baselist, satisfyee_baselist, handler, ier_vari
 		// Get the highest option count satisfying the relation
 		for (var yee_idx = 0; yee_idx < list.length; yee_idx ++) {
 			var max_count = -1;
+			
+			// Is the yee-precondition satisfied?
+			if (!__test_precondition(list[yee_idx], ier_variations))
+				continue;
 
 			for (var ier_idx = 0; ier_idx < satisfier_baselist[relation].length; ier_idx ++) {
 				var count;	

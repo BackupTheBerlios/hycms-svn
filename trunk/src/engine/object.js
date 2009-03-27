@@ -189,3 +189,19 @@ Object.prototype._append = function(value)
 	this[value._def_string()] = value;
 }
 
+/*
+ * Native(object)
+ *
+ * Wraps a native object, to be compatible to the typing system.
+ * The native object can be accessed by the method "valueOf".
+ *
+ */
+function Native(obj)
+{
+	this.__encapsulated_native = obj;
+}
+
+Native.prototype.valueOf = function()
+{
+	return this.__encapsulated_native;
+}

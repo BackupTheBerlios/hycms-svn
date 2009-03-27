@@ -9,7 +9,7 @@
 	{__def:		"|?document_information < list",
 	 __value:	
 		 [
-			{__def:		"|?author < ?person < structure; [~name, ~mail_address, ?*]; ?name < text; ?mail_address < text",
+			{__def:						"|?author < ?person < structure; author, person: [~name, ~mail_address, ?*]; ?name < text; ?mail_address < text",
 			 "|?name < text":			"Friedrich Gräter",
 			 "|?mail_address < text":	"graeter@hydrixos.org"
 			},
