@@ -146,5 +146,8 @@ Editor.prototype.onClick = function(event)
 																									   text_coordinates
 																									  );
 	this.focussed_node = parent_node;
+
+	// Ignore klicks on Links etc.
+	event.preventDefault();
 }
 
