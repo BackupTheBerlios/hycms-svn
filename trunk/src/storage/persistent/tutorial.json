@@ -1110,170 +1110,170 @@
 			 	]
 			},
 			
-			{__def:		"|?directory < ?tree < structure; [~dir_name, ~comment, ~raised, ~files]; ?dir_name < ?node_name < ?text; ?files < ?child_nodes < ?list; ?comment < ?text; ?raised < ?boolean",
+			{__def:		"|?directory < ?tree < structure; directoy, tree: [~dir_name, ~comment, ~raised, ~files]; ?dir_name < ?node_name < ?text; ?files < ?child_nodes < ?list; ?comment < ?text; ?raised < ?boolean",
 			 "|?dir_name < ?node_name < text":	"hyCMS/src",
 			 "|?comment < text":				"Das Source-Verzeichnis von hyCMS",
 			 "|?raised < text":					true,
 			 "|?files < ?child_nodes < list":
 			 	[
-					{__def:		"|?directory < ?tree < structure; [~dir_name, ~comment, ~raised, ~files]; ?dir_name < ?node_name < ?text; ?files < ?child_nodes < ?list; ?comment < ?text; ?raised < ?boolean",
+					{__def:		"|?directory < ?tree < structure; directoy, tree: [~dir_name, ~comment, ~raised, ~files]; ?dir_name < ?node_name < ?text; ?files < ?child_nodes < ?list; ?comment < ?text; ?raised < ?boolean",
 					 "|?dir_name < ?node_name < text":	"apps",
 					 "|?comment < text":				"Anwendungen basierend auf dem Framework",
 					 "|?raised < text":					true,
 					 "|?files < ?child_nodes < list":
 					 	[
-							{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+							{__def:		"|?file < ?tree_node < structure; file, tree_node: [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
 							 "|?dir_name < ?node_name < text":	"nocache.php",
 							 "|?comment < text":				"Ein einfacher Betrachter für die Seiteninhalte ohne Caching",
 							},
 						]
 					},			 	
 			 	
-					{__def:		"|?directory < ?tree < structure; [~dir_name, ~comment, ~raised, ~files]; ?dir_name < ?node_name < ?text; ?files < ?child_nodes < ?list; ?comment < ?text; ?raised < ?boolean",
+					{__def:		"|?directory < ?tree < structure; directoy, tree: [~dir_name, ~comment, ~raised, ~files]; ?dir_name < ?node_name < ?text; ?files < ?child_nodes < ?list; ?comment < ?text; ?raised < ?boolean",
 					 "|?dir_name < ?node_name < text":	"engine",
 					 "|?comment < text":				"Enthält interne Dateien des Dispatcher",
 					 "|?raised < text":					false,
 					 "|?files < ?child_nodes < list":
 					 	[
-							{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+							{__def:		"|?file < ?tree_node < structure; file, tree_node: [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
 							 "|?dir_name < ?node_name < text":	"definition.js",
 							 "|?comment < text":				"Definitionen-Parser",
 							},
 
-							{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+							{__def:		"|?file < ?tree_node < structure; file, tree_node: [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
 							 "|?dir_name < ?node_name < text":	"dispatcher.js",
 							 "|?comment < text":				"Dispatcher",
 							},
 					 		
-							{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+							{__def:		"|?file < ?tree_node < structure; file, tree_node: [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
 							 "|?dir_name < ?node_name < text":	"object.js",
 							 "|?comment < text":				"Objekt-Erweiterungen",
 							},
 					 		
-							{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+							{__def:		"|?file < ?tree_node < structure; file, tree_node: [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
 							 "|?dir_name < ?node_name < text":	"relation.js",
 							 "|?comment < text":				"Relation-Operationen",
 							}
 						]
 					},
 
-					{__def:		"|?directory < ?tree < structure; [~dir_name, ~comment, ~raised, ~files]; ?dir_name < ?node_name < ?text; ?files < ?child_nodes < ?list; ?comment < ?text; ?raised < ?boolean",
+					{__def:		"|?directory < ?tree < structure; directory, tree: [~dir_name, ~comment, ~raised, ~files]; ?dir_name < ?node_name < ?text; ?files < ?child_nodes < ?list; ?comment < ?text; ?raised < ?boolean",
 					 "|?dir_name < ?node_name < text":	"packages",
 					 "|?comment < text":				"Enthält alle JavaScript-Module, die für den Dispatcher in Frage kommen",
 					 "|?raised < text":					true,
 					 "|?files < ?child_nodes < list":
 					 	[
-							{__def:		"|?directory < ?tree < structure; [~dir_name, ~comment, ~raised, ~files]; ?dir_name < ?node_name < ?text; ?files < ?child_nodes < ?list; ?comment < ?text; ?raised < ?boolean",
+							{__def:		"|?directory < ?tree < structure; directory, tree: [~dir_name, ~comment, ~raised, ~files]; ?dir_name < ?node_name < ?text; ?files < ?child_nodes < ?list; ?comment < ?text; ?raised < ?boolean",
 							 "|?dir_name < ?node_name < text":	"htmlView",
 							 "|?comment < text":				"Views für HTML",
 							 "|?raised < text":					false,
 							 "|?files < ?child_nodes < list":
 							 	[
-									{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+									{__def:		"|?file < ?tree_node < structure; file, tree_node: [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
 									 "|?dir_name < ?node_name < text":	"article.js",
 									 "|?comment < text":				"Artikel-Klasse",
 									},
 									
-									{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+									{__def:		"|?file < ?tree_node < structure; file, tree_node: [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
 									 "|?dir_name < ?node_name < text":	"author.js",
 									 "|?comment < text":				"Autor-Klasse",
 									},									
 
-									{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+									{__def:		"|?file < ?tree_node < structure; file, tree_node: [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
 									 "|?dir_name < ?node_name < text":	"basic.js",
 									 "|?comment < text":				"Allgemeine HTML-Darstellung",
 									},
 
-									{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+									{__def:		"|?file < ?tree_node < structure; file, tree_node: [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
 									 "|?dir_name < ?node_name < text":	"page.js",
 									 "|?comment < text":				"Page Klasse",
 									},
 
-									{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+									{__def:		"|?file < ?tree_node < structure; file, tree_node: [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
 									 "|?dir_name < ?node_name < text":	"paragraph.js",
 									 "|?comment < text":				"Absatz-Klassen",
 									},									
 									
-									{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+									{__def:		"|?file < ?tree_node < structure; file, tree_node: [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
 									 "|?dir_name < ?node_name < text":	"lines.js",
 									 "|?comment < text":				"Zeilen-Stile",
 									},
 									
-									{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+									{__def:		"|?file < ?tree_node < structure; file, tree_node: [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
 									 "|?dir_name < ?node_name < text":	"tree.js",
 									 "|?comment < text":				"Baum-Ansicht",
 									},									
 									
-									{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+									{__def:		"|?file < ?tree_node < structure; file, tree_node: [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
 									 "|?dir_name < ?node_name < text":	"htmlViewHelper.js",
 									 "|?comment < text":				"Hilfsfunktionen zum Entwickeln von HTML-Views",
 									}							
 								]
 							},
 
-							{__def:		"|?directory < ?tree < structure; [~dir_name, ~comment, ~raised, ~files]; ?dir_name < ?node_name < ?text; ?files < ?child_nodes < ?list; ?comment < ?text; ?raised < ?boolean",
+							{__def:		"|?directory < ?tree < structure; directory, tree: [~dir_name, ~comment, ~raised, ~files]; ?dir_name < ?node_name < ?text; ?files < ?child_nodes < ?list; ?comment < ?text; ?raised < ?boolean",
 							 "|?dir_name < ?node_name < text":	"textView",
 							 "|?comment < text":				"Views für Textausgabe",
 							 "|?raised < text":					false,
 							 "|?files < ?child_nodes < list":
 							 	[
-									{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+									{__def:		"|?file < ?tree_node < structure; file, tree_node: [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
 									 "|?dir_name < ?node_name < text":	"textView.js",
 									 "|?comment < text":				"Text-View",
 									},
 								]
 							},
 							
-							{__def:		"|?directory < ?tree < structure; [~dir_name, ~comment, ~raised, ~files]; ?dir_name < ?node_name < ?text; ?files < ?child_nodes < ?list; ?comment < ?text; ?raised < ?boolean",
+							{__def:		"|?directory < ?tree < structure; directory, tree: [~dir_name, ~comment, ~raised, ~files]; ?dir_name < ?node_name < ?text; ?files < ?child_nodes < ?list; ?comment < ?text; ?raised < ?boolean",
 							 "|?dir_name < ?node_name < text":	"persistence",
 							 "|?comment < text":				"Zugriff auf den PHP-Server",
 							 "|?raised < text":					false,
 							 "|?files < ?child_nodes < list":
 							 	[
-									{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+									{__def:		"|?file < ?tree_node < structure; file, tree_node: [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
 									 "|?dir_name < ?node_name < text":	"data_provider.js",
 									 "|?comment < text":				"Zugriff auf die Dokumente über AJAX",
 									},
 								]
 							},							
 
-							{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+							{__def:		"|?file < ?tree_node < structure; file, tree_node: [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
 							 "|?dir_name < ?node_name < text":	"viewHelper.js",
 							 "|?comment < text":				"Hilfsfunktionen zum Entwickeln von Views",
 							}
 						]
 					},
 					
-					{__def:		"|?directory < ?tree < structure; [~dir_name, ~comment, ~raised, ~files]; ?dir_name < ?node_name < ?text; ?files < ?child_nodes < ?list; ?comment < ?text; ?raised < ?boolean",
+					{__def:		"|?directory < ?tree < structure; directory, tree: [~dir_name, ~comment, ~raised, ~files]; ?dir_name < ?node_name < ?text; ?files < ?child_nodes < ?list; ?comment < ?text; ?raised < ?boolean",
 					 "|?dir_name < ?node_name < text":	"services",
 					 "|?comment < text":				"Interne Dienste des PHP-Servers",
 					 "|?raised < text":					false,
 					 "|?files < ?child_nodes < list":
 					 	[
-								{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+								{__def:		"|?file < ?tree_node < structure; file, tree_node: [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
 								 "|?dir_name < ?node_name < text":	"content.php",
 								 "|?comment < text":				"Zugriff auf JSON-Daten",
 								},
 
-								{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+								{__def:		"|?file < ?tree_node < structure; file, tree_node: [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
 								 "|?dir_name < ?node_name < text":	"packages.php",
 								 "|?comment < text":				"Automatisches Laden von JavaScript-Modulen",
 								},
 								
-								{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+								{__def:		"|?file < ?tree_node < structure; file, tree_node: [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
 								 "|?dir_name < ?node_name < text":	"setup.php",
 								 "|?comment < text":				"Systemeinstellungen für JavaScript-Module",
 								},								
 						]
 					},
 					
-					{__def:		"|?directory < ?tree < structure; [~dir_name, ~comment, ~raised, ~files]; ?dir_name < ?node_name < ?text; ?files < ?child_nodes < ?list; ?comment < ?text; ?raised < ?boolean",
+					{__def:		"|?directory < ?tree < structure; directory, tree: [~dir_name, ~comment, ~raised, ~files]; ?dir_name < ?node_name < ?text; ?files < ?child_nodes < ?list; ?comment < ?text; ?raised < ?boolean",
 					 "|?dir_name < ?node_name < text":	"storage",
 					 "|?comment < text":				"Enthält die gespeicherten Inhalte im JSON-Format",
 					 "|?raised < text":					true,
 					 "|?files < ?child_nodes < list":
 					 	[
-								{__def:		"|?file < ?tree_node < structure; [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
+								{__def:		"|?file < ?tree_node < structure; file, tree_node:  [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
 								 "|?dir_name < ?node_name < text":	"tutorial.json",
 								 "|?comment < text":				"Dieses Tutorial",
 								},
