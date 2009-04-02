@@ -198,7 +198,7 @@ Dispatcher.prototype.find = function()
 			highest_idx = list.length - 1;
 		}
 	}
-	
+
 	// Return list or function?
 	var retval;
 
@@ -213,7 +213,7 @@ Dispatcher.prototype.find = function()
 		else
 			retval = list[highest_idx];
 	}
-		
+
 	// Tuple with definition?
 	if (return_definition == true)
 		return {definition: user_def, found: retval};
@@ -269,7 +269,7 @@ Dispatcher.prototype.send = function(definitions, params)
 		if (param.__orderedRelations["<"] == null) {
 			if (input["structure"] != null)
 				throw new ParameterTypeNotUnique("Parameter not unique - object");
-		
+
 			inlet_descs.push("structure");
 			param_descs.push("null < structure");
 			
@@ -297,7 +297,7 @@ Dispatcher.prototype.send = function(definitions, params)
 
 	var found = this.find.apply(this, defs.concat([false, true]));
 	var func = found.found;
-	
+
 	if (func == null)
 		throw new ReceiverNotAvailable("No receiver found - "+defs.join(" -- "));
 	
@@ -474,7 +474,7 @@ Array.prototype._function = function(func)
 String.prototype._function = function(func)
 {
 	func._as.apply(func, [this]);
-	
+
 	return __dispatcher.register(func);
 }
 
@@ -495,7 +495,7 @@ Object.prototype._function = function(func)
 {
 	var defs = [];
 	var idx = 0;
-	
+
 	this.__each( function(element, key) { 
 		if ((element.charAt(0) != "|") && (idx == 0))
 			defs.push("|"+element);

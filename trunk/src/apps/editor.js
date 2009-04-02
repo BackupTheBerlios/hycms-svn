@@ -147,7 +147,7 @@ Editor.prototype.onClick = function(event)
 																									  );
 	this.focussed_node = parent_node;
 
-	// Ignore klicks on Links etc.
+	// Ignore clicks on links etc.
 	event.preventDefault();
 }
 

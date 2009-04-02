@@ -385,7 +385,6 @@ Object.prototype._as = function()
 	return this;
 }
 
-
 /*
  * String::_as([definition1, ..., definitionN])
  *
@@ -400,9 +399,7 @@ Object.prototype._as = function()
  */
 String.prototype._as = function()
 {
-	Object._as.apply(this, arguments);
-	
-	return this;
+	return Object._as.apply(this, arguments);
 }
 
 /*
@@ -419,9 +416,7 @@ String.prototype._as = function()
  */
 Number.prototype._as = function()
 {
-	Object._as.apply(this, arguments);
-	
-	return this;
+	return Object._as.apply(this, arguments);
 }
 
 /*
@@ -438,9 +433,7 @@ Number.prototype._as = function()
  */
 Boolean.prototype._as = function()
 {
-	Object._as.apply(this, arguments);
-	
-	return this;
+	return 	Object._as.apply(this, arguments);
 }
 
 /*
@@ -457,9 +450,7 @@ Boolean.prototype._as = function()
  */
 Array.prototype._as = function()
 {
-	var self = this;
-
-	Object._as.apply(this, arguments);
+	var self = Object._as.apply(this, arguments);
 	
 	// Apply definitions recursivley to all enumerated elements
 	this.__each( function(element, key) {
@@ -468,7 +459,7 @@ Array.prototype._as = function()
 		}	
 	});
 
-	return this;	
+	return self;	
 }
 
 /*

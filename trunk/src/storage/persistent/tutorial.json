@@ -19,7 +19,7 @@
 			},
 	
 			{__def:		"|?version < text",
-			 __value:	"1.2"
+			 __value:	"0.2a"
 			},
 	
 			{__def:		"|?abstract < ?paragraph < list",
@@ -1113,13 +1113,13 @@
 			{__def:		"|?directory < ?tree < structure; directoy, tree: [~dir_name, ~comment, ~raised, ~files]; ?dir_name < ?node_name < ?text; ?files < ?child_nodes < ?list; ?comment < ?text; ?raised < ?boolean",
 			 "|?dir_name < ?node_name < text":	"hyCMS/src",
 			 "|?comment < text":				"Das Source-Verzeichnis von hyCMS",
-			 "|?raised < text":					true,
+			 "|?raised < boolean":					true,
 			 "|?files < ?child_nodes < list":
 			 	[
 					{__def:		"|?directory < ?tree < structure; directoy, tree: [~dir_name, ~comment, ~raised, ~files]; ?dir_name < ?node_name < ?text; ?files < ?child_nodes < ?list; ?comment < ?text; ?raised < ?boolean",
 					 "|?dir_name < ?node_name < text":	"apps",
 					 "|?comment < text":				"Anwendungen basierend auf dem Framework",
-					 "|?raised < text":					true,
+					 "|?raised < boolean":					true,
 					 "|?files < ?child_nodes < list":
 					 	[
 							{__def:		"|?file < ?tree_node < structure; file, tree_node: [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
@@ -1132,7 +1132,7 @@
 					{__def:		"|?directory < ?tree < structure; directoy, tree: [~dir_name, ~comment, ~raised, ~files]; ?dir_name < ?node_name < ?text; ?files < ?child_nodes < ?list; ?comment < ?text; ?raised < ?boolean",
 					 "|?dir_name < ?node_name < text":	"engine",
 					 "|?comment < text":				"Enthält interne Dateien des Dispatcher",
-					 "|?raised < text":					false,
+					 "|?raised < boolean":					false,
 					 "|?files < ?child_nodes < list":
 					 	[
 							{__def:		"|?file < ?tree_node < structure; file, tree_node: [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
@@ -1160,13 +1160,13 @@
 					{__def:		"|?directory < ?tree < structure; directory, tree: [~dir_name, ~comment, ~raised, ~files]; ?dir_name < ?node_name < ?text; ?files < ?child_nodes < ?list; ?comment < ?text; ?raised < ?boolean",
 					 "|?dir_name < ?node_name < text":	"packages",
 					 "|?comment < text":				"Enthält alle JavaScript-Module, die für den Dispatcher in Frage kommen",
-					 "|?raised < text":					true,
+					 "|?raised < boolean":					true,
 					 "|?files < ?child_nodes < list":
 					 	[
 							{__def:		"|?directory < ?tree < structure; directory, tree: [~dir_name, ~comment, ~raised, ~files]; ?dir_name < ?node_name < ?text; ?files < ?child_nodes < ?list; ?comment < ?text; ?raised < ?boolean",
 							 "|?dir_name < ?node_name < text":	"htmlView",
 							 "|?comment < text":				"Views für HTML",
-							 "|?raised < text":					false,
+							 "|?raised < boolean":					false,
 							 "|?files < ?child_nodes < list":
 							 	[
 									{__def:		"|?file < ?tree_node < structure; file, tree_node: [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
@@ -1214,7 +1214,7 @@
 							{__def:		"|?directory < ?tree < structure; directory, tree: [~dir_name, ~comment, ~raised, ~files]; ?dir_name < ?node_name < ?text; ?files < ?child_nodes < ?list; ?comment < ?text; ?raised < ?boolean",
 							 "|?dir_name < ?node_name < text":	"textView",
 							 "|?comment < text":				"Views für Textausgabe",
-							 "|?raised < text":					false,
+							 "|?raised < boolean":				false,
 							 "|?files < ?child_nodes < list":
 							 	[
 									{__def:		"|?file < ?tree_node < structure; file, tree_node: [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
@@ -1227,7 +1227,7 @@
 							{__def:		"|?directory < ?tree < structure; directory, tree: [~dir_name, ~comment, ~raised, ~files]; ?dir_name < ?node_name < ?text; ?files < ?child_nodes < ?list; ?comment < ?text; ?raised < ?boolean",
 							 "|?dir_name < ?node_name < text":	"persistence",
 							 "|?comment < text":				"Zugriff auf den PHP-Server",
-							 "|?raised < text":					false,
+							 "|?raised < boolean":				false,
 							 "|?files < ?child_nodes < list":
 							 	[
 									{__def:		"|?file < ?tree_node < structure; file, tree_node: [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
@@ -1247,7 +1247,7 @@
 					{__def:		"|?directory < ?tree < structure; directory, tree: [~dir_name, ~comment, ~raised, ~files]; ?dir_name < ?node_name < ?text; ?files < ?child_nodes < ?list; ?comment < ?text; ?raised < ?boolean",
 					 "|?dir_name < ?node_name < text":	"services",
 					 "|?comment < text":				"Interne Dienste des PHP-Servers",
-					 "|?raised < text":					false,
+					 "|?raised < boolean":					false,
 					 "|?files < ?child_nodes < list":
 					 	[
 								{__def:		"|?file < ?tree_node < structure; file, tree_node: [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",
@@ -1270,7 +1270,7 @@
 					{__def:		"|?directory < ?tree < structure; directory, tree: [~dir_name, ~comment, ~raised, ~files]; ?dir_name < ?node_name < ?text; ?files < ?child_nodes < ?list; ?comment < ?text; ?raised < ?boolean",
 					 "|?dir_name < ?node_name < text":	"storage",
 					 "|?comment < text":				"Enthält die gespeicherten Inhalte im JSON-Format",
-					 "|?raised < text":					true,
+					 "|?raised < boolean":					true,
 					 "|?files < ?child_nodes < list":
 					 	[
 								{__def:		"|?file < ?tree_node < structure; file, tree_node:  [~file_name, ~comment]; ?file_name < ?node_name < ?text; ?comment < ?text",

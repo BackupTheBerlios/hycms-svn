@@ -44,7 +44,8 @@
 					callback(requestData._as());
 				}
 				 catch(e) {
-				 	console.log(e);
+					document.body.innerHTML = e;
+//				 	console.log(e);
 				}
 			}
 		}

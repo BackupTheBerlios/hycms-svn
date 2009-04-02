@@ -15,7 +15,7 @@
 			document.body.innerHTML = html;
 		}
 	
-		function main(content_path) {
+		function main(content_path) {		
 			"|?SemanticDataProvider < DataProvider"._send ( content_path._as("|path < text"), 
 															viewFunction._as("|callback < function") 
 														  );

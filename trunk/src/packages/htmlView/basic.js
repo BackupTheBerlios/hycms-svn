@@ -16,7 +16,7 @@
 	output:		"<(~html)>; ?html < text"
 })._(
 
-	function HtmlView_Structure(input) 
+	function HtmlView_Structure(input, def) 
 	{
 		var output = "";
 
@@ -30,8 +30,8 @@
 			output += "|View; <(?html, ?text)>; ?html < text"._send( element );
 			output += "</td></tr>";
 		});
-	
-		HtmlView_autotag("table", arguments, input, def, output);
+
+		return HtmlView_autotag("table", arguments, input, def, output);
 	}
 );
 
@@ -80,6 +80,41 @@
 
 );
 
+//
+// Plain boolean view
+//		 
+({
+	purpose:	"View",
+	conditions:	"{?recursive_context, ?keep_method_conditions, ?set_uuid_attribute}",
+
+	input:		">(boolean)<; boolean",
+	output:		"<(~html)>; ?html < text"
+})._(
+
+	function HtmlView_Boolean(input, def) 
+	{
+		return HtmlView_autotag("span", arguments, String(input._get("boolean")).html_text());
+	}
+
+);
+
+//
+// Plain number view
+//		 
+({
+	purpose:	"View",
+	conditions:	"{?recursive_context, ?keep_method_conditions, ?set_uuid_attribute}",
+
+	input:		">(number)<; number",
+	output:		"<(~html)>; ?html < text"
+})._(
+
+	function HtmlView_Number(input, def) 
+	{
+		return HtmlView_autotag("span", arguments, String(input._get("number")).html_text());
+	}
+
+);
 //
 // Important text view
 //		 
@@ -147,7 +182,7 @@
 
 	function HtmlView_Error(input, def) 
 	{
-		console.log(input._get("error").valueOf());
+//		console.log(input._get("error").valueOf());
 		return input._get("error");
 	}
 
