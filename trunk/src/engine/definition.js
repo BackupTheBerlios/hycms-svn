@@ -81,6 +81,10 @@ Object.prototype.__each = function(callback)
  */
 Object.prototype.__appendTerms = function(relation_list, expressions, no_variadic)
 {
+	// [OPT] Count options
+	relation_list.__options = 0;
+	// [END OPT] Count options
+
 	// Build relation table
 	for (var idx = 0; idx < expressions.length; idx ++) {
 		var term_expression = expressions[idx];
@@ -104,11 +108,18 @@ Object.prototype.__appendTerms = function(relation_list, expressions, no_variadi
 		// Variadic * is not allowed
 		if ((term == "*") && (is_variadic))
 			throw new InvalidDefinitionError("Variadic * is not allowed: "+term_expression);
-	
+
 		// Only add it, if not a null term
 		if (term != ".") {
+			var term_descriptor = {"name": term, "is_option": is_option, "is_variadic": is_variadic};
+			
 			// Put relation element
-			relation_list.push({"name": term, "is_option": is_option, "is_variadic": is_variadic});		
+			relation_list.push(term_descriptor);
+
+			// [OPT] Count options
+			if (is_option)
+				relation_list.__options ++;
+			// [END OPT] Count options
 		}
 	}
 	
@@ -334,8 +345,19 @@ Object.prototype._as = function()
 
 	var precondition = null;
 
+	// [OPT] Term lookup table
+	this.__term_lookup = new Object();
+	
+	var lookup_list = definition.match(/[A-Za-z0-9\_\-]+/g);
+	
+	for (var idx = 0; idx < lookup_list.length; idx ++) {
+		this.__term_lookup[lookup_list[idx]] = true;
+	}
+	// [END OPT]
+		
 	// Build relations
-	relation_strings.__each( function(relation_string) {
+	for (var idx = 0; idx < relation_strings.length; idx ++) {
+		var relation_string = relation_strings[idx];
 		var relation = null;
 	
 		if (relation_string == "")
@@ -369,16 +391,18 @@ Object.prototype._as = function()
 			relation = self.__parseUnordered(relation_string);
 			
 		relation.conditions = precondition;
-	});
+	}
 
 	// Apply definitions recursivley to all |-prefixed elements,
 	// which are still untyped
-	this.__each( function(element, key) {
+	for (var key in this) {
 		if (key.charAt(0) == "|") {
-			if (self[key].__orderedRelations == null)
-				self[key] = element._as(key);
+			var element = this[key];
+
+			if (this[key].__orderedRelations == null)
+				this[key] = element._as(key);
 		}	
-	});
+	}
 
 	this.__uuid = session_uuid ++;
 
@@ -452,12 +476,13 @@ Array.prototype._as = function()
 {
 	var self = Object._as.apply(this, arguments);
 	
+	if (self != this)
+		throw new Error("JavaScript environment error.");
+	
 	// Apply definitions recursivley to all enumerated elements
-	this.__each( function(element, key) {
-		if ((/([0-9]*)/).test(key)) {
-			self[key] = element._as();
-		}	
-	});
+	for (var key = 0; key < self.length; key ++) {
+		self[key] = self[key]._as();
+	}
 
 	return self;	
 }
@@ -486,18 +511,27 @@ Object.prototype._def_string = function()
 	var relations = new Array();
 	var self = this;
 
-	this.__orderedRelations.__each( function(relation, key) {
-		for (var idx = 0; idx < relation.length; idx++) {
-			relations.push( self._relationToString(key, idx, true) );
-		}
-	});
-	
-	this.__unorderedRelations.__each( function(relation, key) {
-		for (var idx = 0; idx < relation.length; idx++) {
-			relations.push( self._relationToString(key, idx, false) );
-		}
-	});
+	for (var key in this.__orderedRelations)
+	{
+		if (this.__orderedRelations[key] instanceof Array) {
+			var relation = this.__orderedRelations[key];
 
+			for (var idx = 0; idx < relation.length; idx++) {
+				relations.push( self._relationToString(key, idx, true) );
+			}
+		}
+	}
+	
+	for (var key in this.__unorderedRelations)
+	{
+		if (this.__unorderedRelations[key] instanceof Array) {
+			var relation = this.__unorderedRelations[key];
+
+			for (var idx = 0; idx < relation.length; idx++) {
+				relations.push( self._relationToString(key, idx, false) );
+			}
+		}
+	}
 	return "|"+relations.join("; ");
 }
 
@@ -541,6 +575,11 @@ function __variadic_equivalence(yee_term, ier_term, ier_variations, yee_variatio
 	if (yee_term.is_variadic && !ier_term.is_variadic) {
 		var variations = yee_variations["<"].variations["#"+yee_term.name];
 
+		// [OPT] There is no yee variation of the ier term, we should test
+		if (yee_variations["<"].variations["#"+ier_term.name] == null)
+			return false;
+		// [END OPT]
+
 		for (var idx = 0; idx < variations.length; idx ++) {
 			var variation = variations[idx];
 
@@ -557,6 +596,11 @@ function __variadic_equivalence(yee_term, ier_term, ier_variations, yee_variatio
 	if (!yee_term.is_variadic && ier_term.is_variadic) {
 		var variations = ier_variations["<"].variations["#"+ier_term.name];
 
+		// [OPT] There is no ier variation of the yee term, we should test
+		if (ier_variations["<"].variations["#"+yee_term.name] == null)
+			return false;
+		// [END OPT]
+
 		for (var idx = 0; idx < variations.length; idx ++) {
 			var variation = variations[idx];
 
@@ -571,6 +615,8 @@ function __variadic_equivalence(yee_term, ier_term, ier_variations, yee_variatio
 
 	// both variations
 	if (yee_term.is_variadic && ier_term.is_variadic) {
+		// There are no variations of the opposite term
+		var yee_lookup = yee_variations["<"].variations;
 		var ier_variations = ier_variations["<"].variations["#"+ier_term.name];
 		var yee_variations = yee_variations["<"].variations["#"+yee_term.name];
 
@@ -582,6 +628,11 @@ function __variadic_equivalence(yee_term, ier_term, ier_variations, yee_variatio
 				// Search yee inside ier
 				for (var y_idx = 0; y_idx < yee_variations.length; y_idx ++) {
 					var yee_variation = yee_variations[y_idx];
+
+					// [OPT] Test if the yee term is available in any ier list
+					if (yee_lookup["#"+ier_variation.list[l_idx].name] == null)
+						break;
+					// [END OPT]
 
 					for (var ly_idx = ier_variation.position; ly_idx < yee_variation.list.length; ly_idx ++) {
 						if (ier_variation.list[l_idx].name == yee_variation.list[ly_idx].name)
@@ -662,7 +713,7 @@ function __unorderedSatisfied(satisfier, satisfyee, ier_variations, yee_variatio
  *  String::_satisfies
  *
  */
-function __orderedSatisfied(satisfier, satisfyee, ier_variations, yee_variations)
+function __orderedSatisfied(satisfier, satisfyee, ier_variations, yee_variations, lookup_hash)
 {
 	var count = 0;
 	var ier_base = 0;
@@ -671,16 +722,25 @@ function __orderedSatisfied(satisfier, satisfyee, ier_variations, yee_variations
 		var yee_term = satisfyee[yee_idx];
 		var found = false;
 	
+		// [OPT] Stop, if term is not in the lookup hash of ther satisfier
+		if (!lookup_hash[yee_term.name]) {
+			if (!yee_term.is_option)
+				return -1;
+			else
+				continue;
+		}
+		// [END OPT]
+
 		// Stop, if we can't iterate again over the satisfier list
 		if (ier_base == satisfier.length) {
 
-			// This is okay, if we there are only optional terms in yee
+			// This is okay, if there are only optional terms in yee
 			do {
 				if (satisfyee[yee_idx].is_option == false)
 					return -1;
 			}while(++ yee_idx < satisfyee.length);
-
-			return count;
+			
+			 return count;			
 		}
 		
 		// Accept ?* yer-terms and fail on * yer-terms
@@ -774,11 +834,16 @@ function __test_precondition(list, ier_variations)
  *  String::_satisfies
  *
  */
-function __check_lists(satisfier_baselist, satisfyee_baselist, handler, ier_variations, yee_variations)
+function __check_lists(satisfier_baselist, satisfyee_baselist, handler, ier_variations, yee_variations, lookup_hash)
 {
 	var option_count = 0;
 
-	satisfyee_baselist.__each( function(list, relation) {
+	for (var relation in satisfyee_baselist) {
+		var list = satisfyee_baselist[relation];
+
+		if (!(list instanceof Array))
+			continue;
+
 		// Relation does not exist in "satisfier"
 		if (    (satisfier_baselist[relation] == null) 
 		     || (satisfier_baselist[relation][0] == null)
@@ -792,7 +857,9 @@ function __check_lists(satisfier_baselist, satisfyee_baselist, handler, ier_vari
 				// Is the yee-precondition satisfied?
 				if (!__test_precondition(list[idx], ier_variations))
 					continue;
-			
+	
+				/*
+				// [WITHOUT OPT]		
 				for (var r_idx = 0; r_idx < list[idx].length; r_idx ++) {
 					if (list[idx][r_idx].is_option == false) {
 						all_optional = false;
@@ -802,14 +869,19 @@ function __check_lists(satisfier_baselist, satisfyee_baselist, handler, ier_vari
 				
 				if (!all_optional)
 					break;
+				// [END WITHOUT OPT]
+				*/
+				
+				// [OPT] Use precalculated options count
+				if (list[idx].__options < list[idx].length)
+					break;
+				// [END OPT] Use precalculated options count
 			}
 			
-			if (!all_optional) {
-				option_count = -1;
+			if (!all_optional)
 				return -1;
-			}
 			 else
-			 	return 0;
+			 	continue;
 		}
 
 		// Get the highest option count satisfying the relation
@@ -822,8 +894,8 @@ function __check_lists(satisfier_baselist, satisfyee_baselist, handler, ier_vari
 
 			for (var ier_idx = 0; ier_idx < satisfier_baselist[relation].length; ier_idx ++) {
 				var count;	
-	
-				count = handler(satisfier_baselist[relation][ier_idx], list[yee_idx], ier_variations, yee_variations);
+
+				count = handler(satisfier_baselist[relation][ier_idx], list[yee_idx], ier_variations, yee_variations, lookup_hash);
 		
 				if (count > max_count)
 					max_count = count;
@@ -831,15 +903,13 @@ function __check_lists(satisfier_baselist, satisfyee_baselist, handler, ier_vari
 
 			// There was no satisfying relation
 			if (max_count == -1) {
-				option_count = -1;
 				return -1;
 			}
 
 			// Use the maximum count for this relation
 			option_count += max_count;
-		}
-		
-	});
+		}		
+	}
 	
 	return option_count;
 }
@@ -860,7 +930,8 @@ function _satisfy_internal(satisfier, satisfyee)
 								 satisfyee.__unorderedRelations, 
 								 __unorderedSatisfied,
 								 satisfier.__orderedRelations,
-								 satisfyee.__orderedRelations
+								 satisfyee.__orderedRelations,
+								 satisfier.__term_lookup
 								);
 	
 	// Unsatisfiable condition
@@ -872,7 +943,8 @@ function _satisfy_internal(satisfier, satisfyee)
 								 	  satisfyee.__orderedRelations, 
 							 		  __orderedSatisfied,
 									 satisfier.__orderedRelations,
-									 satisfyee.__orderedRelations
+									 satisfyee.__orderedRelations,
+									 satisfier.__term_lookup
 									 );
 
 	// Unsatisfiable condition

@@ -26,18 +26,19 @@ function HtmlView_renderChild(object, def, additional_def_string)
 
 
 /*
- * HtmlView_listInside(input, def[, parentType, iterateFunction])
+ * HtmlView_listInside(input, def[, parentType, iterateFunction(output, element, key)])
  *
  * Iterates over all elements of "input" and visualizes them as inline
  * elements of a paragraph. The definition "def" of the function call
- * has to be passed to this called. The "parentType" determines the type
+ * has to be passed. The "parentType" determines the type
  * of the parent element in which the input should be visualized in. If
  * this parameter is not given, it will be taken from the first element of
  * the first ">()<"-relation, which is for HTML views normally the input
  * type.
  *
- * If iterateFunction is given, the output will be passed to this function.
- * The outcome of "iterateFunction" will be concatenated to the return value.
+ * If iterateFunction is given, the output and the element will be passed to this function.
+ * The outcome of "iterateFunction" will be concatenated to the return value. If iterateFunction
+ * is not given, the output of each child nodes will just concatenated together.
  *
  * Returns:
  *	HTML view of the children of "input"
@@ -45,22 +46,7 @@ function HtmlView_renderChild(object, def, additional_def_string)
  */
 function HtmlView_listInside(input, def, parentType, iterateFunction)
 {
-	var output = "";
-
-	function _listInsideIterate_Simple(context, key, element) {
-			output += HtmlView_renderChild( element, def, context );		
-	}
-
-	function _listInsideIterate(context, key, element) {
-			output += iterateFunction( HtmlView_renderChild( element, def, context ) );
-	}
-
-	if (iterateFunction != null)
-		View_contextIterate(input, def, _listInsideIterate, parentType);
-	else
-		View_contextIterate(input, def, _listInsideIterate_Simple, parentType);
-		
-	return output;
+	return View_listInside(input, def, parentType, HtmlView_renderChild, iterateFunction);
 }
 
 /*

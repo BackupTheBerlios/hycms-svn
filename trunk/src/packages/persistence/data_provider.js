@@ -45,7 +45,7 @@
 				}
 				 catch(e) {
 					document.body.innerHTML = e;
-//				 	console.log(e);
+				 	console.log(e);
 				}
 			}
 		}

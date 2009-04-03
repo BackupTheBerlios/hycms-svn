@@ -83,3 +83,45 @@ function View_contextIterate(input, def, traverseFunction, parentType)
 	});
 }
 
+/*
+ * View_listInside(input, def[, parentType[, renderFunction(element, def, context), iterateFunction(output, element, key)])
+ *
+ * Iterates over all elements of "input" and visualizes them using "renderFunction". 
+ * The definition "def" of the function call has to be passed. 
+ * The "parentType" determines the type of the parent element in which the input should be 
+ * visualized in. If this parameter is not given, it will be taken from the first element of
+ * the first ">()<"-relation, which is for HTML views normally the input
+ * type.
+ *
+ * If iterateFunction is given, the output and the element will be passed to this function.
+ * The outcome of "iterateFunction" will be concatenated to the return value. If iterateFunction
+ * is not given, the output of all subsequent calls of renderFunction will be just concatenated.
+ *
+ * If renderFunction is not given, View_renderChild will be used.
+ *
+ * Returns:
+ *	View of the input object
+ *
+ */
+function View_listInside(input, def, parentType, renderFunction, iterateFunction)
+{
+	var output = "";
+
+	if (renderFunction == null)
+		renderFunction = View_renderChild;
+
+	function _listInsideIterate_Simple(context, key, element) {
+			output += renderFunction( element, def, context );		
+	}
+
+	function _listInsideIterate(context, key, element) {
+			output += iterateFunction( renderFunction( element, def, context ), element, key );
+	}
+
+	if (iterateFunction != null)
+		View_contextIterate(input, def, _listInsideIterate, parentType);
+	else
+		View_contextIterate(input, def, _listInsideIterate_Simple, parentType);
+		
+	return output;
+}

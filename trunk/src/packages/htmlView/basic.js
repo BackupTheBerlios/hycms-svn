@@ -20,18 +20,15 @@
 	{
 		var output = "";
 
-		input._get("structure")._iterate( function (element, key) {
+		function _view_internal(output, element, key) {
 			var id = element._getClassName().toLowerCase();
 
 			id = id[0].toUpperCase() + id.substr(1);
 		
-			output += "<tr>";
-			output += "<td>"+id+"</td><td>";
-			output += "|View; <(?html, ?text)>; ?html < text"._send( element );
-			output += "</td></tr>";
-		});
+			return "<tr><td>"+id+"</td><td>"+output+"</td></tr>";
+		}
 
-		return HtmlView_autotag("table", arguments, input, def, output);
+		return HtmlView_autotag("table", arguments, input, def, HtmlView_listInside(input, def, _view_internal));
 	}
 );
 
@@ -50,14 +47,11 @@
 	{
 		var output = "";
 
-		input._get("list")._iterate( function (element, key) {
-			output += "<tr>";
-			output += "<td>"+key.html_text()+"</td><td>";
-			output += "|View; <(?html, ?text)>; ?html < text"._send( element );
-			output += "</td></tr>";
-		});
-	
-		return HtmlView_autotag("table", arguments, output);
+		function _view_internal(output, element, key) {
+			return "<tr><td>"+key.html_text()+"</td><td>"+output+"</td></tr>";
+		}
+
+		return HtmlView_autotag("table", arguments, input, def, HtmlView_listInside(input, def, _view_internal));
 	}
 
 );

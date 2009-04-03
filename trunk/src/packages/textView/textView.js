@@ -11,7 +11,7 @@
 ({
 	purpose:	"View",
 	input:		">(structure)<; structure",
-	output:     "<(?text)>; text"
+	output:     "<(text)>; text"
 })._(
 
 	function TextView_Structure(input) 
@@ -35,7 +35,7 @@
 ({
 	purpose:	"View",
 	input: 		">(list)<; list",
-	output:		"<(?text)>; text"
+	output:		"<(text)>; text"
 })._(
 
 	function TextView_List(input) 
@@ -60,7 +60,7 @@
 ({
 	purpose:	"View",
 	input: 	    ">(text)<; text",
-	output:		"<(?text)>; text"
+	output:		"<(text)>; text"
 })._( 
 
 	function TextView_Text(input) 

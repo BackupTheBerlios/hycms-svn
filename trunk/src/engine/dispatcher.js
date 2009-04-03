@@ -496,14 +496,19 @@ Object.prototype._function = function(func)
 	var defs = [];
 	var idx = 0;
 
-	this.__each( function(element, key) { 
+	for (var key in this) {
+		if ((typeof(this[key]) != "string") && !(this[key] instanceof String))
+			continue;
+	
+		var element = this[key];
+	
 		if ((element.charAt(0) != "|") && (idx == 0))
 			defs.push("|"+element);
 		else
 			defs.push(element);
 			
 		idx ++;
-	});
+	}
 
 	func._as.apply(func, defs);
 
