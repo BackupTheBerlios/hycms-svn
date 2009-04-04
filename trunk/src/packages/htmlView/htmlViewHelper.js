@@ -61,7 +61,7 @@ function HtmlView_listInside(input, def, parentType, iterateFunction)
  */
 function HtmlView_uuid_attribute(object)
 {
-	return "uuid ='"+object.__uuid+"'";
+	return "uuid='"+object.__uuid+"'";
 }
 
 /*

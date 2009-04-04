@@ -292,10 +292,6 @@ Object.prototype._as = function()
 		definition += arg + sym;
 	}
 
-	// No overloading of definitions
-	if ((this.__definition != null) || (this.__orderedRelations != null)  || (this.__unorderedRelations != null))
-		throw new OverloadingDefinitionError(definition+" overwrites "+this.__definition);
-
 	// Implicit definition given?
 	if (arguments.length == 0) {
 		definition = this.__def;
@@ -316,6 +312,10 @@ Object.prototype._as = function()
 		else if (this instanceof Object)
 			definition = "|structure";
 	}
+
+	// No overloading of definitions
+	if ((this.__definition != null) || (this.__orderedRelations != null)  || (this.__unorderedRelations != null))
+		throw new OverloadingDefinitionError(definition+" overwrites "+this._def_string());
 
 	// Building object from value?
 	if (this.__value != null)
@@ -479,9 +479,10 @@ Array.prototype._as = function()
 	if (self != this)
 		throw new Error("JavaScript environment error.");
 	
-	// Apply definitions recursivley to all enumerated elements
+	// Apply definitions recursivley to all enumerated, undefined elements
 	for (var key = 0; key < self.length; key ++) {
-		self[key] = self[key]._as();
+		if (self[key].__orderedRelations == null)
+			self[key] = self[key]._as();
 	}
 
 	return self;	

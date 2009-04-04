@@ -54,7 +54,7 @@ function View_contextIterate(input, def, traverseFunction, parentType)
 	var context = ""
 	var conditions = "";
 	var selectType = parentType;
-	
+
 	// Get parent type from >()< if not given
 	if (parentType == null)
 		parentType = def._getUnorderedRelationElement(">()<").name;
@@ -70,6 +70,7 @@ function View_contextIterate(input, def, traverseFunction, parentType)
 
 	for (var idx = 0; idx < contextList.length; idx ++) {
 		var parentDefLists = def._variationsToArrays(contextList[idx].substr(2), "?");
+		
 		for (var l_idx = 0; l_idx < parentDefLists.length; l_idx ++) {
 			parentDefs += "; "+parentDefLists[l_idx]._arrayToRelationString("<", true);
 		}

@@ -103,12 +103,11 @@ function JsonView_listInside(input, def, parentType, iterateFunction)
 		
 		output  = "{__def: \""+list._def_string()+"\",\n";
 		output += " __value:\n";
-		output += "	[\n";
+		output += "\t[\n";
 
 		var ext = "";
 
 		list._iterate ( function(element, key) {
-			var def = " \""+element._def_string()+"\":";
 			var child = "|View; <(json)>; json < text"._send(element);
 			
 			ext += "\t "+child.replace(RegExp("\n", "g"), "\n\t ")+",\n";
@@ -160,7 +159,7 @@ function JsonView_listInside(input, def, parentType, iterateFunction)
 	function JsonView_Boolean(input, def) 
 	{
 		var data = input._get("boolean");
-		var text = data.valueOf();
+		var text = String(data.valueOf());
 
 		if (data._getClassName() == "boolean")
 			return text;
@@ -183,7 +182,7 @@ function JsonView_listInside(input, def, parentType, iterateFunction)
 	function JsonView_Number(input, def) 
 	{
 		var data = input._get("number");
-		var text = data.valueOf();
+		var text = String(data.valueOf());
 
 		if (data._getClassName() == "number")
 			return text;

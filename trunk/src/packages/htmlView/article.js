@@ -23,7 +23,7 @@
 		function _listInsideIterate(context, key, element) {
 		
 			// Display all inline elements in one line
-			if (!element._instanceOf("paragraph")) {
+			if (!element._instanceOf("list")) {
 				output_header += "<span class='document_information_head_item'>";
 				output_header += HtmlView_renderChild( element, def, context );
 				output_header += "</span>,&nbsp;";		

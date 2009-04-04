@@ -24,11 +24,12 @@
 			var id = element._getClassName().toLowerCase();
 
 			id = id[0].toUpperCase() + id.substr(1);
+			id = id.replace(RegExp("[\_\-]", "g"), " ");
 		
 			return "<tr><td>"+id+"</td><td>"+output+"</td></tr>";
 		}
 
-		return HtmlView_autotag("table", arguments, input, def, HtmlView_listInside(input, def, _view_internal));
+		return HtmlView_autotag("table", arguments, HtmlView_listInside(input, def, "structure", _view_internal));
 	}
 );
 
@@ -43,7 +44,7 @@
 	output:		"<(~html)>; ?html < text"
 })._(
 
-	function HtmlView_List(input) 
+	function HtmlView_List(input, def) 
 	{
 		var output = "";
 
@@ -51,7 +52,7 @@
 			return "<tr><td>"+key.html_text()+"</td><td>"+output+"</td></tr>";
 		}
 
-		return HtmlView_autotag("table", arguments, input, def, HtmlView_listInside(input, def, _view_internal));
+		return HtmlView_autotag("table", arguments, HtmlView_listInside(input, def, "list", _view_internal));
 	}
 
 );
@@ -134,7 +135,7 @@
 	purpose:	"View",
 	conditions:	"{?recursive_context, ?keep_method_conditions, ?set_uuid_attribute}",
 
-	input:		">(~important_text)<; identifier < text",
+	input:		">(~identifier)<; identifier < text",
 	output:		"<(~html)>; ?html < text"
 })._(
 
@@ -176,8 +177,7 @@
 
 	function HtmlView_Error(input, def) 
 	{
-//		console.log(input._get("error").valueOf());
-		return input._get("error");
+		return HtmlView_autotag("b", arguments, input._get("error").html_text());
 	}
 
 );
