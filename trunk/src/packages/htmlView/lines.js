@@ -58,7 +58,7 @@ function HtmlView_renderLine(element, replacements) {
 			code_line = code_line.replace(replacement.regexp, "$1<span class='"+css_type+"'>$2</span>$3");
 		}
 		
-		return HtmlView_tag("span", element, ""._as("|>(~codeLine)<; codeLine < text"), code_line);
+		return HtmlView_tag("span", element, ""._as("|>(~codeLine)<; ?codeLine < text"), code_line._as("|?codeLine < text"));
 }
 
 /*

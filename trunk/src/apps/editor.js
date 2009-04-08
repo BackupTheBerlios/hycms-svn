@@ -5,10 +5,12 @@
  *		viewContainer		The DOM node used to show the content
  *		content				The currently viewed document as content tree
  *		contentHash			Map from HTML node tags to content objects
+ *		focussedNode		Node with the current focus
  *
  * Methods:
  *		viewContent
  *		show
+ *		propagateDownwards		Propagates a certain event downwards the tree
  *
  * Aspects:
  *		htmlRenderAspect		Extends all HTML views with event handling and tags them
@@ -94,6 +96,72 @@ Editor.prototype.htmlRenderAspect = function(receiver, result, input, def)
 }
 
 /*
+ * Editor::propagateDownwards(target, handler(node) )
+ *
+ * Calls "handler" for each view nodes in the propagation hierarchy
+ * upwards of target. A DOM node is seen as view node, iff. it has the
+ * UUID-attribute. The view hierarchy will be traversed downwards.
+ * The handler will also be called for the target itself. 
+ *
+ */
+Editor.prototype.propagateDownwards = function(target, handler)
+{
+	var propagationList = [];
+	var node = target;
+	
+	while ((node != null) && (node != this.viewContainer))
+	{
+		if (node.getAttribute("uuid") != null)
+			propagationList.push(node);
+			
+		node = node.parentNode;
+	}
+	
+	for (var idx=0; idx < propagationList.length; idx ++) {
+		handler(propagationList[idx]);
+	}
+}
+
+/*
+ * Editor::sendEventWithContext(message, node, ...)
+ *
+ * Sends an event message with respect to a certain DOM node "node". The
+ * message begins with the message string "message". The message will
+ * be extended by the entire context of the content object represented
+ * by the view node.
+ *
+ * The "node" is a native datatype.
+ *
+ * Return value:
+ *		Answer of the message receiver
+ *
+ */
+Editor.prototype.sendEventWithContext = function(msg, node)
+{
+	var self = this;
+	var context = ". ";
+	var inheritances = "";
+	
+	// Build context relation
+	this.propagateDownwards(node, function _stopEdit(parent_node) {
+		var parent_object = self.contentHash[parent_node.getAttribute("uuid")];
+	console.log(parent_node.getAttribute("uuid"), self.contentHash[parent_node.getAttribute("uuid")]);
+		context += " << ?~"+parent_object._getClassName();
+		inheritances += parent_object._relationToString("<", 0, true, "?") + "; ";
+	});
+	
+	// Extract arguments
+	var args = [];
+	
+	for (var idx = 2; idx < arguments.length; idx++) {
+		args.push(arguments[idx]);
+	}
+	
+	// Send message
+	return String.prototype._send.apply(("|"+msg+"; "+inheritances+context), args);
+}
+
+/*
  * Editor::onClick(event)
  *
  * Handles a click into the editor view. The system guarantees, that the reference
@@ -102,52 +170,61 @@ Editor.prototype.htmlRenderAspect = function(receiver, result, input, def)
  */
 Editor.prototype.onClick = function(event)
 {
-	var parent_node = event.target;
+	var targetView = event.target;
 	var selection = window.getSelection();
-	var uuid;
-	var ex_node;
-	
-	var text_coordinates = { "|?anchor_node < ?dom_node < native":	 	new Native(selection.anchorNode), 
-							 "|?anchor_offset < number": 				selection.anchorOffset
-						   }._as("|?selection_coordinates < structure");
+	var lastFocussed = null;
 
-	// Get associated parent node
-	while ((uuid = parent_node.getAttribute("uuid")) == null) {
-		parent_node = parent_node.parentNode;
+	// Get the view node, which is associated with the event
+	var uuid;
+	
+	while ((uuid = targetView.getAttribute("uuid")) == null) {
+		targetView = targetView.parentNode;
 		
-		// Event not going to a tagged node
-		if (parent_node == null)
+		// Event is not targeting a view node
+		if (targetView == null)
 			return;
 	}
 
 	// Objectify node
-	parent_node = (new Native(parent_node))._as("|?focussed < ?dom_node < native");
+	targetView = (new Native(targetView))._as("|?anchor_view < ?dom_node < native");
 	
-	// Get unfocussed node
-	if (this.focussed_node != null) {
-		ex_node = (new Native(this.focussed_node.valueOf()))._as("|?unfocussed < ?dom_node < native");
+	// Create target description
+	var eventCoordinates = { "|?anchor_node < ?dom_node < native":	 	new Native(selection.anchorNode), 
+			 				 "|?anchor_offset < number": 				selection.anchorOffset,
+							 "|?anchor_view < ?dom_node < native":		targetView,
+							 "|?page_x < cartesian < number":			event.pageX,
+							 "|?page_y < cartesian < number":			event.pageY
+						   }._as("|event_coordinates < structure");
 
-		// Send stop edit, to currently focussed node
-		var lost_accepted =
-			"|StopEditHandler; {use_uuid_attribute, unset_is_focussed}; <(accepted)>; accepted < boolean"._send(ex_node, parent_node);
-
-		// Change of focus was not accepted
-		if (!lost_accepted)
+	// Send stop edit
+	if (this.lastFocussed != null) {
+		var lastFocussed = (new Native(this.lastFocussed))._as("|?last_focussed_view < ?dom_node < native");
+	
+		var accepted = this.sendEventWithContext("StopEdit; {use_uuid_attribute, unset_is_focussed}; <(accepted)>; accepted < boolean", 
+												 lastFocussed.valueOf(), 
+												 eventCoordinates, lastFocussed, this.contentHash[lastFocussed.valueOf().getAttribute("uuid")]
+												);
+	
+		if (!accepted)
 			return;
-	}
-	 else {
-	 	ex_node = null;
-	}
+	}		
 
-	// Send begin edit to newly focussed node
-	"|BeginEditHandler; {use_uuid_attribute, set_is_focussed}; <(accepted)>; accepted < boolean"._send(parent_node, 
-																									   ex_node,
-																									   this.contentHash[uuid], 
-																									   text_coordinates
-																									  );
-	this.focussed_node = parent_node;
+	// Send begin edit
+	var accepted = this.sendEventWithContext("BeginEdit; {use_uuid_attribute, set_is_focussed}; <(accepted)>; accepted < boolean", 
+											 targetView.valueOf(), 
+											 eventCoordinates, this.contentHash[targetView.valueOf().getAttribute("uuid")]
+											);
 
-	// Ignore clicks on links etc.
-	event.preventDefault();
+	if (!accepted)
+		return;
+		
+	// Set up focus
+	this.lastFocussed = targetView.valueOf();
+	
+	// Finish handling
+	//event.preventDefault();
+	//event.stopPropagation();
+
+	return true;
 }
 

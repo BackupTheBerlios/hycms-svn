@@ -2,6 +2,7 @@
 <head>
 	<title>View: <? echo $_GET["hycms_content"] ?></title>
 
+	<link rel="stylesheet" type="text/css" href="editor.css">
 	<link rel="stylesheet" type="text/css" href="nocache.css">
 
 <? include "../services/setup.php" ?>	
