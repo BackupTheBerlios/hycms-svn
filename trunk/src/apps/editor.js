@@ -27,6 +27,7 @@ function Editor(viewContainer)
 
 	// Register events Handlers
 	viewContainer.addEventListener("click", function(event) { try { self.onClick(event); } catch(e) { console.log(e) } } , true);
+	viewContainer.addEventListener("keypress", function(event) { try { self.onClick(event); } catch(e) { console.log(e) } } , true);
 
 	// Register all aspects
 	function aspectCallback() { self.htmlRenderAspect.apply(self, arguments); }
@@ -145,7 +146,7 @@ Editor.prototype.sendEventWithContext = function(msg, node)
 	// Build context relation
 	this.propagateDownwards(node, function _stopEdit(parent_node) {
 		var parent_object = self.contentHash[parent_node.getAttribute("uuid")];
-	console.log(parent_node.getAttribute("uuid"), self.contentHash[parent_node.getAttribute("uuid")]);
+
 		context += " << ?~"+parent_object._getClassName();
 		inheritances += parent_object._relationToString("<", 0, true, "?") + "; ";
 	});
@@ -222,8 +223,8 @@ Editor.prototype.onClick = function(event)
 	this.lastFocussed = targetView.valueOf();
 	
 	// Finish handling
-	//event.preventDefault();
-	//event.stopPropagation();
+	event.preventDefault();
+	event.stopPropagation();
 
 	return true;
 }

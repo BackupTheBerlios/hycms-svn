@@ -48,9 +48,15 @@
  *	HtmlView_renderCode
  *
  */
-function HtmlView_renderLine(element, replacements) {
-		var code_line = element.valueOf().replace(/\&/g, "&&").replace(/\</g, "&lt;").replace(/\>/g, "&gt;");
+function HtmlView_renderLine(element, replacements) 
+{
+		var code_line;
 
+		if (element._instanceOf("code"))
+			code_line = element.valueOf().replace(/\&/g, "&&").replace(/\</g, "&lt;").replace(/\>/g, "&gt;");
+		else
+			code_line = HtmlView_renderChild(element, null, "text") 
+		
 		for (var idx = 0; idx < replacements.length; idx ++) {
 			var replacement = replacements[idx];
 			var css_type = "code_highlight_"+replacement.type.toLowerCase();
@@ -58,7 +64,7 @@ function HtmlView_renderLine(element, replacements) {
 			code_line = code_line.replace(replacement.regexp, "$1<span class='"+css_type+"'>$2</span>$3");
 		}
 		
-		return HtmlView_tag("span", element, ""._as("|>(~codeLine)<; ?codeLine < text"), code_line._as("|?codeLine < text"));
+		return HtmlView_tag("span", element, ""._as("|>(~codeLine)<; ?codeLine < text"), code_line);
 }
 
 /*

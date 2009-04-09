@@ -15,12 +15,6 @@ td {
 	font-style: italic;
 }
 
-span.code {
-	font-family: monospace;
-	margin-left: 0.4em;
-	margin-right: 0.4em;
-}
-
 h1 {
 	text-align: center;
 }
@@ -29,6 +23,12 @@ h1 {
  * Code view
  *
  */
+span.code {
+	font-family: monospace;
+	margin-left: 0.4em;
+	margin-right: 0.4em;
+}
+
 div.code {
 	font-family: monospace;
 	border: 1px dashed #a0a0a0;
