@@ -9,7 +9,7 @@
 //
 ({
 	purpose:		"BeginEdit",
-	conditions:		"{use_uuid_attribute, set_is_focussed}",
+	conditions:		"{use_uuid_attribute, set_is_focussed, use_content_editable_caret}",
 
 	input:			">(event_coordinates, ~focussed_model)<",
 	input_types:	"?focussed_model < structure; event_coordinates < structure",
@@ -33,7 +33,7 @@
 //
 ({
 	purpose:		"StopEdit",
-	conditions:		"{use_uuid_attribute, unset_is_focussed}",
+	conditions:		"{use_uuid_attribute, unset_is_focussed, use_content_editable_caret}",
 
 	input:			">(event_coordinates, last_focussed_view, ~unfocussed_model)<",
 	input_types:	"?unfocussed_model < structure; event_coordinates < structure; last_focussed_view < ?dom_node < native",
@@ -58,7 +58,7 @@
 //
 ({
 	purpose:		"BeginEdit",
-	conditions:		"{use_uuid_attribute, set_is_focussed}",
+	conditions:		"{use_uuid_attribute, set_is_focussed, use_content_editable_caret}",
 
 	input:			">(event_coordinates, ~focussed_model)<",
 	input_types:	"?focussed_model < list; event_coordinates < structure",
@@ -82,7 +82,7 @@
 //
 ({
 	purpose:		"StopEdit",
-	conditions:		"{use_uuid_attribute, unset_is_focussed}",
+	conditions:		"{use_uuid_attribute, unset_is_focussed, use_content_editable_caret}",
 
 	input:			">(event_coordinates, last_focussed_view, ~unfocussed_model)<",
 	input_types:	"?unfocussed_model < list; event_coordinates < structure; last_focussed_view < ?dom_node < native",

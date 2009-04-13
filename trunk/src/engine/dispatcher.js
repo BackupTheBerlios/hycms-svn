@@ -237,6 +237,9 @@ Dispatcher.prototype.find = function()
  * Optional elements of the inheritance hierarchy of the parameter object
  * will be stored as optional elements in the inlet relation.
  *
+ * If a parameter is extended by _extend, the receiver can access the object
+ * using the extended term. 
+ *
  * The function will return the result of the function. And
  * pass all exceptions.
  *
@@ -256,6 +259,7 @@ Dispatcher.prototype.send = function(definitions, params)
 	// Analyze parameters
 	for (var idx = 0; idx < params.length; idx++) {
 		var param = params[idx];
+		var paramValue = param;
 	
 		// Is it null? => ignore it
 		if (param == null)
@@ -273,7 +277,7 @@ Dispatcher.prototype.send = function(definitions, params)
 			inlet_descs.push("structure");
 			param_descs.push("null < structure");
 			
-			input["|structure"] = param;
+			input["|structure"] = paramValue;
 		}
 		 else {
 		 	var param_type = new Array();
@@ -288,7 +292,7 @@ Dispatcher.prototype.send = function(definitions, params)
 			if (input[param_str] != null)
 				throw new ParameterTypeNotUnique("Parameter not unique - "+param_str);
 				
-			input[param_str] = param;
+			input[param_str] = paramValue;
 		}
 	}
 

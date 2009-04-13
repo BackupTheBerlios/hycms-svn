@@ -20,10 +20,44 @@ function ElementAlreadyExistsError(message)
 ElementAlreadyExistsError.prototype = new Error();
 
 /*
+ * class __TypeWrap(description, object)
+ *
+ * Used for temporary type extensions.
+ *
+ * See: _extend
+ *
+ */
+function __TypeWrap(description, object)
+{
+	this.description = description;
+	this.object = object;
+
+	this._as(description);
+}	
+
+/*
+ * Object::_extend(term, object)
+ *
+ * Extends the class name of the given "object" by "term".
+ *
+ */
+Object.prototype._extend = function (term) 
+{
+	var descr = this._def_string();
+	
+	descr = "|"+ term+" < "+this._relationToString("<", 0, true);
+
+	return new __TypeWrap(descr, this);
+}
+
+/*
  * Object::_get(term)
  *
  * Returns the first element, that has "term" in its
  * primary inheritance hierarchy.
+ *
+ * If an element is of the type __TypeWrap the wraped
+ * object will be returned.
  *
  * Return value:
  *	The element or "null"
@@ -35,8 +69,12 @@ Object.prototype._get = function(term)
 		if (key.charAt(0) == "|") {
 			element = this[key];		
 
-			if (element._instanceOf(term))
-				return element;
+			if (element._instanceOf(term)) {
+				if (element instanceof __TypeWrap)
+					return element.object;
+				else
+					return element;
+			}
 		}
 	}
 	
@@ -48,6 +86,9 @@ Object.prototype._get = function(term)
  *
  * Returns all elements, which have "term" in their primary
  * inheritance hierarchy.
+ *
+ * It will return the wraped object for all elements which are
+ * instance of __TypeWrap.
  *
  * Return value:
  *	An array of elements
@@ -61,8 +102,13 @@ Object.prototype._getAll = function(term)
 		if (key.charAt(0) == "|") {
 			element = this[key];		
 
-			if (element._instanceOf(term))
-				out.push(element);
+			if (element._instanceOf(term)) {
+			
+				if (element instanceof __TypeWrap)
+					out.push(element.object);
+				else
+					out.push(element);
+			}
 		}
 	}
 	

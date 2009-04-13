@@ -2,22 +2,32 @@
  * [class] Editor
  *
  * Properties:
- *		viewContainer		The DOM node used to show the content
- *		content				The currently viewed document as content tree
- *		contentHash			Map from HTML node tags to content objects
- *		focussedNode		Node with the current focus
+ *		viewContainer			The DOM node used to show the content
+ *
+ *		content					The currently viewed document as content tree
+ *		contentHash				Map from HTML node tags to content objects
+ *
+ *		lastFocussed			Node with the current focus
+ *		currentSemantics		Current semantics selected by the user
  *
  * Methods:
- *		viewContent
- *		show
+ *		viewContent				Renders a given content
+ *		show					Shows the editor view for a given content path
+ *
  *		propagateDownwards		Propagates a certain event downwards the tree
+ *		getViewNode				Retrieves the view node responsible for a given DOM node
+ *
+ *		changeFocus				Changes the focus inside the editor
+ *		insertText				Inserts a given text with a given semantic on a given position
  *
  * Aspects:
  *		htmlRenderAspect		Extends all HTML views with event handling and tags them
  *								to the contentHash
  *
  * Events:
- *		onClick					Click event
+ *		onClick					Click event (changes focus)
+ *		onKeyPress				Keypress event (insert / delete text; no focus change)
+ *		onKeyUp					KeyUp event (focus change / selection change)
  *
  */
 function Editor(viewContainer)
@@ -26,12 +36,19 @@ function Editor(viewContainer)
 	this.viewContainer = viewContainer;
 
 	// Register events Handlers
-	viewContainer.addEventListener("click", function(event) { try { self.onClick(event); } catch(e) { console.log(e) } } , true);
-	viewContainer.addEventListener("keypress", function(event) { try { self.onClick(event); } catch(e) { console.log(e) } } , true);
+	viewContainer.addEventListener("click", function(event) { try { self.onClick(event); } catch(e) { console.log(e) } }, true);
+	viewContainer.addEventListener("keypress", function(event) { if (event.target == viewContainer) try { self.onKeyPress(event); } catch(e) { console.log(e) } }, true);
+	viewContainer.addEventListener("keyup", function(event) { if (event.target == viewContainer) try { self.onKeyUp(event); } catch(e) { console.log(e) } }, true);
+
+	// Prevent context menu
+	viewContainer.addEventListener("contextmenu", function(event) { event.preventDefault(); event.stopPropagation(); }, true);
 
 	// Register all aspects
 	function aspectCallback() { self.htmlRenderAspect.apply(self, arguments); }
 	aspectCallback._observe(["|View; <(~html)>; html < text; {set_uuid_attribute}"], ":after");
+
+	// Make the editor "contentEditable"
+	this.viewContainer.contentEditable = true;
 }
 
 /*
@@ -110,7 +127,7 @@ Editor.prototype.propagateDownwards = function(target, handler)
 	var propagationList = [];
 	var node = target;
 	
-	while ((node != null) && (node != this.viewContainer))
+	while ((node != null) && (node.getAttribute != null) && (node != this.viewContainer))
 	{
 		if (node.getAttribute("uuid") != null)
 			propagationList.push(node);
@@ -163,69 +180,229 @@ Editor.prototype.sendEventWithContext = function(msg, node)
 }
 
 /*
- * Editor::onClick(event)
+ * Editor::getViewNode(anchorNode)
  *
- * Handles a click into the editor view. The system guarantees, that the reference
- * to "this" is the editor object associated with the view.
+ * Returns the view node, which is responsible for the given
+ * anchor node. The responsible view node is the first parent node
+ * of the anchor node, that has a UUID attribute.
+ *
+ * Return value:
+ *		- The view node (DOM)
+ *		- null, if such a node does not exist
+ */
+Editor.prototype.getViewNode = function(anchorNode)
+{
+	var targetView = anchorNode.parentNode;
+	var uuid;
+
+	// Get the view node, which is associated with the event	
+	while (   (targetView != null) 
+	       && (targetView.getAttribute != null)
+		   && ((uuid = targetView.getAttribute("uuid")) == null)
+		  ) 
+	{
+		targetView = targetView.parentNode;
+	}
+
+	if (uuid == null)
+		return null;
+
+	return targetView;
+}
+
+/*
+ * Editor::changeFocus(anchorNode, anchorOffset, pageX, pageY)
+ *
+ * Informs the views about changing of the caret inside the editor. "anchorNode"
+ * is the node which should receive the focus at position "anchorOffset". The
+ * coordinates "pageX" and "pageY" should give further informations about the position,
+ * the user selected exactly.
+ *
+ * This function call StopEdit on the view which is going to lose its focus (this.lastFocussed).
+ * If this view accepts the lost of focus, the message BeginEdit will be called for the view
+ * that will receive the focus. If it accepts the new focus, lastFocussed will be updated.
+ * Further propagation of the event will be prevented.
+ *
+ * Return value:
+ *		true			Event accepted
+ *		false			Event not accepted
+ *		null			Event not handled
  *
  */
-Editor.prototype.onClick = function(event)
+Editor.prototype.changeFocus = function(anchorNode, anchorOffset, pageX, pageY)
 {
-	var targetView = event.target;
-	var selection = window.getSelection();
+	var targetView = this.getViewNode(anchorNode);
 	var lastFocussed = null;
+	var uuid = (targetView != null) ? (targetView.getAttribute("uuid")) : null;
+	var targetModel = this.contentHash[uuid];
 
-	// Get the view node, which is associated with the event
-	var uuid;
-	
-	while ((uuid = targetView.getAttribute("uuid")) == null) {
-		targetView = targetView.parentNode;
-		
-		// Event is not targeting a view node
-		if (targetView == null)
-			return;
-	}
+	// Event did not targeting a view node
+	if (uuid == null)
+		return null;
 
 	// Objectify node
 	targetView = (new Native(targetView))._as("|?anchor_view < ?dom_node < native");
 	
 	// Create target description
-	var eventCoordinates = { "|?anchor_node < ?dom_node < native":	 	new Native(selection.anchorNode), 
-			 				 "|?anchor_offset < number": 				selection.anchorOffset,
+	var eventCoordinates = { "|?anchor_node < ?dom_node < native":	 	new Native(anchorNode), 
+			 				 "|?anchor_offset < number": 				anchorOffset,
 							 "|?anchor_view < ?dom_node < native":		targetView,
-							 "|?page_x < cartesian < number":			event.pageX,
-							 "|?page_y < cartesian < number":			event.pageY
+							 "|?page_x < cartesian < number":			pageX,
+							 "|?page_y < cartesian < number":			pageY
 						   }._as("|event_coordinates < structure");
 
 	// Send stop edit
 	if (this.lastFocussed != null) {
 		var lastFocussed = (new Native(this.lastFocussed))._as("|?last_focussed_view < ?dom_node < native");
 	
-		var accepted = this.sendEventWithContext("StopEdit; {use_uuid_attribute, unset_is_focussed}; <(accepted)>; accepted < boolean", 
+		var accepted = this.sendEventWithContext("StopEdit; {use_uuid_attribute, unset_is_focussed, use_content_editable_caret}; <(accepted)>; accepted < boolean", 
 												 lastFocussed.valueOf(), 
 												 eventCoordinates, lastFocussed, this.contentHash[lastFocussed.valueOf().getAttribute("uuid")]
 												);
 	
 		if (!accepted)
-			return;
+			return false;
 	}		
 
 	// Send begin edit
-	var accepted = this.sendEventWithContext("BeginEdit; {use_uuid_attribute, set_is_focussed}; <(accepted)>; accepted < boolean", 
+	var accepted = this.sendEventWithContext("BeginEdit; {use_uuid_attribute, set_is_focussed, use_content_editable_caret}; <(accepted)>; accepted < boolean", 
 											 targetView.valueOf(), 
-											 eventCoordinates, this.contentHash[targetView.valueOf().getAttribute("uuid")]
+											 eventCoordinates, targetModel
 											);
 
 	if (!accepted)
-		return;
+		return false;
 		
 	// Set up focus
 	this.lastFocussed = targetView.valueOf();
 	
-	// Finish handling
-	event.preventDefault();
-	event.stopPropagation();
-
+	// Set current semantics
+	this.currentSemantics = targetModel._def_string();
+	document.title = this.currentSemantics;
 	return true;
+}
+
+/*
+ * Editor::insert(object, anchorNode, anchorOffset)
+ *
+ * Inserts a given "object" at the given anchor node and offset. This function
+ * will send a "InsertChild" event to the view of the given anchor node. If the
+ * node denies the insertion, the event will be passed to its parent node.
+ *
+ * The called node should place the object as its child and call View to
+ * show it into the tree.
+ *
+ * Return value:
+ *		true		Operation accepted
+ *		false		Operation denied
+ *		null		Operation not applicable on the given node
+ *
+ */
+Editor.prototype.insert = function(object, anchorNode, anchorOffset)
+{
+	var accepted = false;
+	var parentView = this.getViewNode(anchorNode);
+	
+	do {
+		// Create target description
+		var eventCoordinates = { "|?anchor_node < ?dom_node < native":	 	new Native(anchorNode), 
+				 				 "|?anchor_offset < number": 				anchorOffset,
+								 "|?anchor_view < ?dom_node < native":		parentView,
+							   }._as("|event_coordinates < structure");
+
+		parentView = this.getViewNode(anchorNode);
+		
+		if (parentView == null)
+			return null;
+
+		accepted = this.sendEventWithContext("InsertChild; {call_view_method, use_uuid_attribute}; call_view_method: {set_uuid_attribute, ?not_editable_attribute}; <(accepted)>; accepted < boolean",
+											 eventCoordinates,
+											 object._extend("?child_model"),
+											 this.contentHash[parentView.getAttribute("uuid")]._extend("?parent_model")
+											);
+	
+	} while(!accepted);
+	
+	return true;
+}
+
+/*
+ * Editor::onClick(event)
+ *
+ * Handles a click into the editor view. The caller have to make sure, that the reference
+ * to "this" is the editor object associated with the view.
+ *
+ * This function will call the high-level event "onSetCaret".
+ *
+ */
+Editor.prototype.onClick = function(event)
+{
+	var selection = window.getSelection();
+
+	if (this.changeFocus(selection.anchorNode, selection.anchorOffset, event.pageX, event.pageY) != null) {
+		event.preventDefault();
+		event.stopPropagation();
+	}
+}
+
+/*
+ * Editor::onKeyPress(event)
+ *
+ * Handles a keypress inside the editor view. The caller have to make sure, that the reference
+ * to "this" is the editor object associated with the view.
+ *
+ * This function multiplexes several high-level events:
+ *
+ * - Ignore cursor moves
+ * - Insert content
+ * - Delete content
+ *
+ */
+Editor.prototype.onKeyPress = function(event)
+{
+	// Ignore cursor events
+	if ((event.keyCode > 32) && (event.keyCode < 41)) {
+		return;
+	}
+
+	// Insert text
+	if (event.charCode != 0) {
+		var selection = window.getSelection();
+		var inputText = String.fromCharCode(event.charCode)._as(this.currentSemantic);
+		
+		this.insert(inputText, selection.anchorNode, selection.anchorOffset);
+	}
+
+	// Don't do anything else, if we didn't allowed it explicitly
+	event.preventDefault();
+	event.stopPropagation();	
+}
+
+
+/*
+ * Editor::onKeyUp(event)
+ *
+ * Handles a keypress inside the editor view. The caller have to make sure, that the reference
+ * to "this" is the editor object associated with the view.
+ *
+ * This function multiplexes several high-level events:
+ *
+ * - Focus change after cursor move
+ *
+ */
+Editor.prototype.onKeyUp = function(event)
+{
+	// Move cursor
+	if ((event.keyCode > 32) && (event.keyCode < 41)) {
+		var selection = window.getSelection();
+
+		this.changeFocus(selection.anchorNode, selection.anchorOffset, event.pageX, event.pageY)
+
+		return;
+	}
+
+	// Don't do anything else, if we didn't allowed it explicitly
+	event.preventDefault();
+	event.stopPropagation();	
 }
 

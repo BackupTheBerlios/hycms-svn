@@ -722,9 +722,9 @@ function __orderedSatisfied(satisfier, satisfyee, ier_variations, yee_variations
 	for (var yee_idx = 0; yee_idx < satisfyee.length; yee_idx ++) {
 		var yee_term = satisfyee[yee_idx];
 		var found = false;
-	
+
 		// [OPT] Stop, if term is not in the lookup hash of ther satisfier
-		if (!lookup_hash[yee_term.name]) {
+		if ((!yee_term.name == "+") && (!lookup_hash[yee_term.name])) {
 			if (!yee_term.is_option)
 				return -1;
 			else
@@ -991,4 +991,3 @@ String.prototype._satisfies = function(definition)
 
 	return _satisfy_internal(satisfier, satisfyee);
 }
-

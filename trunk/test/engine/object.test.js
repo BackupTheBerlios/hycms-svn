@@ -142,6 +142,18 @@ var objectTest =
 			console.assert( test_object._get("d") == "fdd" );
 
 			assertException( function() { test_object._append("abc"._as("|d < bar")); }, ElementAlreadyExistsError );
+		},
+		
+	"Type wraping":
+		function()
+		{
+			var test_object = {"|foo < bar":	"xyz"._as()._extend("foo < bar"),
+							   "|goo < gar":	"pqr"._as()._extend("goo < gar")
+							  };
+							  
+			console.assert( test_object._get("foo") == "xyz" );
+			console.assert( test_object._get("goo") == "pqr" );
+			
 		}
 }
 

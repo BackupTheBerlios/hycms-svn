@@ -11,7 +11,7 @@
 //
 ({
 	purpose:		"BeginEdit",
-	conditions:		"{use_uuid_attribute, set_is_focussed}",
+	conditions:		"{use_uuid_attribute, set_is_focussed, use_content_editable_caret}",
 
 	input:			">(event_coordinates, ~focussed_model)<",
 	input_types:	"?focussed_model < text; event_coordinates < structure",
@@ -28,7 +28,7 @@
 		anchorView.setAttribute("is_focussed", true);
 		anchorView.style["background"] = "#efefef";
 
-		HtmlEditor_setCaret(anchorView, anchorNode, anchorOffset);
+	//	HtmlEditor_setCaret(anchorView, anchorNode, anchorOffset);
 		
 		return true._as("|accepted < boolean");
 	}
@@ -39,7 +39,7 @@
 //
 ({
 	purpose:		"StopEdit",
-	conditions:		"{use_uuid_attribute, unset_is_focussed}",
+	conditions:		"{use_uuid_attribute, unset_is_focussed, use_content_editable_caret}",
 
 	input:			">(event_coordinates, last_focussed_view, ~unfocussed_model)<",
 	input_types:	"?unfocussed_model < text; event_coordinates < structure; last_focussed_view < ?dom_node < native",
@@ -54,8 +54,32 @@
 		lastFocussed.setAttribute("is_focussed", false);
 		lastFocussed.style["background"] = "";
 
-		HtmlEditor_unsetCaret(lastFocussed);
+	//	HtmlEditor_unsetCaret(lastFocussed);
 	
 		return true._as("|accepted < boolean");
 	}
 );
+
+//
+// InsertChild: generic handler for text inserting text
+//
+({
+	purpose:				"InsertChild",
+	conditions:				"{call_view_method, use_uuid_attribute}",
+	recursive_conditions:	"call_view_method: {set_uuid_attribute, ?not_editable_attribute}",
+	
+	input:					">(event_coordinates, ~parent_model, ~inserted_model)<",
+	input_types:			"?child_model < text; ?parent_model < text; event_coordinates < structure",
+
+	output:					"<(accepted)>; accepted < boolean"
+})._(
+	
+	function InsertChild_Text(input, def)
+	{
+		input._get("child_model")
+		
+		return true._as("|accepted < boolean");
+	}
+
+);
+

@@ -13,7 +13,7 @@
 	<script type='text/javascript' charset='UTF-8'>
 		function main(contentPath) 
 		{
-			var editor = new Editor(document.body);
+			var editor = new Editor(document.getElementById("container"));
 		
 			editor.show(contentPath);
 		}
@@ -21,7 +21,9 @@
 
 </head>
 <body onload="main('<?=$_GET['hycms_content']?>')">
+<div id='container'>
  Loading and rendering content...
+</div>
 </body>
 </html>
 

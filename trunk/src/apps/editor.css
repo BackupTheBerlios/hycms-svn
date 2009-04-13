@@ -4,3 +4,11 @@ div.editorCaret {
 	height:		5px;
 	width		5px;
 }
+
+#container {
+	border:		1px solid black;
+}
+
+#container:focus {
+	outline:	none;
+}

@@ -150,7 +150,22 @@ var dispatcherTest =
 				
 				console.assert( dispatcher.send( ["|a < b"], ["xyz"._as("|?foo < text; foo: [q,d]")] ) == "xyz" );
 			},					
+
 			
+		"Sending a message to a function using a type extension":
+			function()
+			{
+				var dispatcher = new Dispatcher();
+				
+				function f_a(input) { console.log(input); console.log(input._get("foo"), input._get("bar")); return input._get("foo") + input._get("bar"); }
+				
+				f_a._as("|action", ">(~foo, ~bar)<; foo < text; bar < text; <(text)>");
+				
+				dispatcher.register(f_a);
+
+				console.assert( dispatcher.send( ["|action", "<(text)>"], ["abc"._as()._extend("bar"), "def"._as()._extend("foo")] ) == "defabc" );
+			},
+
 		"Watching a function call":
 			function()
 			{
