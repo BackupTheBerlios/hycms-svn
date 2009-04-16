@@ -11,12 +11,56 @@
 <script>
 
 	// Add your test suites here:
-	doTest( {
+/*	doTest( {
 				"Session manager":			sessionTest
 			 }
 		   );
+*/		   
+	function submitUserData()
+	{
+		var user_name = document.getElementById("name").value;
+		var user_password = document.getElementById("passwd").value;
+		
+		checkPassword(user_name, user_password)
+	}
+	
+	function checkPassword(hycms_name, hycms_password)
+	{
+		document.getElementById("ergebnis").innerHTML = "Passwort wird überprüft";
+		var httpRequest;
+		
+		
+		if (window.XMLHttpRequest)
+			httpRequest = new XMLHttpRequest();
+		else if (window.ActiveXObject)
+			httpRequest = new ActiveXObject("Microsoft.XMLHTTP");
+		
+		
+		httpRequest.onreadystatechange = function() {
+			
+			if (httpRequest.readyState == 4) {
+				var loginStatus = httpRequest.responseText;
+				document.getElementById("ergebnis").innerHTML = loginStatus;
+			}
+		}
+		
+		
+		httpRequest.open('POST', "../../src/services/logon.php", true);
+		httpRequest.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+		httpRequest.send('hycms_user_name='+hycms_name+'&hycms_password='+hycms_password);
+
+		
+	}
+	
+	
+	
 
 </script>
 
+	
+  	<p>Name:<br><input  id="name" type="text" size="32" maxlength="32" value="Testuser"></p>
+	<p>Passwort:<br><input id="passwd" type="password" size="32" maxlength="32" value="Testpwd"></p>
+	<input type="submit" name="button1" value="Absenden" onclick="submitUserData();"> 
+	<div id="ergebnis">warte auf eingabe</div> 
 </html>
 
