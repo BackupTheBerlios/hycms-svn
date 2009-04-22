@@ -1,0 +1,169 @@
+Grundsätzlicher	Hinweis:
+========================
+	- Bei allem was mit Pfaden zu tun hat, bitte aufpassen, dass Benutzer nicht heimlich sowas wie ".." unterjubeln können. Also nicht dass
+	  jemand mit "hycms_content_path=../../" Zugriff auf den Ordner "src" erlangt...
+	  
+	 - Bei allem, das Dateien ändert immer darauf achten, dass die Session gültig ist (siehe Punkt 1)
+
+	 - Alle PHP-Skripte, die keine Daten zurückliefern geben einfach den String "SUCCESS" zurück.
+	 		
+
+1. Session-Logon (je nach Zeit vllt. bis Mittwoch?)
+================
+	Aufgabe:
+	========
+		Authentifizieren und Verwalten einer Sitzung beim PHP-Server
+		
+	Interface:
+	==========
+		src/services/logon.php
+		======================
+		
+		Parameter:
+		----------
+			$_POST["hycms_user_name"]	= Benutzername
+			$_POST["hycms_password"]	= Passwort (im Moment im Klartext - is ja net so wild, bei anderen Login-Seiten ist das auch so.
+										  später kann man aber evtl. MD5 auf JavaScript-Seite implementieren, wenn man weng Zeit hat)
+										  
+		Antwort vom PHP-Server:
+		-----------------------
+			=> Session-Cookie (siehe Session-Interface von PHP)
+			
+		src/services/session.php
+		========================
+			-> Alles was du intern bei anderen PHP-Skripten für Sitzungsmanagment brauchst. Vermutlich eine Funktion wie:
+			
+			hasSession()
+			
+			um zu prüfen, ob derzeit eine gültige Sitzung besteht...
+
+	Tests:
+	======
+		- JavaScript, das nativ Benutzername / Passwort abfragt und an Server sendet und irgendwie die Session-ID so speichert, dass man
+		  sie bei späteren AJAX-Requests wieder verwenden kann
+
+		- Wie AJAX-Requests im Prinzip funktionieren findest du in src/packages/persistence/data_provider.js
+		
+		- Das Test-Skript würde ich dann in das hyCMS-Framework integrieren, damit der Editor das nutzen kann (ist also weniger ein Test,
+		  als ein Prototyp :-))
+
+
+2. Content Manager (bis Ostern)
+===============================
+	Aufgabe:
+	========
+		Verwalten der Inhalte
+
+	Interface:
+	==========
+		src/services/content-storage.php
+		================================
+		
+		Parameter:
+		----------
+			Session-Daten (Sitzungen müssen authentifiziert sein!)
+			$_POST["hycms_json_data"] = JSON-Daten generiert von JavaScript (flacher String)
+			$_POST["hycms_content"]	  = Pfad der JSON-Datei im Verzeichnis "src/storage/persistent" - allerdings ohne Endung ".json"
+
+		src/services/list_content.php
+		=============================
+			Liefert eine Liste der Dateien in storage/persistent. 
+			
+			Parameter
+			---------
+				Session-Daten (Nur für authentifizierte Sitzungen!)
+				$_POST["hycms_content_path"]		Pfad, der aufgelistet werden soll (wenn leer, dann direkt storage/persistent)
+				
+			Ausgabe
+			-------
+				JSON-Array für den Pfad-Inhalt. Also enthält das Verzeichnis die Dateien "foo.json" und "bar.json", dann antwort vom Server:
+				
+				["foo.json", "bar.json"]
+				
+		src/services/delete_content.php
+		===============================
+			Löscht eine Datei in storage/persistent.
+			
+			Parameter
+			---------
+				Session-Daten (Nur für authentifizierte Sitzungen!)			
+				$_POST["hycms_content_path"]		Pfad der zu löschenden Datei in storage/persistent, ohne JSON-Endung
+					
+
+3. Cache-Manager (Bis zur Stammesversammlung?)
+==============================================
+	Aufgabe:
+	========
+		Damit das Laden der Seiten schnell geht, sollten wir die Ausgaben von HTML-Views (und auch LaTeX etc.) cachen. Dazu brauchen wir
+		einen Dienst auf dem Server, der uns das Caching verwaltet...
+
+	Interface:
+	==========
+		src/services/manage_cache.php
+		=============================
+			Registrieren von Inhalten, die Cache-Abhängigkeiten besitzen
+	
+			Parameter
+			---------	
+				Session-Daten (Sitzungen müssen authentifiziert sein!)
+				$_POST["hycms_content_path"]		Name der JSON-Datei mit Inhalten in storage/persistent/
+				$_POST["hycms_dependencies"][n]		Array mit allen Dateien, von denen diese Datei abhängt
+	
+		src/services/test_cache.php
+		===========================
+			Überprüfen, welche Caches nach Änderung eines Dokuments neu berechnet werden müssen
+		
+			Parameter
+			---------
+				$_POST["hycms_content_path"]		Name der JSON-Datei deren Cache-Abhängigkeiten geprüft werden sollen
+			
+			Antwort
+			-------
+				JSON-Objekt (mit PHP-JSON-API erstellt), das folgenden Aufbau hat:
+				
+				[
+					{name:		"CONTENT-Pfad der zu aktualisieren datei",
+					 views:		["html"]
+					},
+					usw.
+				]
+				
+				Also ist ein JSON-Array das für jede Datei, die von der im Parameter gegebenen Datei abhängt einen Eintrag enthält,
+				der aussagt, dass die Abhängigkeit aktualisiert werden soll. Die Liste "views" enthält am Anfang immer ["html"]. Später
+				können wir da dann auch andere Views, die gecached werden sollen auflisten....
+
+		src/services/upload_cache.php
+		=============================
+			Hochladen von Cache-Änderungen (Cache-Daten sollen dann unter "cache/html" abgelegt werden)
+			
+			Parameter
+			---------
+				Session-Daten (Nur für authentifizierte Sitzungen!)
+				$_POST["hycms_content_path"]		Name der Datei in storage/persistent deren Cache aktualisiert werden soll
+				$_POST["hycms_cache_type"]			Typ des zu ändernden Caches (im Moment HTML)
+				$_POST["hycms_cache_data"]			Daten die im Cache unter dem gleichen Dateinamen, wie storage/persistent abgelegt werden
+													sollen
+
+		src/services/delete_cache.php
+		=============================
+			Löschen einer Datei aus dem Cache
+			
+			Parameter
+			---------
+				$_POST["hycms_content_path"]		Löscht eine Datei aus dem Cache
+
+
+4. File-Uploader (Bis Stammesversammlung)
+=========================================
+	Aufgabe:
+	========
+		Binärdateien (Bilder o.ä.), die per FILE-Request ankommen unter storage/files/ ablegen
+		
+	Interface:
+	==========
+		src/services/upload.php
+		=======================
+			Session-Daten (Sitzungen müssen authentifiziert sein!)
+			$_FILE							=> Datei
+			$_POST["hycms_upload_path"]		=> Zielpfad unterhalb von storage/files
+
