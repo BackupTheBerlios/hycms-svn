@@ -52,6 +52,30 @@
 		
 	}
 	
+	function deleteSession()
+	{
+		document.getElementById("ergebnis").innerHTML = "Session wird beendet";
+		var httpRequest;
+		
+		
+		if (window.XMLHttpRequest)
+			httpRequest = new XMLHttpRequest();
+		else if (window.ActiveXObject)
+			httpRequest = new ActiveXObject("Microsoft.XMLHTTP");
+		
+		
+		httpRequest.onreadystatechange = function() {
+			
+			if (httpRequest.readyState == 4) {
+				var loginStatus = httpRequest.responseText;
+				document.getElementById("ergebnis").innerHTML = loginStatus;
+			}
+		}
+		httpRequest.open('POST', "../../src/services/logout.php", true);
+		httpRequest.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+		httpRequest.send("");
+		
+	}
 	
 	
 
@@ -61,6 +85,7 @@
   	<p>Name:<br><input  id="name" type="text" size="32" maxlength="32" value="Testuser"></p>
 	<p>Passwort:<br><input id="passwd" type="password" size="32" maxlength="32" value="Testpwd"></p>
 	<input type="submit" name="button1" value="Absenden" onclick="submitUserData();"> 
+	<input type="submit" name="button2" value="Session beenden" onclick="deleteSession();"> 
 	<div id="ergebnis">warte auf eingabe</div> 
 </html>
 
