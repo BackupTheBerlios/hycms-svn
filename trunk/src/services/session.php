@@ -8,7 +8,6 @@
 ?>
 <?php
  	session_start(); 
- 	
  	// Checks if the password stored in /storage/private/passwd is valid for the user name
  	// maybe extended to check also the group or other belongings 
  	function is_authorised($hycms_user_name, $hycms_password)
@@ -24,5 +23,18 @@
  		else {
  			return false;
  		}
+ 	}
+ 	
+ 	/* has_session and delete_session maybe extended :-) */
+ 	
+ 	function has_session()
+ 	{
+ 		return $_SESSION["Login"];
+ 	}
+ 	
+ 	function delete_session()
+ 	{
+ 		session_destroy();
+ 		return true;
  	}
 ?>
