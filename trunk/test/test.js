@@ -16,7 +16,7 @@ function doTest(test_suites)
 		
 		if (test_suites.__proto__[suite_id] == suite)
 			continue;
-			
+	
 		console.group("Test suite: "+suite_id);
 		
 		for (var item in suite) {
@@ -61,5 +61,4 @@ function assertException(func, expected, output)
 	if (catched == false)
 		console.assert(false, output+" - "+"No exception retrieved");
 }
-
 

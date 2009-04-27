@@ -10,18 +10,13 @@
 	<script type='text/javascript' charset='UTF-8'>
 		function viewFunction(content)
 		{
-		console.profile();
-			var html = "|View; <(~html)>; ?html < text"._send ( content );
-		console.profileEnd();			
+			var html = content._view(Request(["*", "html", "text"], "?recursive_context"));
+				
 			document.body.innerHTML = html;
 		}
 	
 		function main(content_path) {		
-			"|?SemanticDataProvider < DataProvider"._send ( content_path._as("|path < text"), 
-															viewFunction._as("|callback < function") 
-														  );
-		
-											  
+			content_path._downloadContent( viewFunction );
 		}
 	</script>
 	

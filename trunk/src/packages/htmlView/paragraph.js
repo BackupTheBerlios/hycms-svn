@@ -4,40 +4,26 @@
  * Published under the terms of the Lesser GNU General Public License v2
  *
  */
-
 //
 // Paragraph view
 //
-({
-	purpose:	"View",
-	conditions:	"{?recursive_context, ?keep_method_conditions, ?set_uuid_attribute}",
-
-	input:		">(paragraph)<; paragraph < list",
-	output:		"<(~html)>; ?html < text"
-})._(
-
-	function HtmlView_Paragraph(input, def) 
+HtmlView_declare(
+	["*", "paragraph", "*", "list"], null,
+	
+	function HtmlView_Paragraph(request) 
 	{
-		return HtmlView_autotag("p", arguments, HtmlView_listInside(input, def));
-
+		return this._taggedIterate("p", request);
 	}
-
 );
 
 //
 // Headline view
 //
-({
-	purpose:	"View",
-	conditions:	"{?recursive_context, ?keep_method_conditions, ?set_uuid_attribute}",
-
-	input:		">(headline)<; headline < paragraph < list",
-	output:		"<(~html)>; ?html < text"
-})._(
-
-	function HtmlView_Headline(input, def) 
+HtmlView_declare(
+	["*", "headline", "*", "?paragraph", "*", "list"], null,
+	
+	function HtmlView_Paragraph(request) 
 	{
-		return HtmlView_autotag("h4", arguments, HtmlView_listInside(input, def));
+		return this._taggedIterate("h4", request);
 	}
-
 );

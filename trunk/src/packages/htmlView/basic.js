@@ -4,55 +4,55 @@
  * Published under the terms of the Lesser GNU General Public License v2
  *
  */
- 
+
 //
 // Structure view
 //
-({
-	purpose:	"View",
-	conditions:	"{?recursive_context, ?keep_method_conditions, ?set_uuid_attribute}",
+HtmlView_declare(
+	["*", "structure"], null,
 
-	input:		">(structure)<; structure; [?*]; ?text",
-	output:		"<(~html)>; ?html < text"
-})._(
-
-	function HtmlView_Structure(input, def) 
+	function HtmlView_Structure(request) 
 	{
-		var output = "";
-
-		function _view_internal(output, element, key) {
-			var id = element._getClassName().toLowerCase();
-
+		function viewFunction(elementOutput, element, key)
+		{
+			var id = element.__getClassName().toLowerCase();
+			
 			id = id[0].toUpperCase() + id.substr(1);
 			id = id.replace(RegExp("[\_\-]", "g"), " ");
-		
-			return "<tr><td>"+id+"</td><td>"+output+"</td></tr>";
+			
+			return "<tr><td>"+id+"</td><td>"+  elementOutput + "</td></tr>";
 		}
 
-		return HtmlView_autotag("table", arguments, HtmlView_listInside(input, def, "structure", _view_internal));
+		return this._taggedIterate("table", request.addOption("viewFunction", viewFunction));
 	}
 );
 
 //
 // List view
 //
-({
-	purpose:	"View",
-	conditions:	"{?recursive_context, ?keep_method_conditions, ?set_uuid_attribute}",
-
-	input:		">(list)<; list; [?*]; ?text",
-	output:		"<(~html)>; ?html < text"
-})._(
-
-	function HtmlView_List(input, def) 
+HtmlView_declare(
+	["*", "list"], null,
+	
+	function HtmlView_List(request) 
 	{
-		var output = "";
-
-		function _view_internal(output, element, key) {
-			return "<tr><td>"+key.html_text()+"</td><td>"+output+"</td></tr>";
+		function viewFunction(elementOutput, element, key)
+		{
+			return "<tr><td>"+key+"</td><td>"+  elementOutput + "</td></tr>";
 		}
 
-		return HtmlView_autotag("table", arguments, HtmlView_listInside(input, def, "list", _view_internal));
+		return this._taggedIterate("table", request.addOption("viewFunction", viewFunction));
+	}
+);
+
+//
+// Plain text view
+//		 
+HtmlView_declare(
+	["*", "text"], null,
+
+	function HtmlView_Text()
+	{
+		return this._htmlText()._tag("span", this)
 	}
 
 );
@@ -60,124 +60,35 @@
 //
 // Plain text view
 //		 
-({
-	purpose:	"View",
-	conditions:	"{?recursive_context, ?keep_method_conditions, ?set_uuid_attribute}",
+HtmlView_declare(
+	["*", "important_text", "*", "text"], null,
 
-	input:		">(text)<; text",
-	output:		"<(~html)>; ?html < text"
-})._(
-
-	function HtmlView_Text(input, def) 
+	function HtmlView_Text()
 	{
-		return HtmlView_autotag("span", arguments, input._get("text").html_text());
+		return this._htmlText()._tag("b", this)
+	}
+);
+
+//
+// Simle URL
+//	
+HtmlView_declare(
+	["*", "url", "*", "text"],
+
+	function HtmlView_Url() 
+	{
+		return this._htmlText()._tag("span", this, Request(null, null, {"attributes": "href='"+this+"'"}));
 	}
 
 );
 
-//
-// Plain boolean view
-//		 
-({
-	purpose:	"View",
-	conditions:	"{?recursive_context, ?keep_method_conditions, ?set_uuid_attribute}",
-
-	input:		">(boolean)<; boolean",
-	output:		"<(~html)>; ?html < text"
-})._(
-
-	function HtmlView_Boolean(input, def) 
-	{
-		return HtmlView_autotag("span", arguments, String(input._get("boolean")).html_text());
-	}
-
-);
-
-//
-// Plain number view
-//		 
-({
-	purpose:	"View",
-	conditions:	"{?recursive_context, ?keep_method_conditions, ?set_uuid_attribute}",
-
-	input:		">(number)<; number",
-	output:		"<(~html)>; ?html < text"
-})._(
-
-	function HtmlView_Number(input, def) 
-	{
-		return HtmlView_autotag("span", arguments, String(input._get("number")).html_text());
-	}
-
-);
-//
-// Important text view
-//		 
-({
-	purpose:	"View",
-	conditions:	"{?recursive_context, ?keep_method_conditions, ?set_uuid_attribute}",
-
-	input:		">(~important_text)<; important_text < text",
-	output:		"<(~html)>; ?html < text"
-})._(
-
-	function HtmlView_ImportantText(input, def) 
-	{
-		return HtmlView_autotag("b", arguments, input._get("text").html_text());
-	}
-
-);
-
-//
-// Identifier text view
-//		 
-({
-	purpose:	"View",
-	conditions:	"{?recursive_context, ?keep_method_conditions, ?set_uuid_attribute}",
-
-	input:		">(~identifier)<; identifier < text",
-	output:		"<(~html)>; ?html < text"
-})._(
-
-	function HtmlView_Identifier(input, def) 
-	{
-		return HtmlView_autotag("i", arguments, input._get("text").html_text());
-	}
-
-);
-
-//
-// URL view
-//		 
-({
-	purpose:	"View",
-	conditions:	"{?recursive_context, ?keep_method_conditions, ?set_uuid_attribute}",
-
-	input:		">(~url)<; url < text",
-	output:		"<(~html)>; ?html < text"
-})._(
-
-	function HtmlView_Url(input, def) 
-	{
-		return HtmlView_autotag("a", arguments, input._get("url").html_text(), "href='"+input._get("url")+"'");
-	}
-
-);
-
-//
-// Error view
-//		 
-({
-	purpose:	"View",
-	conditions:	"{?recursive_context, ?keep_method_conditions, ?set_uuid_attribute}",
-
-	input:		">(~error)<; error < text",
-	output:		"<(~html)>; ?html < text"
-})._(
+HtmlView_declare(
+	["*", "error"],
 
 	function HtmlView_Error(input, def) 
 	{
-		return HtmlView_autotag("b", arguments, input._get("error").html_text());
+		return this._htmlText()._tag("b", this)
 	}
 
 );
+

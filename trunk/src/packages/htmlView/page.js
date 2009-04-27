@@ -8,97 +8,64 @@
 //
 // Page view
 //
-({
-	purpose:	"View",
-	conditions:	"{?recursive_context, ?keep_method_conditions, ?set_uuid_attribute}",
-
-	input:		">(page)<; page < list",
-	output:		"<(~html)>; ?html < text"
-})._ (
-
-	function HtmlView_Page(input, def) 
-	{ 
-		return HtmlView_autotag("div", arguments, HtmlView_listInside(input, def));
+HtmlView_declare(
+	["*", "page", "*", "list"], null,
+	
+	function HtmlView_Page(request) 
+	{
+		return this._taggedIterate("div", request);
 	}
-
 );
 
 				  	   
 //
 // Page Title view
 //
-({
-	purpose:	"View",
-	conditions:	"{?recursive_context, ?keep_method_conditions, ?set_uuid_attribute}",
-
-	input:		">(headline)<; headline < paragraph < list",
-	called_in:	"headline << page; page < list",
-	output:		"<(~html)>; ?html < text"
-})._ (
-
-	function HtmlView_PageTitle(input, def) 
+HtmlView_declare(
+	["*", "headline", "*", "?paragraph", "*", "list"], 
+	["__options.parentList.length > 0", "__options.parentList.__last().__is('page')"],
+	
+	function HtmlView_PageTitle(request) 
 	{
-		return HtmlView_autotag("h1", arguments, HtmlView_listInside(input, def));
+		return this._taggedIterate("h1", request);
 	}
-
 );
-				  	   	    
+		  	   	    
 //
 // Section view
 //
-({
-	purpose:	"View",
-	conditions:	"{?recursive_context, ?keep_method_conditions, ?set_uuid_attribute}",
-
-	input:		">(section)<; section < list",
-	output:		"<(~html)>; ?html < text"
-})._ (
-
-	function HtmlView_Section(input, def) 
+HtmlView_declare(
+	["*", "section", "*", "list"], null,
+	
+	function HtmlView_Section(request) 
 	{
-		return HtmlView_autotag("div", arguments, HtmlView_listInside(input, def));
-
+		return this._taggedIterate("div", request);
 	}
-
 );
 
 //
 // Section headline view
 //
-({
-	purpose:	"View",
-	conditions:	"{?recursive_context, ?keep_method_conditions, ?set_uuid_attribute}",
-
-	input:		">(headline)<; headline < paragraph < list",
-	called_in:	"headline << section << page; section < list; page < list",
-	output:		"<(~html)>; ?html < text"
-})._ (
-
-	function HtmlView_SectionHeadline(input, def) 
+HtmlView_declare(
+	["*", "headline", "*", "?paragraph", "*", "list"], 
+	["__options.parentList.length > 0", "__options.parentList.__last().__is('section')"],
+	
+	function HtmlView_SectionHeadline(request) 
 	{
-		return HtmlView_autotag("h2", arguments, HtmlView_listInside(input, def));
-
+		return this._taggedIterate("h2", request);
 	}
-
 );
 
 //
 // Subsection headline view
 //
-({
-	purpose:	"View",
-	conditions:	"{?recursive_context, ?keep_method_conditions, ?set_uuid_attribute}",
-
-	input:		">(headline)<; headline < paragraph < list",
-	called_in:	"headline << section << section << page; section < list; page < list",
-	output:		"<(~html)>; ?html < text"
-})._ (
-
-	function HtmlView_SubSectionHeadline(input, def) 
+HtmlView_declare(
+	["*", "headline", "*", "?paragraph", "*", "list"], 
+	["__options.parentList.length > 1", "__options.parentList.__last().__is('section')", "__options.parentList.__last(2).__is('section')"],
+	
+	function HtmlView_SubSectionHeadline(request) 
 	{
-		return HtmlView_autotag("h3", arguments, HtmlView_listInside(input, def));
-
+		return this._taggedIterate("h3", request);
 	}
-
 );
 

@@ -7,41 +7,33 @@
 //
 // DocumentInformation view
 //
-({
-	purpose:	"View",
-	conditions:	"{?recursive_context, ?keep_method_conditions, ?set_uuid_attribute}",
-
-	input:		">(document_information)<; ?document_information < list",
-	output:		"<(~html)>; ?html < text"
-})._(
-
-	function HtmlView_DocumentInformation(input, def) 
+HtmlView_declare(
+	["*", "document_information", "*", "list"], null,
+	
+	function HtmlView_DocumentInformation(request)
 	{
 		var output_header = "";
 		var output_items = "";
 
-		function _listInsideIterate(context, key, element) {
-		
+		for (var idx = 0; idx < this.length; idx ++)
+		{
+			var element = this[idx];
+				
 			// Display all inline elements in one line
-			if (!element._instanceOf("list")) {
+			if (!element.__is("list")) {
 				output_header += "<span class='document_information_head_item'>";
-				output_header += HtmlView_renderChild( element, def, context );
+				output_header += HtmlView_showInContext(element, this, request);
 				output_header += "</span>,&nbsp;";		
 			} else {
 				output_items += "<div class='document_information_item'>";
-				output_items += HtmlView_renderChild( element, def, context );
+				output_items += HtmlView_showInContext(element, this, request);
 				output_items += "</div>";		
 			}			
 		}
 
-		View_contextIterate(input, def, _listInsideIterate);
-
-		return HtmlView_autotag("div", arguments,
-						        "<div class='document_information_head'>"+ output_header.substr(0, output_header.length-7) +"</div>"
-						        + output_items
-					           );
-			
-
+		return (  "<div class='document_information_head'>"+ output_header.substr(0, output_header.length-7) +"</div>"
+				+ output_items
+			   )._tag("div", this);
 	}
 
 );
@@ -50,35 +42,29 @@
 //
 // Abstract view
 //
-({
-	purpose:	"View",
-	conditions:	"{?recursive_context, ?keep_method_conditions, ?set_uuid_attribute}",
-
-	input:		">(~abstract)<; abstract < list",
-	output:		"<(~html)>; ?html < text"
-})._(
-
-	function HtmlView_Abstract(input, def) 
+HtmlView_declare(
+	["*", "abstract", "*", "paragraph", "*", "list"], null,
+	
+	function HtmlView_Paragraph(request) 
 	{
-		return HtmlView_autotag("p", arguments, HtmlView_listInside(input, def));
+		return this._taggedIterate("p", request);
 	}
-
 );
+
 
 //
 // Version view
 //
-({
-	purpose:	"View",
-	conditions:	"{?recursive_context, ?keep_method_conditions, ?set_uuid_attribute, ?not_editable_attribute}",
+HtmlView_declare(
+	["*", "version", "*", "text"], null,
 
-	input:		">(~version)<; version < text",
-	output:		"<(~html)>; ?html < text"
-})._(
-
-	function HtmlView_Abstract(input, def) 
+	function HtmlView_Version()
 	{
-		return HtmlView_autotag("span", arguments, "<span not_editable='true'>Version:&nbsp;</span>"+input._get("version"));
+		var text = this._htmlText();
+		
+		text = "Version "+text;
+	
+		return text._tag("span", this)
 	}
-
 );
+

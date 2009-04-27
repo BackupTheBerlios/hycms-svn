@@ -1,525 +1,545 @@
 /*
- * hyObjects(js)
+ * hyJS
  *
- * Dispatcher handling
+ * Predicate dispatcher
  *
  * Copyright(C) 2009 by Friedrich Gräter
  * Published under the terms of the GNU General Public License v2
  *
  */
-function MissingDefinitionError(message)
+function MethodNotExistsError(message)
 {
 	this.message = message;
 }
-MissingDefinitionError.prototype = new Error();
+MethodNotExistsError.prototype = new Error();
 
-function InvalidFunctionError(message)
-{
-	this.message = message;
-}
-InvalidFunctionError.prototype = new Error();
-
-function ReceiverNotAvailable(message)
-{
-	this.message = message;
-}
-ReceiverNotAvailable.prototype = new Error();
-
-function ParameterTypeNotUnique(message)
-{
-	this.message = message;
-}
-ParameterTypeNotUnique.prototype = new Error();
-
-function InvalidPointcutError(message)
-{
-	this.message = message;
-}
-InvalidPointcutError.prototype = new Error();
 
 /*
- * [class] Dispatcher
+ * methodHash
  *
- * Public members:
- *		function			List of available functions
- *
- * Public methods:
- *		register			Registers a function
- *		find				Finds a function according to its description
- *		exec				Executes a function
- *		watch				Sets a watch to a function
+ * Dictionary that references to each method name a list of
+ * method descriptors.
  *
  */
-function Dispatcher()
-{
-	this.functions = new Array();
-}
+var methodHash = new Object();
 
 /*
- * Dispatcher::register(function_object)
+ * String::__declare(method)
  *
- * Registers the given function object to the database of the
- * dispatcher. The function needs to be assigned to a
- * definition using the "_as" call.
+ * Declarates a method with name of "THIS" according to the
+ * methods parameter specification "method":
  *
- * Exceptions:
- *		MissingDefinitionError		Function not assigned to a definition
- *		NotAFunction				Not a function
- */
-Dispatcher.prototype.register = function(func)
-{
-	// Not a function
-	if (!(func instanceof Function))
-		throw new InvalidFunctionError(func);
-
-	// Not assigned to a definition
-	if ((func.__orderedRelations == null) && (func.__unorderedRelations == null)) {
-		throw new MissingDefinitionError(func.name);
-	}
-
-		
-	// Register
-	this.functions.push(func);
-}
-
-/*
- * Dispatcher::find(definition, ...,[, all = false, return_definition = false, ignore_function_sat = false])
+ *	{
+ *		input:		[name_of_parameter_1, ..., name_of_parameter_n] OR NULL,
+ *		output:		tagging_of_return_value OR NULL,
  *
- * Finds a function fitting to the given definition with the
- * highest option count. 
+ *		features:	[available_feature_term_1, ..., available_feature_term_m] OR NULL,
+ *		
+ *		max:		[numeric_instruction_1, ..., numeric_instruction_k] OR NULL,
+ *		whereas:	[boolean_instruction_1, ..., boolean_instruction_l] OR NULL,
  *
- * The definition can be passed as a set of multiple parameters
- * (see Object._as for further explanation).
- * 
- * If the parameter "all" is true, it returns a list of
- * all functions satisfying the definition.
+ *		does:		function(name_of_parameter_1, ..., name_of_parameter_n) { ... };
+ *	}
  *
- * If the parameter "ignore_function_sat" is ture, it accepts also functions,
- * which are not satisfied by the request, but satisfying the request.
+ * Whereas:
+ *	"name_of_parameter_N" 		is the identifier of the n-th parameter of the function.
  *
- * A function fits to a definition iff.
- *		- The function's description is satisfied by the given user definition
- *		- The given user definition is satisfied by the functions definition
+ *  "tagging_of_return_value"	is a list of tags describing the return value. After returning,
+ *								of the function these tags will be applied to the return value (if the
+ *								return value isn't already tagged).
  *
- * The option count used to rank the function is the count of options
- * satisfied in the given user definition by the function definition.
+ *	"available_feature_term_N"	is a feature provided by the method. The feature is described by a string.
+ *
+ *	"max_instruction_N"			is a instruction returning an integer value > 0 or -1. The instruction is
+ *								encoded inside a string and can use any of the parameter identifiers of the
+ *								method. Whenever a method with the given name is called, the dispatcher executes
+ *								all max_instruction_N. It will choose the method implementation, whith the highest
+ *								sum of all instruction inside "max". If one instruction inside "max" evaluates to
+ *								-1 the method won't be called.
+ *
+ *	"boolean_instruction_N"		is a instruction retuning a boolean value. Whenever a method with the given name
+ *								is called, the dispatcher will evaluate all boolean_instructions. If one boolean
+ *								instruction evaluates to "false", the method will not be used for the method call.
+ *
+ *	does						contains the actual implementation of the method. All parameters given to the dispatcher
+ *								will be passed to the method. The "this" reference of the method inside the call is
+ *								the object which was referenced at the call of the method.
+ *
+ * The parameter "method" will be modified by this function.
  *
  * Return value:
- *		- If "all" is true, a array of the function is given 
+ *	True
+ */
+String.prototype.__declare = function(method)
+{
+	var identifier = "_"+this.valueOf();
+
+	// Register dispatcher globally for this method
+	if (Object.prototype[identifier] == null)
+		Object.prototype[identifier] = function __internalCaller() { return __callMethod(identifier.substr(1), this, arguments); };
+
+	// Set all empty fields as empty arrays
+	if (method.input == null)
+		method.input = [];
+	if (method.output == null)
+		method.output = [];
+	if (method.features == null)
+		method.features = [];
+	if (method.whereas == null)
+		method.whereas = [];
+	if (method.max == null)
+		method.max = [];
+	if (method.options == null)
+		method.options = new Object();
+	
+	// Search for undefined fields
+	for (var idx in method) {
+		if (idx[0] == '_') continue;
+		
+		switch(idx) {
+			case 'input':
+			case 'output':
+			case 'features':
+			case 'whereas':
+			case 'max':
+			case 'options':
+			case 'does':
+				break;
+				
+			default:
+				throw new Error("Invalid declarator - "+idx);
+		}
+	}
+			
+	// Precompile boolean and max instructions
+	method.whereas_precompiled = __precompile(method.whereas, method.input);
+	method.max_precompiled = __precompile(method.max, method.input);
+
+	// Register method inside the dispatcher
+	if (methodHash[identifier.substr(1)] == null)
+		methodHash[identifier.substr(1)] = [];
+
+	methodHash[identifier.substr(1)].push(method);
+		
+	return true;
+}
+
+/*
+ * __precompile(functionList, inputList)
  *
- *		- The function with the highest rank
- *
- *		- "null" if no function was found.
- *
- *		- If "return_definition is true, a tuple with the original
- *		  return value and the definition object will be returned:
- *
- *		  {"definition": USER_DEFINITION, "found": null }					no function found
- *		  {"definition": USER_DEFINITION, "found": FOUND_FUNCTION }			all =false
- *		  {"definition": USER_DEFINITION, "found": FOUND_FUNCTION_ARRAY }	all =true
+ * Precompiles the given "functionList". Each of this function receives "inputList" as parameters.
  *
  */
-Dispatcher.prototype.find = function()
+function __precompile(functionList, inputList)
 {
-	var definition = "";
-	var bool_ctr = 0;
-	var all = false;
-	var return_definition = false;
-	var ignore_function_sat = false;
-
-	// Get parameters
-	for (var idx = 0; idx < arguments.length; idx ++) {
+	var functionHeader;
+	var funcList = [];
 	
-		// Scan boolean parameters
-		if ((typeof(arguments[idx]) == "boolean") || (arguments[idx] instanceof Boolean)) {
-		
-			if (bool_ctr == 0)
-				all = arguments[idx];
-			else if (bool_ctr == 1)
-				return_definition = arguments[idx];
-			else if (bool_ctr == 2)
-				ignore_function_sat = arguments[idx];
-				
-			bool_ctr ++;
-				
-			continue;
-		}
+	if (inputList != null)
+		functionHeader = inputList.concat(["__request", "__options"]).join(",");
+	else
+		functionHeader = "";
+
+	if (typeof(functionList) == "string")
+		functionList = [functionList];
 	
-		// Bool parameters must be the last in the list
-		if (bool_ctr > 0)
-			throw new Error("Invalid parameters in Dispatcher.find().");
+	for (var idx = 0; idx < functionList.length; idx ++) {
+		var body = "return ("+functionList[idx]+");";
 
-		// Null given...	
-		if (arguments[idx] == null) {
-			definition = null;
-			break;
-		}
-		
-		if (idx + 1 == arguments.length)
-			sym = "";
-
-		// Concatenate parameters
-		if ((arguments[idx].charAt(0) == "|") && (idx > 0))
-			arg = arguments[idx].substr(1);
-		else
-			arg = arguments[idx];
-
-		definition += arg + "; ";
+		funcList.push(new Function(functionHeader, body));
 	}
-
-	// Remove ; at the end
-	definition = definition.substr(0, definition.length - 2);
-
-	var user_def = {}._as(definition);
-	var list = new Array();
-	var highest_count = -1, highest_idx = 0;
 	
-	for (var idx = 0; idx < this.functions.length; idx ++) {
-		var func = this.functions[idx];
-		var count;
+	return funcList;
+}
 
-		// Is the function def satisfied by the user def?
-		if (!ignore_function_sat)
-			if (_satisfy_internal(user_def, func) == -1)
-				continue;
+/*
+ * class Requesting(returnTypeRequest, [optionMap,] [featureRequest1, ...])
+ *
+ * Specifies certain requests to a method call. "returnTypeRequest" specifies
+ * the requested return type as a list of tags (see __taggedAs). The optional parameter
+ * optionMap may contain a map of named optional parameters. All parameters 
+ * following it describing features the function should provide. If a feature
+ * is prefixed by an "?", it is seen as optional feature.
+ *
+ * Properties:
+ *	returnTypeRequest				Requested return type
+ *	featureRequests					Requested features
+ *	options							List of available options
+ *
+ * Methods:
+ *	copy()							Creates a copy of the request object
+ *	test(returnType, features)		Tests, whether the given parameters are satisfying
+ *									the requested features.
+ *	initOptions(optionMap)			Initializes all unitialized options using the given option map
+ *
+ *	addOption(name, value)			Appends the list of optionally requested parameters by a further parameter
+ *  removeOption(name)				Removes a parameter from the request list
+ *
+ */
+function Requesting(returnTypeRequest, optionMap)
+{
+	var fIdx = 1;
 
-		// Is the user def satisfied by the function def?
-		count = _satisfy_internal(func, user_def);
-
-		if (count == -1)
-			continue;
-		
-		// Remember the function
-		list.push(func);
-
-		// Use the highest
-		if (count > highest_count) {
-			highest_count = count;
-			highest_idx = list.length - 1;
-		}
-	}
-
-	// Return list or function?
-	var retval;
-
-	if (highest_count == -1) {
-		// No function found
-		retval = null;
+	this.returnTypeRequest = returnTypeRequest;
+	this.featureRequests = [];
+	
+	// If option map is given
+	if ((optionMap != null) && (typeof(optionMap) != "string")) {
+		this.options = optionMap;
+		fIdx ++;
 	}
 	 else {
-		// Decide whether to return a list or a single element
-		if (all == true)
-			retval = list;
-		else
-			retval = list[highest_idx];
+	 	this.options = new Object();
 	}
 
-	// Tuple with definition?
-	if (return_definition == true)
-		return {definition: user_def, found: retval};
+	// Create feature map
+	for (var idx = fIdx; idx < arguments.length; idx ++)
+		this.featureRequests.push(arguments[idx]);
+}
+
+/*
+ * Requesting::copy()
+ *
+ * Returns a copy of the request object.
+ *
+ */
+Requesting.prototype.copy = function()
+{
+	var nRequest = new Requesting();
+	
+	// Copy return type request
+	if (this.returnTypeRequest != null)
+		nRequest.returnTypeRequest = this.returnTypeRequest.concat([]);
+		
+	// Copy features
+	nRequest.featureRequests = this.featureRequests.concat([]);
+	
+	// Copy option map
+	nRequest.options = new Object();
+	
+	for (var idx in this.options) {
+		if (idx[0] == "_") continue;
+		
+		if (this.options[idx] != null)
+			nRequest.options[idx] = this.options[idx].__clone();
+		else
+			nRequest.options[idx] = null;
+	}
+
+	return nRequest;
+}
+
+/*
+ * Requesting::test(returnType, features, optionMap)
+ *
+ * Tests whether the given returnType, features and optionMap are satisfying
+ * the request object.
+ *
+ * Return value:
+ *		-1		If a required feature is missing or the return type is wrong
+ *		> 0		Number of satisfied features
+ *		0		Return type valid
+ *
+ */
+Requesting.prototype.test = function(returnType, features, optionMap)
+{
+	var tagCount = 0;
+
+	// Test return type
+	if (this.returnTypeRequest != null) {
+		var testObj = "abc";
+		testObj = testObj.__tag.apply(testObj, returnType);
+
+		tagCount = testObj.__taggedAs.apply(testObj, this.returnTypeRequest);
+
+		if (tagCount == -1)
+			return -1;
+	}
+
+	// Test features
+	var featuresCount = 0;
+	
+	if ((features != null) && (this.featureRequests.length > 0)) {
+		for (var rIdx = 0; rIdx < this.featureRequests.length; rIdx ++) {
+			var rFeature = this.featureRequests[rIdx];
+			var rIsOption = (rFeature[0] == "?");
+			var found = false;
+			
+			if (rIsOption)
+				rFeature = rFeature.substr(1);
+		
+			for (var tIdx = 0; tIdx < features.length; tIdx++) {
+				if (rFeature == features[tIdx])
+					found = true;
+			}
+			
+			if ((!found) && (!rIsOption))
+				return -1;
+				
+			featuresCount ++;
+		}
+	}
+
+	// Test available options
+	var optionsCount = 0;
+
+	if (optionMap != null) {
+		for (var tOpt in this.options) {
+			if ((tOpt[0] != "_") && (tOpt in optionMap))
+				optionsCount ++;
+		}
+	}
+
+	return tagCount + featuresCount + optionsCount;
+}
+
+/*
+ * Requesting::initOptions(optionMap)
+ *
+ * Initializes all unitialized options using the given optionMap.
+ * The initialization will be done using the __clone()-Method of
+ * each element object.
+ *
+ */
+Requesting.prototype.initOptions = function(optionMap)
+{
+	if (optionMap instanceof Array)
+		throw new Error("Invalid argument for optionMap");
+
+	for (var idx in optionMap) {
+		if (idx[0] == "_") continue;
+
+		if (this.options[idx] == null) {
+			this.options[idx] = optionMap[idx].__clone();
+		}
+	}
+}
+
+/*
+ * Requesting::addOption(name, value)
+ *
+ * Appends the list of optional parameters by the named parameter ('name', 'value').
+ * If a parameter with the same name already exists, it will be overwritten.
+ *
+ * Returns: reference to "this"
+ *
+ */
+Requesting.prototype.addOption = function(name, value)
+{
+	this.options[name] = value;
+
+	return this;
+}
+
+/*
+ * Requesting::removeOption(name, value)
+ *
+ * Removes the named parameter 'name' from the list of optional parameters.
+ *
+ * Returns: reference to "this"
+ *
+ */
+Requesting.prototype.removeOption = function(name, value)
+{
+	delete this.options[name];
+	
+	return this;
+}
+
+
+
+/*
+ * Request(...)
+ *
+ * Creates a new request object by calling the Requesting constructor
+ * with the given parameters.
+ *
+ * See: Requesting
+ *
+ */
+function Request()
+{
+	var request = new Requesting();
+	request.constructor.apply(request, arguments);
+	
+	return request;
+}
+
+
+/*
+ * __callMethod(methodName, object, arguments)
+ *
+ * Calls a given method "methodName" for the object "object" as THIS and the
+ * given argument list.
+ *
+ */
+function __callMethod(methodName, object, args)
+{
+	var maxValue = -1;
+	var maxFunction = [];
+	var maxBoolVal = -1;
+	var maxBoolFunc = 0;
+	var requestBase;
+
+	if (methodHash[methodName] == null)
+		throw new MethodNotExistsError("Method not known: "+methodName);
+
+	// Convert "args" to array, if not done
+	if (!(args instanceof Array)) {
+		var tmpArgs = [];
+			
+		for (var argIdx = 0; argIdx < args.length; argIdx ++)
+			tmpArgs[argIdx] = args[argIdx];
+			
+		args = tmpArgs;
+	}
+
+	// Get return type and feature list
+	if ((args.length > 0) && (args[args.length - 1] instanceof Requesting)) {
+		requestBase = args[args.length - 1];
+	}
+	 else 
+	{
+		requestBase = new Requesting();
+		args.push(requestBase);
+	}
+
+	args.push(0);
+
+	// Find best method
+	for (var idx = 0; idx < methodHash[methodName].length; idx ++) {
+		var method = methodHash[methodName][idx];
+		var value = 0;
+		var boolCount = 0;
+
+		// Test expected return type and features
+		var requestCount = requestBase.test(method.output, method.features, method.options);
+
+		if (requestCount == -1)
+			continue;
+
+		value += requestCount;
+
+		// Set default values to optional parameters
+		requestInfo = requestBase.copy();
+		requestInfo.initOptions(method.options);
+		
+		args[args.length - 2] = requestInfo;
+		args[args.length - 1] = requestInfo.options;
+		
+		// If any boolean condition evaluates to false, ignore the function
+		boolCount = __evaluateBoolConditions(method, object, args);
+
+		if (boolCount == -1)
+			continue;
+
+		// Maximize any conditions
+		var tmpValue = __evaluateMaxConditions(method, object, args);
+
+		if (tmpValue == -1)
+			continue;
+
+		value += tmpValue;
+
+		if (value > maxValue) {
+			maxValue = value;
+			maxFunction = [];
+			maxBoolFunc = 0;
+			maxBoolVal = -1;
+		}
+		
+		if (value >= maxValue) {
+			maxFunction.push(idx);
+			
+			// Ties are broken by boolean count
+			if (maxBoolVal < boolCount) {
+				maxBoolVal = boolCount;
+				maxBoolFunc = maxFunction.length - 1;
+			}
+		}
+	}
+
+	// No method found...
+	if (maxFunction.length == 0)
+		throw new MethodNotExistsError("Method not available: "+methodName)	
+
+	// Select method
+	var method = methodHash[methodName][maxFunction[maxBoolFunc]];
+
+	// Prepare request parameter
+	requestInfo = requestBase.copy();
+	requestInfo.initOptions(method.options);	
+	args[args.length - 2] = requestInfo;
+	args[args.length - 1] = requestInfo.options;
+
+	// Call method
+	var retval = method.does.apply(object, args);
+	
+	// Apply return value
+	if (retval != null) {
+		if (retval.__def == null)
+			return retval.__tag.apply(retval, method.output);
+		else
+			return retval;
+	}
 	else
-		return retval;
+		return null;
 }
 
 /*
- * Dispatcher::send( definitions, params )
+ * __evaluateBoolConditions(method, object, args)
  *
- * Sends a message to a function that fits best to "definitions". 
- * "definitions" is a list of string which will be concatenated
- * to a single definition.
+ * Evaluates all "whereas" clauses of "method" for the given "object" and the
+ * given arguments. The last element of the args array should contain the
+ * requestInfo.
  *
- * The parameters of the function can be given to "params".
- * The function will derive all relations required to describe
- * the parameters from the parameters themselves.
+ * Return value:
+ *	Count of satisfied conditions
  *
- * For each parameter object, the inheritance hierarchy of the
- * parameter will be added to the ">( )<" inlet relation as variadic term.
- * Optional elements of the inheritance hierarchy of the parameter object
- * will be stored as optional elements in the inlet relation.
- *
- * If a parameter is extended by _extend, the receiver can access the object
- * using the extended term. 
- *
- * The function will return the result of the function. And
- * pass all exceptions.
- *
- * Exceptions
- *	ReceiverNotAvailable		No receiver found
- *	ParameterTypeNotUnique		Parameter type is not unique
- *
- * Example
- *	Parameter:	a < ?b, c < ?d	results in ">(~a, ~c)<; a < ?b, c < ?d"
  */
-Dispatcher.prototype.send = function(definitions, params)
+function __evaluateBoolConditions(method, object, args)
 {
-	var inlet_descs = new Array();
-	var param_descs = new Array();
-	var input = new Object();
+	for (var idx = 0; idx < method.whereas_precompiled.length; idx ++) {
+		var miniFunc = method.whereas_precompiled[idx];
 
-	// Analyze parameters
-	for (var idx = 0; idx < params.length; idx++) {
-		var param = params[idx];
-		var paramValue = param;
-	
-		// Is it null? => ignore it
-		if (param == null)
-			continue;
-	
-		// Is it a usable object?
-		if (param.__orderedRelations == null)
-			param = param._as();
-
-		// Has it a primary inheritance relation?
-		if (param.__orderedRelations["<"] == null) {
-			if (input["structure"] != null)
-				throw new ParameterTypeNotUnique("Parameter not unique - object");
-
-			inlet_descs.push("structure");
-			param_descs.push("null < structure");
+		try {
+			if (!miniFunc.apply(object, args))
+				return -1;
+		} catch(e) {
+			console.log("ERROR: ", e);
+			console.log(method.toSource(), args);
 			
-			input["|structure"] = paramValue;
+			return -1;
 		}
-		 else {
-		 	var param_type = new Array();
 
-			// Extend the inlet descriptor			
-			inlet_descs.push("~"+param.__orderedRelations["<"][0][0].name);
-
-			// Add the parameter descriptor
-			var param_str = param._def_string();
-			param_descs.push(param_str);
-			
-			if (input[param_str] != null)
-				throw new ParameterTypeNotUnique("Parameter not unique - "+param_str);
-				
-			input[param_str] = paramValue;
-		}
 	}
 
-	// Search function
-	var defs = definitions.concat(param_descs, [">("+inlet_descs.join(", ")+")<"]);
-
-	var found = this.find.apply(this, defs.concat([false, true]));
-	var func = found.found;
-
-	if (func == null)
-		throw new ReceiverNotAvailable("No receiver found - "+defs.join(" -- "));
-	
-	// Transform input message
-	input = input._as("|message < structure");
-	
-	// Call before observers
-	if (func[":before"] != null) {
-		for (var idx = 0; idx < func[":before"].length; idx ++) {
-			var n_input = func[":before"][idx](func, input, found.definition);
-
-			if (n_input != null)
-				input = n_input;
-		}
-	}
-	
-	// Call function
-	var result = func(input, found.definition);
-		
-	// Call after observers
-	if (func[":after"] != null) {
-		for (var idx = 0; idx < func[":after"].length; idx ++) {
-			var n_result = func[":after"][idx](func, result, input, found.definition);
-		
-			if (n_result != null)
-				result = n_result;
-		}
-	}
-	
-	return result;
+	return method.whereas_precompiled.length;
 }
 
 /*
- * Dispatcher::watch(definitions, pointcut, observer)
+ * __evaluateMaxConditions(method, object, args)
  *
- * Applies the given observer function to the given pointcut (":before" or ":after") to
- * all functions fitting to "definitions".
- *
- * The observer function has the following signature:
- *
- *		before_handler(watched_function, input, def) => new_input
- *		after_handler(watched_function, result, input, def) => new_result
- *
- * Return value
- *	Count of functions observed by "watch".
- *
- * Exceptions
- *	InvalidPointcutError		Pointcut not known
+ * Evaluates all "max" clauses of "method" for the given "object" and the
+ * given arguments. The last element of the args array should contain the
+ * requestInfo.
  *
  */
-Dispatcher.prototype.watch = function(definitions, pointcut, observer)
+function __evaluateMaxConditions(method, object, args)
 {
-	var observed = this.find.apply(this, definitions.concat([true, false, true]));
-	
-	if ((pointcut != ":before") && (pointcut != ":after"))
-		throw new InvalidPointcutError(pointcut);
-	
-	if (observed == null)
-		return 0;
-	
-	for (var idx = 0; idx < observed.length; idx ++) {
-		if (observed[idx][pointcut]  == null)
-			observed[idx][pointcut] = new Array();
-				
-		observed[idx][pointcut].push(observer);
-	}
-	
-	return observed.length;
-}
+	var val = 0;
 
-/*
- * Dispatcher __dispatcher
- *
- * The globaly used dispatcher.
- *
- */
-var __dispatcher = new Dispatcher();
+	for (var idx = 0; idx < method.max_precompiled.length; idx ++) {
+		var miniFunc = method.max_precompiled[idx];
 
+		var addVal = miniFunc.apply(object, args);
 
-/*
- * String::_send(parameter1, ..., parameterN)
- *
- * Sends the given parameters to a function, that fits to the
- * definition string in "this".
- *
- * The function uses the dispatcher object stored in the
- * global variable "__dispatcher".
- *
- * See
- *	Dispatcher::send
- *
- */
-String.prototype._send = function()
-{
-	var argArray = new Array();
-	
-	for (var idx = 0; idx < arguments.length; idx ++)
-		argArray.push(arguments[idx]);
-
-	return __dispatcher.send([this.valueOf()], argArray);
-}
-
-/*
- * Function::_observe(definitions, pointcut)
- *
- * Sets the function as observer for all functions satisfying "definitions"
- * at the given pointcut.
- *
- * The function uses the dispatcher object stored in the
- * global variable "__dispatcher".
- *
- * See
- *	Dispatcher::watch
- *
- */
-Function.prototype._observe = function(definitions, pointcut)
-{
-	return __dispatcher.watch(definitions, pointcut, this);
-}
-
-/*
- * Function::_register(definition1, ..., definitionN)
- *
- * Applies the given definitions to the function object and
- * registers it at the global dispatcher.
- *
- * The function uses the dispatcher object stored in the
- * global variable "__dispatcher".
- *
- * See
- *	Dispatcher::register
- *
- */
-Function.prototype._register = function()
-{
-	this._as.apply(this, arguments);
-	
-	return __dispatcher.register(this);
-}
-
-/*
- * Array::_function(function)
- *
- * The array contains a set of definitions used to register
- * the "function" to the dispatcher.
- *
- * The function uses the dispatcher object stored in the
- * global variable "__dispatcher".
- *
- * See
- *	Dispatcher::register
- *
- */
-Array.prototype._function = function(func)
-{
-	func._as.apply(func, this);
-	
-	return __dispatcher.register(func);
-}
-
-/*
- * String::_function(function)
- *
- * The string contains a definition used to register
- * the "function" to the dispatcher.
- *
- * The function uses the dispatcher object stored in the
- * global variable "__dispatcher".
- *
- * See
- *	Dispatcher::register
- *
- */
-String.prototype._function = function(func)
-{
-	func._as.apply(func, [this]);
-
-	return __dispatcher.register(func);
-}
-
-/*
- * Object::_function(function)
- *
- * The objects contains definitions used to register
- * the "function" to the dispatcher.
- *
- * The function uses the dispatcher object stored in the
- * global variable "__dispatcher".
- *
- * See
- *	Dispatcher::register
- *
- */
-Object.prototype._function = function(func)
-{
-	var defs = [];
-	var idx = 0;
-
-	for (var key in this) {
-		if ((typeof(this[key]) != "string") && !(this[key] instanceof String))
-			continue;
-	
-		var element = this[key];
-	
-		if ((element.charAt(0) != "|") && (idx == 0))
-			defs.push("|"+element);
+		if (addVal == -1)
+			return -1;
 		else
-			defs.push(element);
-			
-		idx ++;
+			val += addVal;
 	}
 
-	func._as.apply(func, defs);
-
-	return __dispatcher.register(func);
+	return val;
 }
-
-Array.prototype._ = Array.prototype._function;
-String.prototype._ = String.prototype._function;
-Object.prototype._ = Object.prototype._function;
 

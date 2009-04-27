@@ -12,30 +12,18 @@
 //
 // Lines view
 //
-({
-	purpose:	"View",
-	conditions:	"{?recursive_context, ?keep_method_conditions, ?set_uuid_attribute}",
+HtmlView_declare(
+	["*", "lines", "*", "list"], null,
 
-	input:		">(lines)<; lines < list",
-	output:		"<(~html)>; ?html < text"
-})._(
-
-	function HtmlView_Lines(input, def) 
+	function HtmlView_Lines(request) 
 	{
-		var output = "";
-
-		function _listInsideIterate(context, key, element) {
-				line_nr++;		
-		
-				output += HtmlView_renderChild( element, def, context ) + "<br/>";		
+		function viewFunction(elementOutput, element, key)
+		{
+			return elementOutput + "</br>";
 		}
 
-		View_contextIterate(input, def, _listInsideIterate);
-
-		return "<div class='code'>"+output+"</div>";
+		return this._taggedIterate("div", request.addOption("viewFunction", viewFunction));
 	}
-
-
 );
 
 /*
@@ -52,10 +40,7 @@ function HtmlView_renderLine(element, replacements)
 {
 		var code_line;
 
-		if (element._instanceOf("code"))
-			code_line = element.valueOf().replace(/\&/g, "&&").replace(/\</g, "&lt;").replace(/\>/g, "&gt;");
-		else
-			code_line = HtmlView_renderChild(element, null, "text") 
+		code_line = element.valueOf().replace(/\&/g, "&&").replace(/\</g, "&lt;").replace(/\>/g, "&gt;");
 		
 		for (var idx = 0; idx < replacements.length; idx ++) {
 			var replacement = replacements[idx];
@@ -64,11 +49,11 @@ function HtmlView_renderLine(element, replacements)
 			code_line = code_line.replace(replacement.regexp, "$1<span class='"+css_type+"'>$2</span>$3");
 		}
 		
-		return HtmlView_tag("span", element, ""._as("|>(~codeLine)<; ?codeLine < text"), code_line);
+		return code_line;
 }
 
 /*
- * HtmlView_renderCode(input, def, replacements)
+ * HtmlView_renderCode(input, replacements)
  *
  * Shows the content of "input" as code snippet. For each line, the given set
  * the replacement-table will be used to replace a certain piece of code by
@@ -97,73 +82,51 @@ function HtmlView_renderLine(element, replacements)
  * REMEMBER:	A regexp handling & in a language have to replace &&!
  *
  */
-function HtmlView_renderCode(input, def, replacements)
+function HtmlView_renderCode(input, replacements)
 {
 	var output = "";
-	var line_nr = 0;		
 
-	function _listInsideIterate(context, key, element) {
-		line_nr++;
-		
-		output += "<span class='code_line_nr'>"+ line_nr + "</span>" + HtmlView_renderLine(element, replacements)+ "<br/>";
+	for (var idx = 0; idx < input.length; idx ++) {
+		output += "<span class='code_line_nr' style='-moz-user-select: none;'>"+ (idx+1) + "</span>" + HtmlView_renderLine(input[idx], replacements) + "<br/>";
 	}
 
-	View_contextIterate(input, def, _listInsideIterate);
-
-	return HtmlView_autotag("div", arguments, output, "", "code");
+	return output._tag("div", input);
 }
 
 //
 // Inline code view
 //
-({
-	purpose:	"View",
-	conditions:	"{?recursive_context, ?keep_method_conditions, ?set_uuid_attribute}",
+HtmlView_declare(
+	["*", "code", "*", "text"], null,
 
-	input:		">(~code)<; code < text",
-	output:		"<(~html)>; ?html < text"
-})._(
-
-	function HtmlView_InlineCode(input, def) 
+	function HtmlView_InlineCode(request) 
 	{
-		return HtmlView_autotag("span", arguments, HtmlView_renderLine(input._get("text"), []), "", "code");	
+		return HtmlView_renderLine(this, [])._tag("span", this);
 	}
 );
 
 //
 // Code view
 //
-({
-	purpose:	"View",
-	conditions:	"{?recursive_context, ?keep_method_conditions, ?set_uuid_attribute}",
+HtmlView_declare(
+	["*", "code", "*", "list"], null,
 
-	input:		">(~code)<; code < lines < list",
-	output:		"<(~html)>; ?html < text"
-})._(
-
-	function HtmlView_Code(input, def) 
+	function HtmlView_Code(request)
 	{
-		HtmlView_renderCode(input, def, []);
+		return HtmlView_renderCode(this, []);
 	}
 );
 
 //
 // jsCode view
 //
-({
-	purpose:	"View",
-	conditions:	"{?recursive_context, ?keep_method_conditions, ?set_uuid_attribute}",
+HtmlView_declare(
+	["*", "javascript", "*", "code", "*", "list"], null,
 
-	input:		">(~javascript)<; javascript < code < lines < list",
-	output:		"<(~html)>; ?html < text"
-})._(
-
-	function HtmlView_JavaScriptCode(input, def) 
+	function HtmlView_Code(request)
 	{
-		return HtmlView_renderCode(input, def, js_replacement_table);
+		return HtmlView_renderCode(this, js_replacement_table);
 	}
-
-
 );
 
 //
@@ -223,17 +186,12 @@ var js_replacement_table =
 //
 // hyObjectJS view
 //
-({
-	purpose:	"View",
-	conditions:	"{?recursive_context, ?keep_method_conditions, ?set_uuid_attribute}",
+HtmlView_declare(
+	["*", "hyObject", "*", "javascript", "*", "code", "*", "list"], null,
 
-	input:		">(~hyObject)<; hyObject < javascript < code < lines < list",
-	output:		"<(~html)>; ?html < text"
-})._(
-
-	function HtmlView_hyObject_JavaScriptCode(input, def) 
+	function HtmlView_Code(request)
 	{
-		return HtmlView_renderCode(input, def, hyobject_replacement_table);
+		return HtmlView_renderCode(this, hyobject_replacement_table);
 	}
 );
 

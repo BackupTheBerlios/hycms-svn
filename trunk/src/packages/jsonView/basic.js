@@ -4,75 +4,52 @@
  * Published under the terms of the Lesser GNU General Public License v2
  *
  */
- 
-/*
- * JsonView_renderChild
- *
- * See:
- *	HtmlView_renderChild
- *
- */
-function JsonView_renderChild(object, def, additional_def_string)
-{
-	var additions = (additional_def_string == null) ? "" : "; " + additional_def_string;
-
-	additions = "<(json)>; json < text" + additions;
-	
-	return View_renderChild(object, def, additions);
-}
- 
-/*
- * JsonView_listInternal
- *
- * See:
- *	HtmlView_listInternal
- *
- */
-function JsonView_listInside(input, def, parentType, iterateFunction)
-{
-	return View_listInside(input, def, parentType, JsonView_renderChild, iterateFunction);
-}
-
 //
 // Structure view
 //
+
+"view".__declare
 ({
-	purpose:	"View",
-	conditions:	"{?indenting}",
+	output:		["json", "text"],
+	features:	["indenting"],
+	whereas:	["this.__is('structure')"],
+	does:
 
-	input:		">(structure)<; structure; [?*]; ?text",
-	output:		"<(json)>; ?json < text"
-})._(
-
-	function JsonView_Structure(input, def) 
+	function JsonView_Structure(request) 
 	{
-		var structure = input._get("structure");
 		var output = "";
 		var whitespace = "";
 		var max_ws = 0;
 
 		// Get white space length
-		structure._iterate( function(element, key) {
-			var elem_length = element._def_string().length;
+		for (var idx in this) {
+			if (idx[0] == '_') continue;
+			
+			var elem_length = idx.length;
 			
 			if (elem_length > max_ws)
 				max_ws = elem_length;
-		});
+		}
 
 		function _whitespace(str) { var ws = "\t"; for (var i = 0; i <= (max_ws - str.length) / 8; i ++) ws += "\t"; return ws; }
 
 		// Output definition		
-		output = "{__def:"+_whitespace("__def:")+"\""+structure._def_string()+"\"";
+		if (this.__def == null)
+			output = "{__def:"+_whitespace("__def:")+"['"+this.__def.join("','")+"']";
+		else
+			output = "{__def:"+_whitespace("__def:")+"\"['"+__getJSTypeId(this)+"']\"";
 
 		// Output of children
 		var ext = "";
 		
-		structure._iterate ( function(element, key) {
-			var def = " \""+element._def_string()+"\":";
-			var child = "|View; <(json)>; json < text"._send(element);
+		for (var idx in this) {
+			if (idx[0] == "_") continue;
+		
+			var def = " \""+ idx +"\":";
+			var child = this[idx]._view(request);
 			
-			ext += def+_whitespace(def) + child +",\r";
-		});
+			ext += def + _whitespace(def) + child +",\r";
+		}
 	
 		// Closing definition
 		if (ext != "")
@@ -82,36 +59,38 @@ function JsonView_listInside(input, def, parentType, iterateFunction)
 
 		return output.replace(RegExp("\n", "g"), "\n"+whitespace).replace(RegExp("\r", "g"), "\n");
 	}
-);
+});
 
 
 //
 // List view
 //
+"view".__declare
 ({
-	purpose:	"View",
-	conditions:	"{?indenting}",
+	output:		["json", "text"],
+	features:	["indenting"],
+	whereas:	["this.__is('list')"],
+	does:	
 
-	input:		">(list)<; list; [?*]; ?text",
-	output:		"<(json)>; ?json < text"
-})._(
-
-	function JsonView_List(input, def) 
+	function JsonView_List(request)
 	{
-		var list = input._get("list");
 		var output = "";
 		
-		output  = "{__def: \""+list._def_string()+"\",\n";
+		if (this.__def != null)
+			output  = "{__def: ['"+this.__def.join("','")+"'],\n";
+		else
+			output  = "{__def: \""+__getJSTypeId(this)+"\",\n";					
+			
 		output += " __value:\n";
 		output += "\t[\n";
 
 		var ext = "";
 
-		list._iterate ( function(element, key) {
-			var child = "|View; <(json)>; json < text"._send(element);
+		for (var idx = 0; idx < this.length; idx ++) {
+			var child = this[idx]._view(request);
 			
 			ext += "\t "+child.replace(RegExp("\n", "g"), "\n\t ")+",\n";
-		});
+		}
 		
 		output += ext.substr(0, ext.length-2)+"\n";
 		output += " \t]\n";
@@ -119,75 +98,27 @@ function JsonView_listInside(input, def, parentType, iterateFunction)
 		
 		return output;
 	}
-);
+});
 
 //
 // Plain text view
 //		 
+"view".__declare
 ({
-	purpose:	"View",
-	conditions:	"{?indenting}",
-
-	input:		">(text)<; text",
-	output:		"<(json)>; ?json < text"
-})._(
-
-	function JsonView_Text(input, def) 
+	output:		["json", "text"],
+	features:	["indenting"],
+	whereas:	["this.__is('text') || this.__is('number') || this.__is('boolean')"],
+	does:	
+	
+	function JsonView_Text(request)
 	{
-		var data = input._get("text");
-		var text = "\""+data.valueOf().replace(RegExp("[\\\"]", "g"), "\\\"")+"\"";
+		var text = "\""+this.valueOf().replace(RegExp("[\\\"]", "g"), "\\\"")+"\"";
 
-		if (data._getClassName() == "text")
+		if (this.__getClassName() == "text")
 			return text;
 		else
-			return "{__def: \""+data._def_string()+"\", __value: "+text+"}";
+			return "{__def: ['"+this.__def.join("','")+"'], __value: "+text+"}";
 	}
 
-);
-
-//
-// Plain boolean view
-//		 
-({
-	purpose:	"View",
-	conditions:	"{?indenting}",
-
-	input:		">(boolean)<; boolean",
-	output:		"<(json)>; ?json < text"
-})._(
-
-	function JsonView_Boolean(input, def) 
-	{
-		var data = input._get("boolean");
-		var text = String(data.valueOf());
-
-		if (data._getClassName() == "boolean")
-			return text;
-		else
-			return "{__def: \""+data._def_string()+"\", __value: "+text+"}";
-	}
-);
-
-//
-// Plain number view
-//		 
-({
-	purpose:	"View",
-	conditions:	"{?indenting}",
-
-	input:		">(number)<; number",
-	output:		"<(json)>; ?json < text"
-})._(
-
-	function JsonView_Number(input, def) 
-	{
-		var data = input._get("number");
-		var text = String(data.valueOf());
-
-		if (data._getClassName() == "number")
-			return text;
-		else
-			return "{__def: \""+data._def_string()+"\", __value: "+text+"}";
-	}
-);
+});
 

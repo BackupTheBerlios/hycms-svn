@@ -1,28 +1,28 @@
 {
-	__def:	"|?article < ?page < list",
+	__def:	["article", "page", "list"],
 	__value:
 [
-	{__def:		"|?headline < ?paragraph < list",
+	{__def:		[ "headline", "paragraph", "list" ],
 	 __value:	[ "Just a simple text for testing" ]
 	},
 
-	{__def:		"|?document_information < list",
+	{__def:		[ "document_information", "list"],
 	 __value:	
 		 [
-			{__def:						"|?author < ?person < structure; author, person: [~name, ~mail_address, ?*]; ?name < text; ?mail_address < text",
-			 "|?name < text":			"Friedrich Gräter",
-			 "|?mail_address < text":	"graeter@hydrixos.org"
+			{__def:						["author", "person", "structure"],
+			 "name":					{__def: ["name", "text"], __value: "Friedrich Gräter"},
+			 "mail_address":			{__def: ["mail_address", "address", "text"], __value: "graeter@hydrixos.org"}
 			},
 	
-			{__def:		"|?german_date < ?date < text",
+			{__def:		["german_date", "date", "text"],
 			 __value:	"25.3.2008"
 			},
 	
-			{__def:		"|?version < text",
+			{__def:		["version", "text"],
 			 __value:	"1.0"
 			},
 	
-			{__def:		"|?abstract < ?paragraph < list",
+			{__def:		["abstract", "paragraph", "list"],
 			 __value:
 				[
 					"Relational Dispatch ist eine Erweiterung des Dispatchings in objektorientierten Programmiersprachen. Dabei ist es möglich Methoden ",
@@ -36,21 +36,21 @@
 		]
 	},
 	
-	{__def:		"|?chapter < ?section < list",
+	{__def:		["chapter", "section", "list"],
 	 __value:
 		[		
-			{__def: 	"|?headline < ?paragraph < list",
+			{__def: 	["headline", "paragraph", "list"],
 			 __value:	[ "Was ist Relational Dispatch?" ]
 			},
 
-			{__def:		"|?chapter < ?section < list",
+			{__def:		["chapter", "section", "list"],
 			 __value:
 				[		
-					{__def: 	"|?headline < ?paragraph < list",
+					{__def: 	["headline", "paragraph", "list"],
 					 __value:	[ "Das Problem" ]
 					},
 
-					{__def:		"|?paragraph < list",
+					{__def:		["paragraph", "list"],
 					 __value:
 						[
 							"Wer kennt nicht die vielen Science-Fiction-Serien, in denen Menschen mühelos Computer programmieren, ",
@@ -66,7 +66,7 @@
 						]
 					},
 					
-					{__def:		"|?paragraph < list",
+					{__def:		["paragraph", "list"],
 					 __value:
 					 	[
 					 		"Normalerweise orientieren sich Programmiersprachen beim sog. Dispatching, also dem Auswählen der richtigen ",
@@ -82,7 +82,7 @@
 					 	]
 					},
 					
-					{__def:		"|?paragraph < list",
+					{__def:		["paragraph", "list"],
 					 __value:
 					 	[
 					 		"Darüber hinaus fehlt allen Programmiersprachen die Möglichkeit Optimalität beim Dispatching auszudrücken. Nicht immer ",
@@ -96,14 +96,14 @@
 				]
 			},
 
-			{__def:		"|?chapter < ?section < list",
+			{__def:		["chapter", "section", "list"],
 			 __value:
 				[		
-					{__def: 	"|?headline < ?paragraph < list",
+					{__def: 	["headline", "paragraph", "list"],
 					 __value:	[ "Relational Dispatch" ]
 					},
 					
-					{__def:		"|?paragraph < list",
+					{__def:		["paragraph", "list"],
 					 __value:	
 					 	[
 					 		"Relational Dispatch versucht diese Probleme zu lösen, indem es dem Programmierer erlaubt komplexere Kriterien beim Aufruf ",
@@ -115,7 +115,7 @@
 					 	]
 					},
 
-					{__def:		"|?paragraph < list",
+					{__def:		["paragraph", "list"],
 					 __value:	
 					 	[
 					 		"In diesem Text soll nun eine kurze Einführung in dieses Verfahren anhand einer Implementierung von Relational Dispatch ",
@@ -127,15 +127,15 @@
 		]
 	},
 	
-	{__def:		"|?chapter < ?section < list",
+	{__def:		["chapter", "section", "list"],
 	 __value:
 		[		
-			{__def: 	"|?headline < ?paragraph < list",
+			{__def: 	["headline", "paragraph", "list"],
 			 __value:	[ "Typisierung im Relational Dispatch" ]
 			},
 
 
-			{__def:		"|?paragraph < list",
+			{__def:		["paragraph", "list"],
 			 __value:	
 			 	[
 			 		"Relation Dispatch erfordert, dass jedes Objekt mit beliebigen Metadaten typsiert werden kann. ",
@@ -144,14 +144,14 @@
 			 	]
 			},	
 	
-			{__def:		"|?chapter < ?section < list",
+			{__def:		["chapter", "section", "list"],
 			 __value:
 				[					
-					{__def: 	"|?headline < ?paragraph < list",
+					{__def: 	["headline", "paragraph", "list"],
 					 __value:	[ "Deklarieren von Typen" ]
 					},
 					
-					{__def:		"|?paragraph < list",
+					{__def:		["paragraph", "list"],
 					 __value:	
 					 	[
 					 		"Da JavaScript selbst keine Meta-Daten für Typen bereitstellt, wurde ein eigenes Typsystem eingeführt, das ",
@@ -160,7 +160,7 @@
 					 	]
 					},
 					
-					{__def:		"|?hyObject < ?javascript < ?code < ?lines < list",
+					{__def:		["hyObject", "javascript", "code", "lines", "list"],
 					 __value:
 					 	[
 					 		"\"Beliebiger Text\"._as(\"|?important_text < text\");",
@@ -170,7 +170,7 @@
 					 	]
 					},
 					
-					{__def:		"|?paragraph < list",
+					{__def:		["paragraph", "list"],
 					 __value:	
 					 	[
 					 		"Variablen vom Typ string, number, boolean werden dabei automatisch in ein Objekt vom Typ String, Number oder Boolean ",
@@ -179,46 +179,46 @@
 					 	]
 					},
 
-					{__def:		"|?paragraph < list",
+					{__def:		["paragraph", "list"],
 					 __value:	
 					 	[
 					 		"In der letzten Zeile des Beispiels wird dem Operator keine Typbeschreibung übergeben. In diesem Fall leitet das ",
 					 		"System den Typ des Objekts aus dem JavaScript-Typen ab. So wird für ein String-Objekt automatisch die Relation ",
-					 		{__def:	"|?code < text", __value: "|null < text"}, "zur Beschreibung des Objekts festgelegt. Es gibt noch weitere ",
+					 		{__def:	["code", "text"], __value: "|null < text"}, "zur Beschreibung des Objekts festgelegt. Es gibt noch weitere ",
 					 		"Regeln zur Herleitung des Typs, die jedoch erst später erläutert werden."
 					 	]
 					}
 				]
 			},
 
-			{__def:		"|?chapter < ?section < list",
+			{__def:		["chapter", "section", "list"],
 			 __value:
 				[					
-					{__def: 	"|?headline < ?paragraph < list",
+					{__def: 	["headline", "paragraph", "list"],
 					 __value:	[ "Relationen" ]
 					},
 					
-					{__def:		"|?paragraph < list",
+					{__def:		["paragraph", "list"],
 					 __value:	
 					 	[
 					 		"Eine Typdefinition fängt immer mit einem |-Symbol an, um sie von anderen Strings zu unterscheiden. Wie man erkennen ",
 					 		"kann, besteht eine Definition aus mehreren Teilen, die durch ein Semikolon ; getrennt sind. Jeder dieser Teile entspricht ",
 					 		"einer Relation. Eine Relation setzt mehrere Begriffe, sog. Terme, in einen logischen Zusammenhang. Beispielsweise drückt ",
 					 		
-					 		{__def:	"|?code < text", __value: "headline < paragraph < list"},
+					 		{__def:	["code", "text"], __value: "headline < paragraph < list"},
 					 		
-					 		" aus, dass der Term", {__def:	"|?code < text", __value: "headline"} ,"vom Term ", {__def:	"|?code < text", __value: "paragraph"}, 
-					 		" und ",{__def:	"|?code < text", __value: "list"}," erbt. Die Vererbungsrelation wird dabei durch das Symbol < ",
+					 		" aus, dass der Term", {__def: ["code", "text"], __value: "headline"} ,"vom Term ", {__def: ["code", "text"], __value: "paragraph"}, 
+					 		" und ",{__def: ["code", "text"], __value: "list"}," erbt. Die Vererbungsrelation wird dabei durch das Symbol < ",
 					 		"ausgedrückt. Genauso sagt ",
 
-					 		{__def:	"|?code < text", __value: "[name, street]"},
+					 		{__def:	["code", "text"], __value: "[name, street]"},
 					 		
-					 		" aus, dass das Objekt aus den Elementen ",{__def:	"|?code < text", __value: "name"}," und ",
-					 		{__def:	"|?code < text", __value: "street"}," besteht."
+					 		" aus, dass das Objekt aus den Elementen ",{__def: ["code", "text"], __value: "name"}," und ",
+					 		{__def:	["code", "text"], __value: "street"}," besteht."
 					 	]
 					 },
 					 
-					{__def:		"|?paragraph < list",
+					{__def:		["paragraph", "list"],
 					 __value:	
 					 	[
 					 		"An diesen beiden Beispielen ist zu erkennen, dass es zwei Arten von Relationen gibt: geordnete Relationen, bei denen ",
@@ -229,7 +229,7 @@
 					 	]
 					 },
 					 
-					{__def:		"|?paragraph < list",
+					{__def:		["paragraph", "list"],
 					 __value:	
 					 	[
 					 		"Die Besonderheit von Relational Dispatch ist es nun, dass beliebige Relationen festgelegt werden können und die Semantik ",
@@ -237,7 +237,7 @@
 					 	]
 					},
 					
-					{__def:		"|?hyObject < ?javascript < ?code < ?lines < list",
+					{__def:		["hyObject", "javascript", "code", "lines", "list"],
 					 __value:
 					 	[
 					 		"a << b << c",
@@ -246,14 +246,14 @@
 					 	]
 					},					
 					
-					{__def:		"|?paragraph < list",
+					{__def:		["paragraph", "list"],
 					 __value:	
 					 	[
 					 		"Die erste Relation wird verwendet, um auszudrücken dass ein Objekt 'a' im Kontext von Objekt 'b' zu betrachten ist, ",
 					 		"wobei 'b' wiederum im Kontext von 'c' steht. Die zweite Relation wird verwendet, um die Eingabeparameter einer ",
 					 		"Funktion zu spezifizieren - die letztere für den Rückgabewert. "
 					 	]
-					},
+					}
 
 				]
 			}

@@ -6,13 +6,12 @@
 	 *
 	 */
 ?>
-	<script type='text/javascript' charset='UTF-8' src='../engine/definition.js'></script>
-	<script type='text/javascript' charset='UTF-8' src='../engine/object.js'></script>
+	<script type='text/javascript' charset='UTF-8' src='../engine/tagging.js'></script>
 	<script type='text/javascript' charset='UTF-8' src='../engine/dispatcher.js'></script>
-	<script type='text/javascript' charset='UTF-8' src='../engine/relation.js'></script>
+	<script type='text/javascript' charset='UTF-8' src='../engine/serialization.js'></script>
 
 <?
-		function search_packages($base_path) 
+		function search_packages($base_path, $suffix) 
 		{
 			$dir = opendir($base_path);
 			$actions = array();
@@ -21,18 +20,23 @@
 
 				// Select package
 				if (filetype("$base_path/$file") != "dir")  {
-					$file_object = substr($file, 0, -3);
+					if (substr($file, -(strlen($suffix)+1)) != ".".$suffix)
+						continue;
 				
 					echo "\t<script type='text/javascript' charset='UTF-8' src='./$base_path/$file'></script>\n";
 				}
 				
 				// Nested package directory
 				if ((filetype("$base_path/$file") == "dir") && (substr($file, 0, 1) != ".")) {
-					search_packages("$base_path/$file");
+					search_packages("$base_path/$file", $suffix);
 				}
 			}
 		}
+
+		// First all headers (*.js.h)
+		search_packages("../packages", "js.h");		
 		
-		search_packages("../packages");
+		// Then all files (*.js)
+		search_packages("../packages", "js");
 ?>
 

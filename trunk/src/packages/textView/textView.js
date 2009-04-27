@@ -8,65 +8,66 @@
 //
 // Structure view
 //
+"view".__declare
 ({
-	purpose:	"View",
-	input:		">(structure)<; structure",
-	output:     "<(text)>; text"
-})._(
-
-	function TextView_Structure(input) 
-	{
-		var output = "";
-
-		input._get("structure")._iterate( function (element, key) {
-			output += key+":\n";
-			output += "|?TextView < View; <(?text)>; null < text"._send( element );
-			output += "\n";
-		});
+	output:		["text"],
+	whereas:	["this.__is('structure')"],
 	
-		return output._as();
-	}
+	does:
+		function TextView_Structure() 
+		{
+			var output = "";
 
-);
+			for (var key in this) {
+				if (key[0] == "_")			
+					continue;
+					
+				var element = this[key];
+			
+				output += key+":\n";
+				output += element._view();
+				output += "\n";
+			}
+
+			return output;
+		}
+});
 
 //
 // List view
 //
+"view".__declare
 ({
-	purpose:	"View",
-	input: 		">(list)<; list",
-	output:		"<(text)>; text"
-})._(
-
-	function TextView_List(input) 
-	{
-		var output = "";
-
-		input._get("list")._iterate( function (element, key) {
-			output += key+":\t";
-
-			output += "|?TextView < View; <(?text)>; null < text"._send( element );
-			output += "\n";
-		});
+	output:		["text"],
+	whereas:	["this.__is('list')"],
 	
-		return output._as();
-	}
+	does:
+		function TextView_List() 
+		{
+			var output = "";
 
-);
+			for (var idx = 0; idx < this.length; idx ++) {
+				output += idx+":\t";
+				output += this[idx]._view();
+				output += "\n";
+			}
+	
+			return output;
+		}
+});
 
 //
 // Plain text view
 //
+"view".__declare
 ({
-	purpose:	"View",
-	input: 	    ">(text)<; text",
-	output:		"<(text)>; text"
-})._( 
-
-	function TextView_Text(input) 
-	{
-		return input._get("text");
-	}
-
-);
+	output:		["text"],
+	whereas:	["this.__is('text') || this.__is('number') || this.__is('boolean')"],
+	
+	does:
+		function TextView_Text() 
+		{
+			return this.valueOf();
+		}
+});
 

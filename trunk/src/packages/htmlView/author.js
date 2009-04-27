@@ -8,48 +8,43 @@
 //
 // Author view
 //
-({
-	purpose:	"View",
-	conditions:	"{?recursive_context, ?keep_method_conditions, ?set_uuid_attribute}",
+HtmlView_declare(
+	["*", "author", "*", "person", "*", "structure"], null,
 
-	input:		">(author)<; author < person < structure",
-	author:		"[~name, ?~mail_address, ?*]; ?name < text; ?mail_address < text",
-	output:		"<(~html)>; ?html < text"
-})._(
-
-	function HtmlView_Author(input, def) 
+	function HtmlView_Author(request) 
 	{
 		var add_output = "";
-		var author = input._get("author");
 		var main_info = "";
+		var pname = this.__getByClass("name");
+		var mail = this.__getByClass("mail_address");
 
 		// Get name
-		if (author._get("name"))
-			main_info = author._get("name");
+		if (pname == null)
+			pname = "Missing author name";
 		else
-			main_info = "Missing author name";
+			main_info = pname;
 			
 		// Mail address as link, if given
-		if (author._get("mail_address")) {
+		if (mail) {
 			// This is bad ... normally we have to call a Mail-Address-View !!!
-			main_info = "<a href='mailto:"+author._get("mail_address")+"'>"+main_info+"</a>";
+			main_info = "<a href='mailto:"+mail+"'>"+pname+"</a>";
 		}
 			
 		// Additional informations
-		function _listInsideIterate(context, key, element) {
-				if (element._instanceOf("name") || element._instanceOf("mail_address"))
-					return 0;
-					
-				add_output += HtmlView_renderChild( element, def, context ) + "; ";		
+		for (var idx in this) {
+			var element = this[idx];
+		
+			if (idx[0] == '_') continue;
+			if (element.__is("name") || element.__is("mail_address")) continue;
+			
+			add_output += HtmlView_showInContext(element, this, request)+ "; ";			
 		}
-
-		View_contextIterate(input, def, _listInsideIterate);
 
 		// Append additional information only, if given
 		if (add_output != "")
 			add_output = " ("+add_output+")";
 
-		return HtmlView_autotag("span", arguments, main_info + add_output);
+		return (main_info + add_output)._tag("span", this);
 	}
 
 );
