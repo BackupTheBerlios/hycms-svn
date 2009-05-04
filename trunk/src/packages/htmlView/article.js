@@ -33,7 +33,7 @@ HtmlView_declare(
 
 		return (  "<div class='document_information_head'>"+ output_header.substr(0, output_header.length-7) +"</div>"
 				+ output_items
-			   )._tag("div", this);
+			   )._tag("div", this, HtmlView_tagRequest);
 	}
 
 );
@@ -64,7 +64,7 @@ HtmlView_declare(
 		
 		text = "Version "+text;
 	
-		return text._tag("span", this)
+		return text._tag("span", this, HtmlView_tagRequest)
 	}
 );
 

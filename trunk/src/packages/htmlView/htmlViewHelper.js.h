@@ -50,7 +50,7 @@ function HtmlView_declare( type, whereas, func )
 {
 	"view".__declare(
 		({
-			features:	["recursive_context", "keep_method_conditions", "set_type_attribute", "set_uuid_attribute", "not_editable_attribute"],
+			features:	["recursive_context", "keep_method_conditions", "set_type_as_css_class", "set_type_attribute", "set_uuid_attribute"],
 
 			options:	{"parentList":		[]},
 			output:		["html", "text"],
@@ -74,7 +74,7 @@ function HtmlView_declare( type, whereas, func )
  */
 "tag".__declare({
 	input:		["tag", "object"],
-	features:	["recursive_context", "keep_method_conditions", "set_type_attribute", "set_uuid_attribute", "not_editable_attribute"],
+	features:	["set_type_as_css_class", "set_type_attribute", "set_uuid_attribute"],
 
 	options:	{"attributes": []},
 	output:		["html", "text"],
@@ -112,6 +112,8 @@ function HtmlView_tag(tag, object, request)
 
 });
 
+var HtmlView_tagRequest = Request(["html", "text"], "set_type_as_css_class", "set_type_attribute", "set_uuid_attribute");
+
 /*
  * HtmlView_showInContext(object, parent, request) => [html, text]
  *
@@ -145,13 +147,13 @@ function HtmlView_showInContext(object, parent, request)
  *
  */
 "taggedIterate".__declare({
-	input:		["tag", "object"],
-	features:	["recursive_context", "keep_method_conditions", "set_type_attribute", "set_uuid_attribute", "not_editable_attribute"],
+	input:		["tag"],
+	features:	["recursive_context", "keep_method_conditions", "set_type_attribute", "set_uuid_attribute", "set_type_as_css_class"],
 
 	options:	{"parentList": [],  "viewFunction": function HtmlView_flatViewIterate(text) { return text; } },
 	output:		["html", "text"],
 
-	whereas:	["tag.__is('text')", "this.__is('list')", "viewFunction instanceof Function"],
+	whereas:	["tag.__is('text')", "this.__is('list')", "__options.viewFunction instanceof Function"],
 	
 	does:	 
 function HtmlView_taggedIterate(tag, request, options)
@@ -167,7 +169,7 @@ function HtmlView_taggedIterate(tag, request, options)
 		output += viewFunction(tmpOutput, this[idx], idx);
 	}
 
-	return output._tag(tag, this);
+	return output._tag(tag, this, HtmlView_tagRequest);
 }
 
 });
@@ -179,13 +181,13 @@ function HtmlView_taggedIterate(tag, request, options)
  *
  */
 "taggedIterate".__declare({
-	input:		["tag", "object"],
+	input:		["tag"],
 	features:	["recursive_context", "keep_method_conditions", "set_type_attribute", "set_uuid_attribute", "not_editable_attribute"],
 
 	options:	{"parentList": [],  "viewFunction": function HtmlView_flatViewIterate(text) { return text; } },
 	output:		["html", "text"],
 
-	whereas:	["tag.__is('text')", "this.__is('structure')", "viewFunction instanceof Function"],
+	whereas:	["tag.__is('text')", "this.__is('structure')", "__options.viewFunction instanceof Function"],
 	
 	does:	 
 
@@ -204,7 +206,7 @@ function HtmlView_taggedIterate(tag, request, options)
 		output += viewFunction(tmpOutput, this[idx], idx);
 	}
 
-	return output._tag(tag, this);
+	return output._tag(tag, this, HtmlView_tagRequest);
 }
 
 });

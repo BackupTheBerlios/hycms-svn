@@ -23,7 +23,7 @@ HtmlView_declare(
 			return "<tr><td>"+id+"</td><td>"+  elementOutput + "</td></tr>";
 		}
 
-		return this._taggedIterate("table", request.addOption("viewFunction", viewFunction));
+		return this._taggedIterate("table", request.extendOption("viewFunction", viewFunction));
 	}
 );
 
@@ -40,7 +40,7 @@ HtmlView_declare(
 			return "<tr><td>"+key+"</td><td>"+  elementOutput + "</td></tr>";
 		}
 
-		return this._taggedIterate("table", request.addOption("viewFunction", viewFunction));
+		return this._taggedIterate("table", request.extendOption("viewFunction", viewFunction));
 	}
 );
 
@@ -52,7 +52,7 @@ HtmlView_declare(
 
 	function HtmlView_Text()
 	{
-		return this._htmlText()._tag("span", this)
+		return this._htmlText()._tag("span", this, HtmlView_tagRequest)
 	}
 
 );
@@ -65,7 +65,7 @@ HtmlView_declare(
 
 	function HtmlView_Text()
 	{
-		return this._htmlText()._tag("b", this)
+		return this._htmlText()._tag("b", this, HtmlView_tagRequest)
 	}
 );
 
@@ -77,7 +77,7 @@ HtmlView_declare(
 
 	function HtmlView_Url() 
 	{
-		return this._htmlText()._tag("span", this, Request(null, null, {"attributes": "href='"+this+"'"}));
+		return this._htmlText()._tag("span", this, HtmlView_tagRequest.extendOption("attributes", "href='"+this+"'"));
 	}
 
 );
@@ -87,7 +87,7 @@ HtmlView_declare(
 
 	function HtmlView_Error(input, def) 
 	{
-		return this._htmlText()._tag("b", this)
+		return this._htmlText()._tag("b", this, HtmlView_tagRequest)
 	}
 
 );

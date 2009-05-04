@@ -90,7 +90,7 @@ function HtmlView_renderCode(input, replacements)
 		output += "<span class='code_line_nr' style='-moz-user-select: none;'>"+ (idx+1) + "</span>" + HtmlView_renderLine(input[idx], replacements) + "<br/>";
 	}
 
-	return output._tag("div", input);
+	return output._tag("div", input, HtmlView_tagRequest);
 }
 
 //
@@ -101,7 +101,7 @@ HtmlView_declare(
 
 	function HtmlView_InlineCode(request) 
 	{
-		return HtmlView_renderLine(this, [])._tag("span", this);
+		return HtmlView_renderLine(this, [])._tag("span", this, HtmlView_tagRequest);
 	}
 );
 
