@@ -8,7 +8,7 @@
 //
 // Page view
 //
-HtmlView_declare(
+HtmlView.View(
 	["*", "page", "*", "list"], null,
 	
 	function HtmlView_Page(request) 
@@ -21,7 +21,7 @@ HtmlView_declare(
 //
 // Page Title view
 //
-HtmlView_declare(
+HtmlView.View(
 	["*", "headline", "*", "?paragraph", "*", "list"], 
 	["__options.parentList.length > 0", "__options.parentList.__last().__is('page')"],
 	
@@ -34,7 +34,7 @@ HtmlView_declare(
 //
 // Section view
 //
-HtmlView_declare(
+HtmlView.View(
 	["*", "section", "*", "list"], null,
 	
 	function HtmlView_Section(request) 
@@ -46,7 +46,7 @@ HtmlView_declare(
 //
 // Section headline view
 //
-HtmlView_declare(
+HtmlView.View(
 	["*", "headline", "*", "?paragraph", "*", "list"], 
 	["__options.parentList.length > 0", "__options.parentList.__last().__is('section')"],
 	
@@ -59,7 +59,7 @@ HtmlView_declare(
 //
 // Subsection headline view
 //
-HtmlView_declare(
+HtmlView.View(
 	["*", "headline", "*", "?paragraph", "*", "list"], 
 	["__options.parentList.length > 1", "__options.parentList.__last().__is('section')", "__options.parentList.__last(2).__is('section')"],
 	

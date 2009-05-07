@@ -8,7 +8,7 @@
 //
 // Structure view
 //
-EditorReceiveFocus_declare(
+HtmlEditor.ReceiveFocus(
 	["*", "structure"], null,
 
 	function HtmlView_Structure(lastFocussed, eventDescription) 
@@ -19,7 +19,7 @@ EditorReceiveFocus_declare(
 	}
 );
 
-EditorLostFocus_declare(
+HtmlEditor.LostFocus(
 	["*", "structure"], null,
 
 	function HtmlView_Structure(editor, otherNode) 
@@ -33,7 +33,7 @@ EditorLostFocus_declare(
 //
 // List view
 //
-EditorReceiveFocus_declare(
+HtmlEditor.ReceiveFocus(
 	["*", "list"], null,
 
 	function HtmlView_List(lastFocussed, eventDescription) 
@@ -44,7 +44,7 @@ EditorReceiveFocus_declare(
 	}
 );
 
-EditorLostFocus_declare(
+HtmlEditor.LostFocus(
 	["*", "list"], null,
 
 	function HtmlView_List(editor, otherNode) 
@@ -58,7 +58,7 @@ EditorLostFocus_declare(
 //
 // Plain text view
 //		 
-EditorReceiveFocus_declare(
+HtmlEditor.ReceiveFocus(
 	["*", "text"], null,
 
 	function HtmlView_Text(lastFocussed, eventDescription) 
@@ -69,7 +69,7 @@ EditorReceiveFocus_declare(
 	}
 );
 
-EditorLostFocus_declare(
+HtmlEditor.LostFocus(
 	["*", "text"], null,
 
 	function HtmlView_Text(editor, otherNode) 

@@ -8,7 +8,7 @@
 //
 // Structure view
 //
-HtmlView_declare(
+HtmlView.View(
 	["*", "structure"], null,
 
 	function HtmlView_Structure(request) 
@@ -30,7 +30,7 @@ HtmlView_declare(
 //
 // List view
 //
-HtmlView_declare(
+HtmlView.View(
 	["*", "list"], null,
 	
 	function HtmlView_List(request) 
@@ -47,7 +47,7 @@ HtmlView_declare(
 //
 // Plain text view
 //		 
-HtmlView_declare(
+HtmlView.View(
 	["*", "text"], null,
 
 	function HtmlView_Text()
@@ -60,7 +60,7 @@ HtmlView_declare(
 //
 // Plain text view
 //		 
-HtmlView_declare(
+HtmlView.View(
 	["*", "important_text", "*", "text"], null,
 
 	function HtmlView_Text()
@@ -72,7 +72,7 @@ HtmlView_declare(
 //
 // Simle URL
 //	
-HtmlView_declare(
+HtmlView.View(
 	["*", "url", "*", "text"],
 
 	function HtmlView_Url() 
@@ -82,7 +82,7 @@ HtmlView_declare(
 
 );
 
-HtmlView_declare(
+HtmlView.View(
 	["*", "error"],
 
 	function HtmlView_Error(input, def) 

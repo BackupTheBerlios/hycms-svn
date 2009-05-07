@@ -8,7 +8,7 @@
 //
 // Author view
 //
-HtmlView_declare(
+HtmlView.View(
 	["*", "author", "*", "person", "*", "structure"], null,
 
 	function HtmlView_Author(request) 

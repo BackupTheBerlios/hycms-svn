@@ -6,30 +6,43 @@
  * Common models helper functions
  *
  */
+Model = new Package();
+ 
 /*
- * ModelConstruct_declare( type, whereas, func )
+ * [declarator] Model::Construct( type, initializer, whereas, method_body )
  *
- * Declares a standard function "construct" with the implementation "func"
- * for all objects creating a content object tagged with "type". Additional conditions
- * can be passed through the 'whereas' clause.
+ * This declarator will register an implementation of the method "Construct" with the given method_body.
+ * The applicability of the method can be restricted by the parameters <type>, <initializer> and <whereas>. The method
+ * declared by this declarator has the following syntax and semantics:
  *
- * This declarator declares 'func' with the following properties as method view:
+ * --------------------------------------------------------------------------------------------------------
+ *
+ * Tagging::construct( [initializer == <initializer>] ) ==> [<type>]
  *
  * Purpose:
- *		func will be called, whenever an object with a certain tagging should be created
+ * 		This method will be called, if a new object should be created. The method can be called on all arrays,
+ *		containing a tagging describing the object to create. An additional initializer can be passed for
+ *		prototyping the object.
  *
- * This:
- * 		The tagging of the object to create
+ * Applicability:
+ *		This method is applicable on all arrays containing the tagging <type>.
  *
- * Parameter:
- *		initialize		An initializer for the object (may be null)
+ * Parameters:
+ *		initializer		A prototype for the object or 'null', if a build-in prototype should be used.
  *
- * Return Value:
- * 		'func' returns the new object
+ * Return value:
+ *		The constructed object tagged by the given <type>.
  *
-
+ * Example:
+ *		var addr = ["?address_book", "list"]._construct();
+ *
+ *		Creates a new object tagged with 'address_book' according to its construction function. If there
+ *		is no constructor available for 'address_book' a list will be created.
+ *
+ * --------------------------------------------------------------------------------------------------------
+ *
  */
-function ModelConstruct_declare( type, whereas, func )
+Model.Construct = function( type, initializer, whereas, func )
 {
 	if (whereas == null)
 		whereas = [];
@@ -39,10 +52,10 @@ function ModelConstruct_declare( type, whereas, func )
 
 	"construct".__declare(
 		({
-			input:		"initializer",
+			options:	{"initializer":	initializer},
 			output:		type,
 
-			whereas:	["(input == null) ? true : (initializer.__taggedAs('"+type.join("','")+"') != -1)"].concat(whereas),
+			whereas:	["(__options.initializer == null) ? true : (__options.initializer.__taggedAs('"+type.join("','")+"') != -1)"].concat(whereas),
 			max:		["this.__understoodAs('"+type.join("','")+"')"],
 		
 			does:		func
@@ -50,97 +63,3 @@ function ModelConstruct_declare( type, whereas, func )
 	);
 }
 
-/*
- * ModelInsert_declare( type, whereas, func )
- *
- * Declares a standard function "insert" with the implementation "func"
- * for all objects tagged with "type". Additional conditions
- * can be passed through the 'whereas' clause.
- *
- * This declarator declares 'func' with the following properties as method view:
- *
- * Purpose:
- *		func will be called, whenever a child object should be inserted into a model
- *		object or one of its descendants.
- *
- * This:
- * 		The object, that should insert a new child object
- *
- * Parameter:
- *		position		A position identifier (normally a number)
- *		newChild		The child object to insert
- *		
- *
- * Return Value:
- * 		'func' returns normally 'this'. If it return 'null', the insertion
- *		was not possible
- *
- */
-function ModelInsert_declare( type, whereas, func )
-{
-	if (whereas == null)
-		whereas = [];
-		
-	if (!(whereas instanceof Array))
-		whereas = [whereas];
-
-	"construct".__declare(
-		({
-			input:		["position", "newChild"],
-			output:		type,
-
-			whereas:	["newChild != null", "position != null"].concat(whereas),
-			max:		["this.__taggedAs('"+type.join("','")+"')"],
-		
-			does:		func
-		})
-	);
-}
-
-/*
- * ModelReplace_declare( type, whereas, func )
- *
- * Declares a standard function "replace" with the implementation "func"
- * for all objects tagged with "type". Additional conditions
- * can be passed through the 'whereas' clause.
- *
- * This declarator declares 'func' with the following properties as method view:
- *
- * Purpose:
- *		func will be called, whenever a child object of a model object 
- *		should be replaced by another object.
- *
- * This:
- * 		The object, that should replace a child object
- *
- * Parameter:
- *		position		A position identifier (normally a number)
- *		newChild		The new child object
- *		
- *
- * Return Value:
- * 		'func' returns the object itself. It might be that the call of 'insert' created
- *		a new instance of the object. If this is the case, the caller has to make sure,
- *		that "replace" is called at the parent object.
- *
- */
-function ModelInsert_declare( type, whereas, func )
-{
-	if (whereas == null)
-		whereas = [];
-		
-	if (!(whereas instanceof Array))
-		whereas = [whereas];
-
-	"construct".__declare(
-		({
-			input:		["position", "newChild"],
-			output:		type,
-
-			whereas:	["newChild != null", "position != null"].concat(whereas),
-			max:		["this.__taggedAs('"+type.join("','")+"')"],
-		
-			does:		func
-		})
-	);
-}

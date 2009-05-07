@@ -7,7 +7,7 @@
 //
 // DocumentInformation view
 //
-HtmlView_declare(
+HtmlView.View(
 	["*", "document_information", "*", "list"], null,
 	
 	function HtmlView_DocumentInformation(request)
@@ -42,7 +42,7 @@ HtmlView_declare(
 //
 // Abstract view
 //
-HtmlView_declare(
+HtmlView.View(
 	["*", "abstract", "*", "paragraph", "*", "list"], null,
 	
 	function HtmlView_Paragraph(request) 
@@ -55,7 +55,7 @@ HtmlView_declare(
 //
 // Version view
 //
-HtmlView_declare(
+HtmlView.View(
 	["*", "version", "*", "text"], null,
 
 	function HtmlView_Version()

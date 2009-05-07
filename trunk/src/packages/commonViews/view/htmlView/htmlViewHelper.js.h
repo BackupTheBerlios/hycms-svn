@@ -6,18 +6,34 @@
  * HTML View helper functions
  *
  */
- 
+HtmlView = new Package();
+
 /*
- * HtmlView_declare( type, whereas, func )
+ * [declarator] HtmlView::View( type, whereas, method_body )
  *
- * Declares a standard function "view" with the implementation "func"
- * for all objects with the type constraint "type". Additional conditions
- * can be passed through the 'whereas' clause.
+ * This declarator will register an implementation of the method "view" with the given method_body.
+ * The applicability of the method can be restricted by the parameters 'type' and 'whereas'. The method
+ * declared by this declarator has the following syntax and semantics:
  *
- * This declarator declares 'func' with the following properties as method view:
+ * --------------------------------------------------------------------------------------------------------
  *
- * - 'func' will be declared to fullfill the following features:
+ * OBJECT::view( [parentList] ) ==> [html, text]
  *
+ * Purpose:
+ * 		Shows OBJECT as HTML text. 
+ *
+ * Applicability:
+ *		This method is applicable on OBJECT, if it is tagged with <type>. It will only be used if
+ *		the clauses of <whereas> are satisfied.
+ *
+ * Parameters:
+ * 		The method may receive the additional parameter "parentList" which contains the context, the object should be seen in. 
+ * 		The context is represented as a list of the parent elements of the given OBJECT.
+ *
+ * Return value:
+ *		String tagges as [html, text]
+ *
+ * Features:
  *		recursive_context			The function passes the view context using the
  *									optional parameter 'parentList' to all subsequent
  *									calls of 'view'.
@@ -38,15 +54,18 @@
  *			  uses the calls [text]::tag and [*]::taggedIterate. The first two features will be
  *			  automatically fulfilled by the HtmlView_showInContext function.
  *
- * 'func' returns the type ["html", "text"].
+ * Example:
  *
- * 'func' has the optional parameter parentList, which contains the hierarchy of objects
- * the current object is shown in. 
+ *		"Hallo Welt"._view();
  *
- * 'func' is optimal, if the evaluation of this.__taggedAs(type) is optimal.
+ *		May evaluate to:
+ *
+ *			<span uuid='###'>Hallo Welt</span>
+ *
+ * --------------------------------------------------------------------------------------------------------
  *
  */
-function HtmlView_declare( type, whereas, func )
+HtmlView.View = function( type, whereas, func )
 {
 	"view".__declare(
 		({

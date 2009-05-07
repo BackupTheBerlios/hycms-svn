@@ -777,3 +777,13 @@ function __callAfterAspects(method, subject, args, returnValue)
 	return returnValue;
 }
 
+/*
+ * [class] Package
+ *
+ * Package abstraction.
+ *
+ */
+function Package()
+{
+}
+

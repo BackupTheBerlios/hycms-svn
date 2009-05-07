@@ -8,8 +8,8 @@
 //
 // Structure model
 //
-ModelConstruct_declare(
-	["*", "structure"], null,
+Model.Construct(
+	["*", "structure"], ({}), null,
 
 	function Model_Structure(initializer) 
 	{
@@ -28,8 +28,8 @@ ModelConstruct_declare(
 //
 // List model
 //
-ModelConstruct_declare(
-	["*", "list"], null,
+Model.Construct(
+	["*", "list"], [], null,
 
 	function Model_List(initializer) 
 	{
@@ -46,8 +46,8 @@ ModelConstruct_declare(
 //
 // Plain text model
 //		 
-ModelConstruct_declare(
-	["*", "text"], null,
+Model.Construct(
+	["*", "text"], "", null,
 
 	function Model_Text(initializer) 
 	{

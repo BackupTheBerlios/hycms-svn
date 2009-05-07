@@ -7,7 +7,7 @@
 //
 // Paragraph view
 //
-HtmlView_declare(
+HtmlView.View(
 	["*", "paragraph", "*", "list"], null,
 	
 	function HtmlView_Paragraph(request) 
@@ -19,7 +19,7 @@ HtmlView_declare(
 //
 // Headline view
 //
-HtmlView_declare(
+HtmlView.View(
 	["*", "headline", "*", "?paragraph", "*", "list"], null,
 	
 	function HtmlView_Paragraph(request) 
