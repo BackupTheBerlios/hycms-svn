@@ -15,8 +15,8 @@
 			document.body.innerHTML = html;
 		}
 	
-		function main(content_path) {		
-			content_path._downloadContent( viewFunction );
+		function main(contentPath) {		
+			contentPath._downloadContent( viewFunction );
 		}
 	</script>
 	
