@@ -22,7 +22,9 @@ var theTestSuiteObject =
 }
 
 /*
- * For writing a test suite, you have to do the following things:
+ * I. Writing tests
+ * ================
+ * To write a test suite, you have to do the following things:
  *
  *	A. Header
  *	---------
@@ -58,4 +60,16 @@ var theTestSuiteObject =
  *	global variables or state should be used inside a test, to prevent unclear or implicit state between 
  *  the tests.
  *
+ * II. Instaling test suites
+ * =========================
+ * To install a test suite, it can be placed anywhere inside the folder "test/suites". You can create
+ * your own directory hierarchie. The test suite browser will display this hierarchy.
+ *
+ * III. Executing tests
+ * ====================
+ * To start a test, just open 'test/test.htm' on your web server. Select a test suite from the list.
+ * If you are using Firefox, the results of the test will be displayed in the firebug console. If your
+ * browser doesn't support the console-Interface the test results will be displayed in the browser window.
+ *
  */
+ 
