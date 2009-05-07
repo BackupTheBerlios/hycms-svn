@@ -3,7 +3,7 @@
  * Copyright(C)2008 by Friedrich Gräter
  * Published under the terms of the Lesser GNU General Public License v2
  *
- * HTML View helper functions
+ * HTML Editor View helper functions
  *
  */
  
@@ -14,7 +14,7 @@
  * for all objects showing a content object tagged with "type". Additional conditions
  * can be passed through the 'whereas' clause. 
  *
- * This declarator declares 'func' with the following properties as method view:
+ * This declarator declares 'func' with the following properties:
  *
  * Purpose:
  *		'func' will be called, whenever a view receives the focus.
@@ -22,10 +22,6 @@
  * Features:
  *
  *		use_uuid_attribute		The function will identify the content by the uuid attribute
- *
- * Return Value:
- * 		'func' returns the type ["eventAccepted", "boolean"]. If the return value is true, the
- * 		function accepts the event, otherwise not.
  *
  * This:
  * 		The 'this' object of 'func' will be the view node, which received the event.
@@ -45,6 +41,10 @@
  *
  *			editor				The editor which is related to the event
  *			event				The DOM Event descriptor
+ *
+ * Return Value:
+ * 		'func' returns the type ["eventAccepted", "boolean"]. If the return value is true, the
+ * 		function accepts the event, otherwise not. 
  *
  */
 function EditorReceiveFocus_declare( type, whereas, func )
@@ -88,7 +88,7 @@ function EditorReceiveFocus_declare( type, whereas, func )
  * for all objects showing a content object tagged with "type". Additional conditions
  * can be passed through the 'whereas' clause.
  *
- * This declarator declares 'func' with the following properties as method view:
+ * This declarator declares 'func' with the following properties:
  *
  * Purpose:
  *		func will be called, whenever a view losts its focus.
@@ -97,16 +97,16 @@ function EditorReceiveFocus_declare( type, whereas, func )
  *
  *		use_uuid_attribute		The function will identify the content by the uuid attribute
  *
- * Return Value:
- * 		'func' returns the type ["eventAccepted", "boolean"]. If the return value is true, the
- * 		function accepts the event, otherwise not.
- *
  * This:
  * 		The 'this' object of 'func' will be the view node, which received the event.
  *
  * Parameters:
  *		editor		The editor object, associated with the node.
  * 		newFocus	The view node, that should receive the new focus.
+ *
+ * Return Value:
+ * 		'func' returns the type ["eventAccepted", "boolean"]. If the return value is true, the
+ * 		function accepts the event, otherwise not.
  *
  */
 function EditorLostFocus_declare( type, whereas, func )
@@ -133,4 +133,5 @@ function EditorLostFocus_declare( type, whereas, func )
 		})
 	);
 }
+
 
