@@ -25,7 +25,8 @@
 			$line = trim($sline);
 			$parameter = "";
 		
-			if ($line == "// Do:") break;
+			if ($sline == "") continue;
+			if (substr($line, 2) != "//") break;
 	
 			if (strpos($line, $REQUIRES) !== false) {
 				$parameter = trim(substr($line, strlen($REQUIRES)));
