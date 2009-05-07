@@ -24,6 +24,14 @@ MethodNotExistsError.prototype = new Error();
 var methodHash = new Object();
 
 /*
+ * aspectTable
+ *
+ * List of all aspects applied in the system.
+ *
+ */
+var aspectTable = new Array();
+
+/*
  * String::__declare(method)
  *
  * Declarates a method with name of "THIS" according to the
@@ -92,6 +100,18 @@ String.prototype.__declare = function(method)
 	if (method.options == null)
 		method.options = new Object();
 	
+	// Arrayify non-array elements
+	if (!(method.input instanceof Array))
+		method.input = [method.input];
+	if (!(method.output instanceof Array))
+		method.output = [method.output];
+	if (!(method.features instanceof Array))
+		method.features = [method.features];
+	if (!(method.whereas instanceof Array))
+		method.whereas = [method.whereas];
+	if (!(method.max instanceof Array))
+		method.max = [method.max];
+	
 	// Search for undefined fields
 	for (var idx in method) {
 		if (idx[0] == '_') continue;
@@ -114,6 +134,12 @@ String.prototype.__declare = function(method)
 	// Precompile boolean and max instructions
 	method.whereas_precompiled = __precompile(method.whereas, method.input);
 	method.max_precompiled = __precompile(method.max, method.input);
+
+	// Set name
+	method.name = this.valueOf();
+
+	// Install asspects
+	__registerAspects(method);
 
 	// Register method inside the dispatcher
 	if (methodHash[identifier.substr(1)] == null)
@@ -247,10 +273,7 @@ Requesting.prototype.test = function(returnType, features, optionMap)
 
 	// Test return type
 	if (this.returnTypeRequest != null) {
-		var testObj = "abc";
-		testObj = testObj.__tag.apply(testObj, returnType);
-
-		tagCount = testObj.__taggedAs.apply(testObj, this.returnTypeRequest);
+		tagCount = returnType.__understoodAs.apply(returnType, this.returnTypeRequest);
 
 		if (tagCount == -1)
 			return -1;
@@ -346,7 +369,42 @@ Requesting.prototype.removeOption = function(name, value)
 	return this;
 }
 
+/*
+ * Requesting::extendOption(name, value)
+ *
+ * Copies the request object and extends the copy using addOption(name, value)
+ *
+ * See: addOption
+ *
+ * Returns: Copied instance of the request
+ *
+ */
+Requesting.prototype.extendOption = function(name, value)
+{
+	return this.copy().addOption(name, value);
+}
 
+/*
+ * Requesting::reduceOption(name, ...)
+ *
+ * Copies the request object and reduces the copy using removeOption(name).
+ * The function can receive an arbitrary number of options to remove.
+ *
+ * See: removeOption
+ *
+ * Returns: Copied instance of the request
+ *
+ */
+Requesting.prototype.reduceOption = function()
+{
+	var cp = this.copy();
+	
+	for (var idx = 0; idx < arguments.length; idx ++) {
+		cp.removeOption(arguments[idx]);
+	}
+	
+	return cp;
+}
 
 /*
  * Request(...)
@@ -426,7 +484,7 @@ function __callMethod(methodName, object, args)
 		
 		args[args.length - 2] = requestInfo;
 		args[args.length - 1] = requestInfo.options;
-		
+		if (args[args.length-1] == null) console.log("NULLOPTIONSARRAY!");
 		// If any boolean condition evaluates to false, ignore the function
 		boolCount = __evaluateBoolConditions(method, object, args);
 
@@ -472,9 +530,15 @@ function __callMethod(methodName, object, args)
 	args[args.length - 2] = requestInfo;
 	args[args.length - 1] = requestInfo.options;
 
+	// Call before aspects
+	args = __callBeforeAspects(method, object, args);
+
 	// Call method
 	var retval = method.does.apply(object, args);
-	
+
+	// Call after aspects
+	retval = __callAfterAspects(method, object, args, retval);
+
 	// Apply return value
 	if (retval != null) {
 		if (retval.__def == null)
@@ -507,7 +571,10 @@ function __evaluateBoolConditions(method, object, args)
 				return -1;
 		} catch(e) {
 			console.log("ERROR: ", e);
-			console.log(method.toSource(), args);
+			console.log("Evaluation failed:", miniFunc.toSource());
+			console.log("Of Method:", method);
+			console.log("Called with:", args);
+			console.trace();
 			
 			return -1;
 		}
@@ -532,7 +599,14 @@ function __evaluateMaxConditions(method, object, args)
 	for (var idx = 0; idx < method.max_precompiled.length; idx ++) {
 		var miniFunc = method.max_precompiled[idx];
 
-		var addVal = miniFunc.apply(object, args);
+		try {
+			var addVal = miniFunc.apply(object, args);
+		} catch (e) {
+			console.log("ERROR: ", e);
+			console.log("Evaluation failed:", miniFunc.toSource());
+			console.log("Of Method:", method);			
+			console.log("Called with:", args);
+		}
 
 		if (addVal == -1)
 			return -1;
@@ -541,5 +615,165 @@ function __evaluateMaxConditions(method, object, args)
 	}
 
 	return val;
+}
+
+/*
+ * Function::__observes( advice, condition_1, ..., condition_n )
+ *
+ * Registers the current function as aspect of all functions satisfying
+ * the arbitrary number of pointcuts "condition_N".The parameter 'advice'
+ * specifies when to execute the function. There are currently two possibilities:
+ * before, after.
+ *
+ * If the same function is already added to a certain pointcut, it won't
+ * be added twice.
+ *
+ * The function for the before advice receives the following parameters:
+ *		aspect		-	The descriptor of the aspect
+ *		method		-	The descriptor of the message
+ *		subject		-	The 'this' parameter of the method
+ *		arguments	-	List of argumetns passed to the watched function
+ * It has to return "arguments" or a modified version of arguments. 
+ *
+ * The function for the before advice receives the following parameters:
+ *		aspect		-	The descriptor of the aspect
+ *		method		-	The descriptor of the message
+ *		subject		-	The 'this' parameter of the method
+ *		arguments	-	List of argumest passed to the watched function
+ *		returnValue	-	The value returned from the watched function
+ * It has to return the returnValue of the watched function or a modified
+ * version of it.
+ *
+ * The conditions are javascript instruction strings evaluating to 'true' or 'false'.
+ * They may receive the parameters 'name', 'input', 'output', 'whereas', 'max', 'options'
+ * from all methods tested with the conditions.
+ *
+ */
+Function.prototype.__observes = function( advice )
+{
+	var conditions = [];
+	var conditions_precompiled = [];
+
+	// Build conditions list
+	for (var idx = 1; idx < arguments.length; idx ++) {
+		conditions.push(arguments[idx]);
+		conditions_precompiled.push(new Function("name, input, output, whereas, max, options", "return ("+arguments[idx]+");"));
+	}
+
+	// Register aspect
+	aspectTable.push( { advice: advice, conditions: conditions, conditions_precompiled: conditions_precompiled, handler: this} );
+	
+	// Apply aspect to all methods
+	for (var methodName in methodHash) {
+		if (methodName[0] == '_') continue;
+
+		for (var idx = 0; idx < methodHash[methodName].length; idx ++) {
+			__registerAspects( methodHash[methodName][idx] );
+		}
+	}
+}
+
+/*
+ * __registerAspects( method )
+ *
+ * Tests all aspects on their applicability of 'method'. If a aspect
+ * is applicable, it will be registered. If the same function is already
+ * registered to a method, it will not be registered twice.
+ *
+ */
+function __registerAspects(method)
+{
+	// Register administrative structures
+	if (method.aspects == null)
+		method.aspects = new Object();
+	if (method.aspects.before == null)
+		method.aspects.before = new Array();
+	if (method.aspects.after == null)
+		method.aspects.after = new Array();
+
+	// Test and add all aspects
+	for (var idx = 0; idx < aspectTable.length; idx ++) {
+		var aspect = aspectTable[idx];
+		
+		if (__aspectApplicable(method, aspect)) {
+			var methodAspects = method.aspects[aspect.advice];
+			
+			// Register only, if not already done
+			if (methodAspects.indexOf(aspect) == -1)
+				methodAspects.push(aspect);
+		}
+	}
+}
+
+/*
+ * __aspectApplicable(method, aspect)
+ *
+ * Tests whether the given aspect is applicable to a method,
+ * and returns 'true' if so.
+ *
+ */
+function __aspectApplicable(method, aspect)
+{
+	for (var idx = 0; idx < aspect.conditions_precompiled.length; idx ++) {
+		var condition = aspect.conditions_precompiled[idx];
+
+		if (!condition(method.name, method.input, method.output, method.whereas, method.max, method.options)) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+/*
+ * __callBeforeAspects(method, subject, args)
+ *
+ * Calls all before aspects of the given 'method' and passes
+ * the given parameter list 'args' to it. The 'this' parameter
+ * of the function to be called is 'subject'.
+ *
+ * Return value:
+ *		The new argument list of the method
+ */
+function __callBeforeAspects(method, subject, args)
+{
+	// No aspects registered
+	if (method.aspects == null)
+		return args;
+
+	for (var idx = 0; idx < method.aspects.before.length; idx ++) {
+		var aspect = method.aspects.before[idx];
+	
+		args = aspect.handler(aspect, method, subject, args);
+		
+		if (args == null) return null;
+	}
+	
+	return args;
+}
+
+/*
+ * __callAfterAspects(method, subject, args, returnValue)
+ *
+ * Calls all after aspects of the given 'method' and passes
+ * the given parameter list 'args' and returnValue to it.
+ * The 'this' parameter of the function to be called is 'subject'.
+ *
+ * Return value:
+ *		The new argument list of the method
+ */
+function __callAfterAspects(method, subject, args, returnValue)
+{
+	// No aspects registered
+	if (method.aspects == null)
+		return returnValue;
+	
+	for (var idx = 0; idx < method.aspects.after.length; idx ++) {
+		var aspect = method.aspects.after[idx];
+
+		returnValue = aspect.handler(aspect, method, subject, args, returnValue);
+	}
+
+	return returnValue;
 }
 

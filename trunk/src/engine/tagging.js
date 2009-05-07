@@ -165,40 +165,24 @@ Object.prototype.__untag = function()
 }
 
 /*
- * Object::__taggedAs(...)
+ * Array::__understoodAs(...)
  *
- * Tets whether the given tags are applying on the given object. The
- * tags can be given as an arbitrary number of strings. The order of
- * the tags will be seen as requirement. The following wildcards exist:
+ * Tests whether the given tags are applying to the tags given in the array.
  *
- *		*	At this position, zero or more tags can be placed
- *		+	Exactly one unknown tag can be placed at this position
- *
- * If a tag is marked up with a ? sign, it will be seen as optional.
- * If it is not available at a given position, it will be ignored.
- *
- * Return value:
- *	The function counts all non-wildcard terms of the tagging of the
- *  given object which are in the right order. If there is a term
- *  of the parameter list not existing in the tagging of the object
- *	or not in the right order, the function will return -1.
+ * See: Object::__taggedAs
  *
  */
- var testI = false;
-Object.prototype.__taggedAs = function()
+Array.prototype.__understoodAs = function()
 {
 	var count = 0;
-	var def = this.__def;
-
-	if (this.__def == null)
-		def = [__getJSTypeId(this)];
+	var def = this;
 
 	for (var objIdx = 0, argIdx = 0; objIdx < def.length; objIdx ++)
 	{
 		var objElement = def[objIdx];
 		var argElement = arguments[argIdx];
 		var argOptional = (argElement[0] == '?')
-if (testI) console.log("TEST", argElement, objElement);
+
 		// Remove option prefix
 		if (argOptional == true) {
 			argElement = argElement.substr(1);
@@ -208,7 +192,6 @@ if (testI) console.log("TEST", argElement, objElement);
 		if (argElement == "*") {
 			// There are still tags to test
 			if (argIdx + 1 < arguments.length) {
-			if (testI) console.log(argElement, arguments[argIdx + 1], objElement);
 				// Next argument tag is *, just ignore current and try again
 				if (arguments[argIdx + 1] == "*") {
 					argIdx ++;
@@ -295,6 +278,36 @@ if (testI) console.log("TEST", argElement, objElement);
 		return -1;
 
 	return count;
+}
+
+/*
+ * Object::__taggedAs(...)
+ *
+ * Tets whether the given tags are applying on the given object. The
+ * tags can be given as an arbitrary number of strings. The order of
+ * the tags will be seen as requirement. The following wildcards exist:
+ *
+ *		*	At this position, zero or more tags can be placed
+ *		+	Exactly one unknown tag can be placed at this position
+ *
+ * If a tag is marked up with a ? sign, it will be seen as optional.
+ * If it is not available at a given position, it will be ignored.
+ *
+ * Return value:
+ *	The function counts all non-wildcard terms of the tagging of the
+ *  given object which are in the right order. If there is a term
+ *  of the parameter list not existing in the tagging of the object
+ *	or not in the right order, the function will return -1.
+ *
+ */
+Object.prototype.__taggedAs = function()
+{
+	var def = this.__def;
+
+	if (this.__def == null)
+		def = [__getJSTypeId(this)];
+
+	return def.__understoodAs.apply(def, arguments);
 }
 
 /*
