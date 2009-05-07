@@ -1,5 +1,5 @@
 // Tagging test
-
+// Suite: taggingTest
 var taggingTest =
 {
 	"Tagging an object":

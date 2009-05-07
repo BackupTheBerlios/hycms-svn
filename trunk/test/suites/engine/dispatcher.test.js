@@ -1,5 +1,5 @@
-// Name:		Dispatcher test
-
+// Dispatcher test
+// Suite: dispatcherTest
 var dispatcherTest =
 {
 	"Registering a method (empty)":

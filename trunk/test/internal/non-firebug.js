@@ -2,12 +2,17 @@
  * For testing with non-firebug browsers
  *
  */
+var non_firebug = false;
+ 
 if (console == null) {	
 	console = new Object();
+	
+	non_firebug = true;
 }
 
 if (console.group == null) {
-
+	non_firebug = true;
+	
 	console.assert = function( condition )
 	{
 		console.thisGroup.assertionCount ++;

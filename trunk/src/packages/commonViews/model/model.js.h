@@ -6,8 +6,8 @@
  * Common models helper functions
  *
  */
-Model = new Package();
- 
+var Model = new Package();
+
 /*
  * [declarator] Model::Construct( type, initializer, whereas, method_body )
  *

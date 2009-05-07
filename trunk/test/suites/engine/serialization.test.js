@@ -1,5 +1,5 @@
-// Name:		Serialization test
-
+// Serialization test
+// Suite: serializationTest
 var serializationTest =
 {
 	"Building objects (string)":
