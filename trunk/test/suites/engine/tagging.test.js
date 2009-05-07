@@ -1,12 +1,5 @@
-/*
- * hyJS
- *
- * Test suite
- *
- * Copyright(C) 2009 by Friedrich Gräter
- * Published under the terms of the GNU General Public License v2
- *
- */
+// Tagging test
+
 var taggingTest =
 {
 	"Tagging an object":
