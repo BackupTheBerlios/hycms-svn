@@ -153,7 +153,7 @@ var dispatcherTest =
 				input:		null,
 				output:		["html", "text"],
 				
-				does:	function() { return "abcdef"; }
+				does:	function xy() { return "abcdef"; }
 			});
 
 			"edit".__declare({
@@ -178,7 +178,7 @@ var dispatcherTest =
 				
 				whereas:	"this instanceof Number",
 				
-				does:	function() { return "abcdef"; }
+				does:	function () { return "abcdef"; }
 			});
 
 			"view".__declare({
@@ -305,5 +305,62 @@ var dispatcherTest =
 			// Test no optional parameter
 			console.assert( "abc"._view(objA) == "abc-none" );
 		},
+
+	"Registering an aspect to a method":
+		function()
+		{
+			methodHash = new Object();
+		
+			"view".__declare({
+				input:		["parentList"],
+				output:		["foo", "text"],
+				
+				does:	function( parentList, request ) { return "1"; }
+			});		
+		
+			"view".__declare({
+				input:		["parentList"],
+				output:		["html", "text"],
+				
+				does:	function( parentList, request ) { return "2"; }
+			});
+
+
+			function beforeAspect ( aspect, method, subject, arguments ) { };
+			beforeAspect.__observes( "before", "name == 'view'", "input.indexOf('parentList') > -1", "output.__understoodAs('foo', 'text') > -1" );
+
+			function afterAspect ( aspect, method, subject, arguments, retVal ) { };
+			afterAspect.__observes( "after", "name == 'view'", "input.indexOf('parentList') > -1", "output.__understoodAs('foo', 'text') > -1" );		
+
+			console.assert(methodHash['view'][0].aspects.before[0].handler == beforeAspect);
+			console.assert(methodHash['view'][0].aspects.after[0].handler == afterAspect);
+			
+			console.assert(methodHash['view'][1].aspects.before.length == 0);
+			console.assert(methodHash['view'][1].aspects.before.length == 0);
+			
+		},
+		
+	"Using an aspect on a method":
+		function()
+		{
+			methodHash = new Object();
+		
+			"view".__declare({
+				input:		["parentList"],
+				output:		["html", "text"],
+				
+				does:	function( parentList, request ) { return parentList; }
+			});		
+
+			function beforeAspect ( aspect, method, subject, arguments ) { arguments[0] = "before-"+subject+"-"+arguments[0]; return arguments; };
+			beforeAspect.__observes( "before", "name == 'view'", "input.indexOf('parentList') > -1", "output.__understoodAs('html', 'text') > -1" );
+
+			function afterAspect ( aspect, method, subject, arguments, retVal ) { return retVal+"-"+subject+"-after" };
+			afterAspect.__observes( "after", "name == 'view'", "input.indexOf('parentList') > -1", "output.__understoodAs('html', 'text') > -1" );		
+
+			console.assert("anything"._view("call") == "before-anything-call-anything-after");
+			
+		}	
+		
 }
 

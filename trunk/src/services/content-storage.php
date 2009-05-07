@@ -23,7 +23,7 @@
 		}else {
 			//Creates new Folder 
 			if(!is_dir("../storage/persistent/".implode("/",$hycms_folder)."/")){
-				mkdir("../storage/persistent/".implode("/",$hycms_folder)."/",0777);
+				mkdir("../storage/persistent/".implode("/",$hycms_folder)."/",0744);
 			}
 			
 			//Writes .json file
@@ -42,7 +42,7 @@
 
 		}
 	}else {
-		echo "No authentificated Session";
+		echo "Session not authenticated";
 	}
 	
 ?>
