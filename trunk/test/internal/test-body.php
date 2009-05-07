@@ -24,9 +24,9 @@
 		foreach($src as $sline) {
 			$line = trim($sline);
 			$parameter = "";
-		
+
 			if ($sline == "") continue;
-			if (substr($line, 2) != "//") break;
+			if (substr($sline, 0, 2) != "//") break;
 	
 			if (strpos($line, $REQUIRES) !== false) {
 				$parameter = trim(substr($line, strlen($REQUIRES)));
