@@ -1,6 +1,6 @@
 <html>
 <head>
-	<title>View: <? echo $_GET["hycms_content"] ?></title>
+	<title>Edit: <? echo $_GET["hycms_content"] ?></title>
 
 	<link rel="stylesheet" type="text/css" href="editor.css">
 	<link rel="stylesheet" type="text/css" href="nocache.css">
@@ -15,7 +15,7 @@
 		{
 			var editor = new Editor(document.getElementById("container"));
 		
-			editor.show(contentPath);
+			editor._showReference(contentPath);
 		}
 	</script>
 

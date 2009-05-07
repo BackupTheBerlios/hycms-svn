@@ -11,14 +11,8 @@
  *		currentSemantics		Current semantics selected by the user
  *
  * Methods:
- *		viewContent				Renders a given content
- *		show					Shows the editor view for a given content path
- *
- *		propagateDownwards		Propagates a certain event downwards the tree
- *		getViewNode				Retrieves the view node responsible for a given DOM node
- *
- *		changeFocus				Changes the focus inside the editor
- *		insertText				Inserts a given text with a given semantic on a given position
+ *		show					Visualizes the content inside the editor
+ *		showReference			Visualizes the content of a reference inside the editor
  *
  * Aspects:
  *		htmlRenderAspect		Extends all HTML views with event handling and tags them
@@ -29,6 +23,19 @@
  *		onKeyPress				Keypress event (insert / delete text; no focus change)
  *		onKeyUp					KeyUp event (focus change / selection change)
  *
+ * Signals:
+ *		viewNode.receiveFocus		A view node receives the focus
+ *		viewNode.lostFocus			A view node loses the focus
+ *		viewNode.update				A view node should be updated
+ *
+ *		contentObject.view				A content object should be shown (as HTML)
+ *
+ *		contentObject.insertChild		A child node should be inserted into a content object
+ *		contentObject.removeChild		A child node should be removed from a content object
+ *
+ *		contentObject.changeSemantics	The semantics of a content object is changing
+ *		contentObject.construct			Initializes a content object using a template
+ *
  */
 function Editor(viewContainer)
 {
@@ -36,148 +43,122 @@ function Editor(viewContainer)
 	this.viewContainer = viewContainer;
 
 	// Register events Handlers
-	viewContainer.addEventListener("click", function(event) { try { self.onClick(event); } catch(e) { console.log(e) } }, true);
-	viewContainer.addEventListener("keypress", function(event) { if (event.target == viewContainer) try { self.onKeyPress(event); } catch(e) { console.log(e) } }, true);
-	viewContainer.addEventListener("keyup", function(event) { if (event.target == viewContainer) try { self.onKeyUp(event); } catch(e) { console.log(e) } }, true);
+	viewContainer.addEventListener("click", function(event) { try { self.onClick(self._makeDescription(event)); } catch(e) { console.log(e) } }, true);
+	viewContainer.addEventListener("keypress", function(event) { if (event.target == viewContainer) try { self.onKeyPress(self._makeDescription(event)); } catch(e) { console.log(e) } }, true);
+	viewContainer.addEventListener("keyup", function(event) { if (event.target == viewContainer) try { self.onKeyUp(self._makeDescription(event)); } catch(e) { console.log(e) } }, true);
 
 	// Prevent context menu
 	viewContainer.addEventListener("contextmenu", function(event) { event.preventDefault(); event.stopPropagation(); }, true);
 
 	// Register all aspects
-	function aspectCallback() { self.htmlRenderAspect.apply(self, arguments); }
-	aspectCallback._observe(["|View; <(~html)>; html < text; {set_uuid_attribute}"], ":after");
+	function aspectCallback() { return self.htmlRenderAspect.apply(self, arguments); }
+	aspectCallback.__observes("after", "name == 'view'");
 
-	// Make the editor "contentEditable"
+	// Make the editor pane "contentEditable"
 	this.viewContainer.contentEditable = true;
 }
 
 /*
- * Editor::viewContent(content)
+ * Editor::show(content)
  *
  * Visualizes a certain content object into the editor view.
  *
  */
-Editor.prototype.viewContent = function(content)
+"show".__declare({
+	whereas:	"this instanceof Editor",
+	does:
+	
+function(content)
 {
 	// Flush old content tree
 	this.content = content;
 	this.contentHash = new Object();
-	this.contentHash.nextID = 0;
 
 	// We only accept those HTML views, that can set us the uuid_attribute
-	var html = "|View; <(~html)>; ?html < text; {set_uuid_attribute, ?not_editable_attribute}"._send ( content );
+	var html = content._view(Request(["*", "html", "text"], "?recursive_context", "keep_method_conditions", "set_uuid_attribute"));
 
 	this.viewContainer.innerHTML = html;
 }
 
+});
+
 /*
- * Editor::show(content_path)
+ * Editor::showReference(content_path)
  *
- * Shows a document inside the Editor
+ * Shows a document at a given path inside the Editor
  *
  */
-Editor.prototype.show = function (contentPath)
+"showReference".__declare({
+	whereas:	"this instanceof Editor",
+	does:
+	
+function(contentPath)
 {
 	var self = this;
 
 	// Prepare callback
 	function viewContentCallback(content)
 	{
-		self.viewContent(content);
+		self._show(content);
 	}
-	viewContentCallback._as("|callback < function; >(?path)<; ?path < ?text");
-
 	// Call data provider
-	"|?SemanticDataProvider < DataProvider"._send ( contentPath._as("|path < text"), 
-													viewContentCallback
-												  );
+	contentPath._downloadContent( viewContentCallback );
 								  
 }
 
+});
 /*
- * Editor::htmlRenderAspect(receiver, result, input, def)
+ * Editor::htmlRenderAspect(aspect, method, subject, arguments, returnValue)
  *
  * Watches all HTML-Render nodes for rendering some content. If this
  * is done, the aspect will register the content to the contentHash by
  * a unique id.
  *
  */
-Editor.prototype.htmlRenderAspect = function(receiver, result, input, def)
+Editor.prototype.htmlRenderAspect = function(aspect, method, subject, arguments, returnValue)
 {
-	var input_object = input._get(def._getUnorderedRelationElement(">()<", 0, 0).name);
-	var uuid_string = HtmlView_uuid_attribute(input_object);
+	var uuid = arguments.__uuid;
+	var refCount = 0;
 
 	// Register object by its UUID
-	this.contentHash[input_object.__uuid] = input_object;
-	
-	return result;
+	if (this.contentHash[uuid] != null)
+		refCount = this.contentHash[uuid].refCount;
+		
+	this.contentHash[subject.__uuid] = ({link: subject, refCount: refCount});
+
+	return returnValue;
 }
 
 /*
- * Editor::propagateDownwards(target, handler(node) )
+ * Editor::getViewContext(element)
  *
- * Calls "handler" for each view nodes in the propagation hierarchy
- * upwards of target. A DOM node is seen as view node, iff. it has the
- * UUID-attribute. The view hierarchy will be traversed downwards.
- * The handler will also be called for the target itself. 
- *
- */
-Editor.prototype.propagateDownwards = function(target, handler)
-{
-	var propagationList = [];
-	var node = target;
-	
-	while ((node != null) && (node.getAttribute != null) && (node != this.viewContainer))
-	{
-		if (node.getAttribute("uuid") != null)
-			propagationList.push(node);
-			
-		node = node.parentNode;
-	}
-	
-	for (var idx=0; idx < propagationList.length; idx ++) {
-		handler(propagationList[idx]);
-	}
-}
-
-/*
- * Editor::sendEventWithContext(message, node, ...)
- *
- * Sends an event message with respect to a certain DOM node "node". The
- * message begins with the message string "message". The message will
- * be extended by the entire context of the content object represented
- * by the view node.
- *
- * The "node" is a native datatype.
+ * Analyzes the context of a view element.
  *
  * Return value:
- *		Answer of the message receiver
+ *		Context description
  *
  */
-Editor.prototype.sendEventWithContext = function(msg, node)
-{
-	var self = this;
-	var context = ". ";
-	var inheritances = "";
-	
-	// Build context relation
-	this.propagateDownwards(node, function _stopEdit(parent_node) {
-		var parent_object = self.contentHash[parent_node.getAttribute("uuid")];
+"getViewContext".__declare({
+	input:		"element",
+	whereas:	["this instanceof Editor", "element instanceof Element", "element.getAttribute != null", "element.getAttribute('type') != null"],
+	does:
 
-		context += " << ?~"+parent_object._getClassName();
-		inheritances += parent_object._relationToString("<", 0, true, "?") + "; ";
-	});
+function getViewContext(element)
+{
+	var list = [];
 	
-	// Extract arguments
-	var args = [];
+	while (element != this.viewContainer) {
 	
-	for (var idx = 2; idx < arguments.length; idx++) {
-		args.push(arguments[idx]);
+		if (element.getAttribute('type') != null)
+			list.push( element.getAttribute('type').split(",") );
+			
+		element = element.parentNode;
 	}
 	
-	// Send message
-	return String.prototype._send.apply(("|"+msg+"; "+inheritances+context), args);
+	return list;
 }
+
+});
 
 /*
  * Editor::getViewNode(anchorNode)
@@ -190,9 +171,14 @@ Editor.prototype.sendEventWithContext = function(msg, node)
  *		- The view node (DOM)
  *		- null, if such a node does not exist
  */
-Editor.prototype.getViewNode = function(anchorNode)
+"getViewNode".__declare({
+	input:		"anchorNode",
+	whereas:	["this instanceof Editor", "anchorNode instanceof Element", "anchorNode.getAttribute != null"],
+	does:
+
+function getViewNode(anchorNode)
 {
-	var targetView = anchorNode.parentNode;
+	var targetView = anchorNode;
 	var uuid;
 
 	// Get the view node, which is associated with the event	
@@ -210,121 +196,110 @@ Editor.prototype.getViewNode = function(anchorNode)
 	return targetView;
 }
 
+});
+
+"getViewNode".__declare({
+	input:		"anchorNode",
+	whereas:	["this instanceof Editor", "anchorNode instanceof Node", "anchorNode.parentNode != null"],
+	does:
+	
+function getViewNode(anchorNode)
+{
+	return this._getViewNode(anchorNode.parentNode);
+}
+
+});
+
 /*
- * Editor::changeFocus(anchorNode, anchorOffset, pageX, pageY)
+ * Editor::getContentObject(viewNode)
  *
- * Informs the views about changing of the caret inside the editor. "anchorNode"
- * is the node which should receive the focus at position "anchorOffset". The
- * coordinates "pageX" and "pageY" should give further informations about the position,
- * the user selected exactly.
- *
- * This function call StopEdit on the view which is going to lose its focus (this.lastFocussed).
- * If this view accepts the lost of focus, the message BeginEdit will be called for the view
- * that will receive the focus. If it accepts the new focus, lastFocussed will be updated.
- * Further propagation of the event will be prevented.
+ * Returns the content object that is associated with a given view node.
  *
  * Return value:
- *		true			Event accepted
- *		false			Event not accepted
- *		null			Event not handled
+ *		The content object
+ */
+"getContentObject".__declare({
+	input:		"viewNode",
+	whereas:	["this instanceof Editor", "viewNode instanceof Element", "viewNode.getAttribute != null", "viewNode.getAttribute('uuid') != null"],
+	does:
+
+function getContentObject(viewNode)
+{
+	return this.contentHash[viewNode.getAttribute('uuid')].link;
+}
+
+});
+
+/*
+ * Editor::switchFocus(eventDescription)
+ *
+ * Switches the focus inside the editor
  *
  */
-Editor.prototype.changeFocus = function(anchorNode, anchorOffset, pageX, pageY)
+"switchFocus".__declare({
+	input:		["eventDescription"],
+	whereas:	["this instanceof Editor", 
+				 
+				 "eventDescription.__is('event_description')",
+				 "eventDescription.destNode instanceof Element",
+				 "eventDescription.anchorNode instanceof Node",
+				 "typeof(eventDescription.anchorOffset) == 'number'"
+				],
+	does:
+
+function switchFocus(eventDescription)
 {
-	var targetView = this.getViewNode(anchorNode);
-	var lastFocussed = null;
-	var uuid = (targetView != null) ? (targetView.getAttribute("uuid")) : null;
-	var targetModel = this.contentHash[uuid];
-
-	// Event did not targeting a view node
-	if (uuid == null)
-		return null;
-
-	// Objectify node
-	targetView = (new Native(targetView))._as("|?anchor_view < ?dom_node < native");
-	
-	// Create target description
-	var eventCoordinates = { "|?anchor_node < ?dom_node < native":	 	new Native(anchorNode), 
-			 				 "|?anchor_offset < number": 				anchorOffset,
-							 "|?anchor_view < ?dom_node < native":		targetView,
-							 "|?page_x < cartesian < number":			pageX,
-							 "|?page_y < cartesian < number":			pageY
-						   }._as("|event_coordinates < structure");
-
-	// Send stop edit
 	if (this.lastFocussed != null) {
-		var lastFocussed = (new Native(this.lastFocussed))._as("|?last_focussed_view < ?dom_node < native");
-	
-		var accepted = this.sendEventWithContext("StopEdit; {use_uuid_attribute, unset_is_focussed, use_content_editable_caret}; <(accepted)>; accepted < boolean", 
-												 lastFocussed.valueOf(), 
-												 eventCoordinates, lastFocussed, this.contentHash[lastFocussed.valueOf().getAttribute("uuid")]
-												);
-	
-		if (!accepted)
+		if (!this.lastFocussed._lostFocus(this, eventDescription.destNode))
 			return false;
-	}		
+	}
 
-	// Send begin edit
-	var accepted = this.sendEventWithContext("BeginEdit; {use_uuid_attribute, set_is_focussed, use_content_editable_caret}; <(accepted)>; accepted < boolean", 
-											 targetView.valueOf(), 
-											 eventCoordinates, targetModel
-											);
-
-	if (!accepted)
+	if (!eventDescription.destNode._receiveFocus(this.lastFocussed, eventDescription))
 		return false;
-		
-	// Set up focus
-	this.lastFocussed = targetView.valueOf();
+
+	this.lastFocussed = eventDescription.destNode;
 	
-	// Set current semantics
-	this.currentSemantics = targetModel._def_string();
-	document.title = this.currentSemantics;
 	return true;
 }
+
+});
 
 /*
- * Editor::insert(object, anchorNode, anchorOffset)
+ * Editor::makeDescription(event)
  *
- * Inserts a given "object" at the given anchor node and offset. This function
- * will send a "InsertChild" event to the view of the given anchor node. If the
- * node denies the insertion, the event will be passed to its parent node.
- *
- * The called node should place the object as its child and call View to
- * show it into the tree.
- *
- * Return value:
- *		true		Operation accepted
- *		false		Operation denied
- *		null		Operation not applicable on the given node
+ * Builds an event descriptor from an event for the
+ * given editor.
  *
  */
-Editor.prototype.insert = function(object, anchorNode, anchorOffset)
+"makeDescription".__declare({
+	input:		"event",
+	output:		"event_description",
+	whereas:	["this instanceof Editor", 
+				 "event instanceof Event",
+				 "window != null"
+				],
+	does:
+
+function makeDescription(event)
 {
-	var accepted = false;
-	var parentView = this.getViewNode(anchorNode);
-	
-	do {
-		// Create target description
-		var eventCoordinates = { "|?anchor_node < ?dom_node < native":	 	new Native(anchorNode), 
-				 				 "|?anchor_offset < number": 				anchorOffset,
-								 "|?anchor_view < ?dom_node < native":		parentView,
-							   }._as("|event_coordinates < structure");
+	var eventDescription = new Object();
 
-		parentView = this.getViewNode(anchorNode);
-		
-		if (parentView == null)
-			return null;
+	eventDescription.selection = window.getSelection();
+	eventDescription.anchorNode = eventDescription.selection.anchorNode;
+	eventDescription.anchorOffset = eventDescription.selection.anchorOffset;
 
-		accepted = this.sendEventWithContext("InsertChild; {call_view_method, use_uuid_attribute}; call_view_method: {set_uuid_attribute, ?not_editable_attribute}; <(accepted)>; accepted < boolean",
-											 eventCoordinates,
-											 object._extend("?child_model"),
-											 this.contentHash[parentView.getAttribute("uuid")]._extend("?parent_model")
-											);
+	eventDescription.destNode = this._getViewNode(eventDescription.anchorNode);
+
+	eventDescription.content = this._getContentObject(eventDescription.destNode);
+	eventDescription.contextList = this._getViewContext(eventDescription.destNode);
+
+	eventDescription.editor = this;
+	eventDescription.event = event;	
 	
-	} while(!accepted);
-	
-	return true;
+	return eventDescription;
 }
+
+});
 
 /*
  * Editor::onClick(event)
@@ -335,14 +310,9 @@ Editor.prototype.insert = function(object, anchorNode, anchorOffset)
  * This function will call the high-level event "onSetCaret".
  *
  */
-Editor.prototype.onClick = function(event)
+Editor.prototype.onClick = function(eventDescription)
 {
-	var selection = window.getSelection();
-
-	if (this.changeFocus(selection.anchorNode, selection.anchorOffset, event.pageX, event.pageY) != null) {
-		event.preventDefault();
-		event.stopPropagation();
-	}
+	this._switchFocus(eventDescription);
 }
 
 /*
@@ -358,19 +328,13 @@ Editor.prototype.onClick = function(event)
  * - Delete content
  *
  */
-Editor.prototype.onKeyPress = function(event)
+Editor.prototype.onKeyPress = function(eventDescription)
 {
+	var event = eventDescription.event;
+
 	// Ignore cursor events
 	if ((event.keyCode > 32) && (event.keyCode < 41)) {
 		return;
-	}
-
-	// Insert text
-	if (event.charCode != 0) {
-		var selection = window.getSelection();
-		var inputText = String.fromCharCode(event.charCode)._as(this.currentSemantic);
-		
-		this.insert(inputText, selection.anchorNode, selection.anchorOffset);
 	}
 
 	// Don't do anything else, if we didn't allowed it explicitly
@@ -390,19 +354,19 @@ Editor.prototype.onKeyPress = function(event)
  * - Focus change after cursor move
  *
  */
-Editor.prototype.onKeyUp = function(event)
+Editor.prototype.onKeyUp = function(eventDescription)
 {
+	var event = eventDescription.event;
+
 	// Move cursor
 	if ((event.keyCode > 32) && (event.keyCode < 41)) {
-		var selection = window.getSelection();
-
-		this.changeFocus(selection.anchorNode, selection.anchorOffset, event.pageX, event.pageY)
+		this._switchFocus(eventDescription);
 
 		return;
 	}
 
 	// Don't do anything else, if we didn't allowed it explicitly
-	event.preventDefault();
 	event.stopPropagation();	
+	event.preventDefault();
 }
 
