@@ -245,7 +245,7 @@ Requesting.prototype.copy = function()
 	
 	for (var idx in this.options) {
 		if (idx[0] == "_") continue;
-		
+
 		if (this.options[idx] != null)
 			nRequest.options[idx] = this.options[idx].__clone();
 		else
@@ -481,10 +481,10 @@ function __callMethod(methodName, object, args)
 		// Set default values to optional parameters
 		requestInfo = requestBase.copy();
 		requestInfo.initOptions(method.options);
-		
+	
 		args[args.length - 2] = requestInfo;
 		args[args.length - 1] = requestInfo.options;
-		if (args[args.length-1] == null) console.log("NULLOPTIONSARRAY!");
+
 		// If any boolean condition evaluates to false, ignore the function
 		boolCount = __evaluateBoolConditions(method, object, args);
 

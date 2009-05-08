@@ -77,6 +77,9 @@ Object.prototype.__tag = function()
 	if (this.__def != null)
 		throw new AlreadyTaggedError("Already tagged - "+this.__def);
 	
+	if (arguments[0] instanceof Array)
+		arguments = arguments[0];
+	
 	this.__def = [];
 
 	for (var idx = 0; idx < arguments.length; idx ++) {
@@ -176,6 +179,9 @@ Array.prototype.__understoodAs = function()
 {
 	var count = 0;
 	var def = this;
+
+	if (arguments[0] instanceof Array)
+		arguments = arguments[0];
 
 	for (var objIdx = 0, argIdx = 0; objIdx < def.length; objIdx ++)
 	{
@@ -306,6 +312,9 @@ Object.prototype.__taggedAs = function()
 
 	if (this.__def == null)
 		def = [__getJSTypeId(this)];
+
+	if (arguments[0] instanceof Array)
+		arguments = arguments[0];
 
 	return def.__understoodAs.apply(def, arguments);
 }

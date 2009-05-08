@@ -3,21 +3,27 @@ div#testBox {
 	top: 0px;
 	left: 0px;
 	right: 0px;
-	height: 2em;
 	background: black;
 	vertical-align: middle;
 	text-align: center;
 	color: white;
 	float: left;
 	padding-top: 0.5em;
+	padding-bottom: 0.5em;	
 }
 
 span#testIdentifier {
 	vertical-align: middle;
+	font-weight: bold;
 }
 
 a#testLink {
 	vertical-align: middle;
+}
+
+img#testButton {
+	vertical-align: middle;
+	border: 0px;
 }
 
 select#testSel {

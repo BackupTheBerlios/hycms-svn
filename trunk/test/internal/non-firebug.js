@@ -21,7 +21,7 @@ if (console.group == null) {
 			console.thisGroup.innerHTML += "<div style='color:red'>Assertion failed (#"+console.thisGroup.assertionCount+")</div>";
 	}
 
-	console.thisGroup = document.body;
+	console.thisGroup = document.getElementById("bodyField");
 	console.thisGroup.assertionCount = 0;
 
 	console.group = function( gName )

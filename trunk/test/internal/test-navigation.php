@@ -49,6 +49,6 @@
 	?>
 	</select>
 	
-	<a href="javascript:reload()" id='testLink'><img border=0 src="./internal/reload.png" /></a>
+	<a href="javascript:window.location.reload()" id='testLink'><img id='testButton' src="./internal/reload.png" /></a>
 </div>
 

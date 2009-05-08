@@ -43,18 +43,17 @@
 	
 		?>
 
-	<!-- The test suite script -->
-	<script src='<?=$_GET["suite"]?>'></script>
-
-		<!-- Helper functions of the test system -->
-		<script src="./internal/non-firebug.js"></script>
-		<script src="./internal/test.js"></script>
+		<!-- The test suite script -->
+		<script src='<?=$_GET["suite"]?>'></script>
 		
 		<!-- Show title and start test -->
 		<h1><?=$title?><br/></h1>
 <? } ?>
 </div>
-
+		<!-- Helper functions of the test system -->
+		<script src="./internal/non-firebug.js"></script>
+		<script src="./internal/test.js"></script>
+		
 		<script>
 	
 			if (!non_firebug) {

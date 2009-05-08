@@ -9,10 +9,10 @@
 HtmlView = new Package();
 
 /*
- * [declarator] HtmlView::View( type, whereas, method_body )
+ * [declarator] HtmlView::View <type, whereas, method_body>
  *
  * This declarator will register an implementation of the method "view" with the given method_body.
- * The applicability of the method can be restricted by the parameters 'type' and 'whereas'. The method
+ * The applicability of the method can be restricted by the parameters <type> and <whereas>. The method
  * declared by this declarator has the following syntax and semantics:
  *
  * --------------------------------------------------------------------------------------------------------

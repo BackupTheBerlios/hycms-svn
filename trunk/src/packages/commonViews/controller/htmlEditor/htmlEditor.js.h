@@ -9,10 +9,10 @@
 HtmlEditor = new Package();
 
 /*
- * [declarator] HtmlEditor::ReceiveFocus( type, whereas, method_body )
+ * [declarator] HtmlEditor::ReceiveFocus <type, whereas, method_body>
  *
  * This declarator will register an implementation of the method "receiveFocus" with the given method_body.
- * The applicability of the method can be restricted by the parameters 'type' and 'whereas'. The method
+ * The applicability of the method can be restricted by the parameters <type> and <whereas>. The method
  * declared by this declarator has the following syntax and semantics:
  *
  * --------------------------------------------------------------------------------------------------------
@@ -86,7 +86,7 @@ HtmlEditor.ReceiveFocus = function( type, whereas, func )
 }
 
 /*
- * [declarator] HtmlEditor::LostFocus( type, whereas, method_body )
+ * [declarator] HtmlEditor::LostFocus <type, whereas, method_body>
  *
  * This declarator will register an implementation of the method "receiveFocus" with the given method_body.
  * The applicability of the method can be restricted by the parameters <type> and <whereas>. The method
