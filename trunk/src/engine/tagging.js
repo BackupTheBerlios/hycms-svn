@@ -56,6 +56,7 @@ function __getJSTypeId(object)
 
 /*
  * Object::__tag(...)
+ * Object::__tag(array)
  *
  * Tags an object with the given parameters. The parameters
  * can be an arbitrary number of strings. The order of the paramters
@@ -97,6 +98,7 @@ Object.prototype.__tag = function()
 
 /*
  * String::__tag(...)
+ * String::__tag(array)
  *
  * Tags an string with the given parameters. The parameters
  * can be an arbitrary number of strings. If the object was already
@@ -116,6 +118,7 @@ String.prototype.__tag = function()
 
 /*
  * Number::__tag(...)
+ * Number::__tag(array) 
  *
  * Tags an string with the given parameters. The parameters
  * can be an arbitrary number of strings. If the object was already
@@ -135,6 +138,7 @@ Number.prototype.__tag = function()
 
 /*
  * Boolean::__tag(...)
+ * Boolean::__tag(array) 
  *
  * Tags an string with the given parameters. The parameters
  * can be an arbitrary number of strings. If the object was already
@@ -169,6 +173,7 @@ Object.prototype.__untag = function()
 
 /*
  * Array::__understoodAs(...)
+ * Array::__understoodAs(array) 
  *
  * Tests whether the given tags are applying to the tags given in the array.
  *
@@ -288,6 +293,7 @@ Array.prototype.__understoodAs = function()
 
 /*
  * Object::__taggedAs(...)
+ * Object::__taggedAs(array) 
  *
  * Tets whether the given tags are applying on the given object. The
  * tags can be given as an arbitrary number of strings. The order of
