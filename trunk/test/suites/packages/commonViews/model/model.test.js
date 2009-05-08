@@ -57,6 +57,27 @@ var basicModelTest =
 			console.assert( preinitTagged[1] == 2);
 			console.assert( preinitTagged[2] == 3);					
 		},
-		
+
+	"Construction (Text)":
+		function()
+		{
+			var bare = ["text"]._construct();
+			
+			console.assert( bare instanceof String);
+
+			var tagged = ["?anything", "text"]._construct();
+			
+			console.assert( tagged instanceof String );
+			
+			var preinit = ["text"]._construct("Hello world!");
+			
+			console.assert( preinit instanceof String );
+			console.assert( preinit == "Hello world!" );
+			
+			var preinitTagged = ["?anything", "text"]._construct("Hello world!");
+			
+			console.assert( preinitTagged instanceof String);
+			console.assert( preinitTagged.a == "Hello world!" );			
+		}	
 }
 

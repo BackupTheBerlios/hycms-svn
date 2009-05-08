@@ -1,16 +1,14 @@
-<html>
 <script type='text/javascript' charset='UTF-8'>
 	function reload()
 	{
-		parent.frames[1].location="test-body.php?suite="+document.getElementById('test_sel').value;
+		window.location="test.php?suite="+document.getElementById('testSel').value;
 	}
 </script>
 
-<body style='text-align:center; vertical-align:middle; background:black; color: white; font-family: sans serif; font-size: 0.9em; font-weight: bold'>
-<div style="vertical-align:middle;">
-	<span style='vertical-align:middle'>Test suite:</span>
+<div id='testBox'>
+	<span id='testIdentifier'>Test suite:</span>
 
-	<select id='test_sel' style='width:30em; vertical-align:middle' onchange='reload()'>		
+	<select id='testSel' onchange='reload()'>		
 	<?
 
 		function search_packages($base_path, $suffix, $depth) 
@@ -23,12 +21,17 @@
 
 				// Select package
 				if (filetype("$base_path/$file") != "dir")  {
+					$selected = "";
+				
 					if (substr($file, -(strlen($suffix))) != $suffix)
 						continue;
 				
 					$file_data = file("$base_path/$file");
 				
-					echo "$depth\t<option value='$base_path/$file'>$path_depth".substr($file_data[0], 3)."</option>\n";
+					if ($_GET['suite'] == "$base_path/$file")
+						$selected = 'selected="true"';
+				
+					echo "$depth\t<option value='$base_path/$file' $selected>$path_depth".substr($file_data[0], 3)."</option>\n";
 				}
 				
 				// Nested package directory
@@ -42,12 +45,10 @@
 			}
 		}		
 		
-		search_packages("../suites", ".test.js", "");
+		search_packages("./suites", ".test.js", "");
 	?>
 	</select>
 	
-	<a href="javascript:reload()" style="vertical-align:middle"><img border=0 src="./reload.png" /></a>
+	<a href="javascript:reload()" id='testLink'><img border=0 src="./internal/reload.png" /></a>
 </div>
-</body>
-</html>
 
