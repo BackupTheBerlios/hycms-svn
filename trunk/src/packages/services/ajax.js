@@ -47,9 +47,9 @@ _does:
 
 		// Send request
 		if ((method == 'post') || (method == 'POST'))
-			httpRequest.open('POST', "../src/services/logon.php", !__ajax_test_mode);
+			httpRequest.open('POST', url, !__ajax_test_mode);
 		else
-			httpRequest.open('POST', "../src/services/logon.php?"+requestData, !__ajax_test_mode);
+			httpRequest.open('POST', url+"?"+requestData, !__ajax_test_mode);
 		
 		httpRequest.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');			
 		httpRequest.send(requestData);

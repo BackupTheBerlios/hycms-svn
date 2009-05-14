@@ -11,48 +11,43 @@
 
 	_output:		["*"],
 	
-	_does:
+_does:
+	function downloadContent(callback) 
+	{
+		var requestData = null;
 
-		function SemanticDataProvider(callback) 
+		function __receive(responseText)
 		{
-			var httpRequest;
-			var requestData = null;
-			var lock = 0;
+			var answer = new Object();
 
-			if (window.XMLHttpRequest)
-				httpRequest = new XMLHttpRequest();
-			else if (window.ActiveXObject)
-				httpRequest = new ActiveXObject("Microsoft.XMLHTTP");
-
-			httpRequest.onreadystatechange = function() {
-				if (httpRequest.readyState == 4) {
-					var answer = new Object();
-
-					// Convert data from JSON to object
-					try {
-						requestData = eval('('+httpRequest.responseText+')');
-					} catch (e) {
-						callback({__def: ["error", "text"], __value: "Read error: "+e}.__build());
-						return;
-					}
-		
-					if (requestData == null) {
-						callback({__def: ["error", "text"], __value: "Missing data"}.__build());
-						return;
-					}
-
-					try {
-						callback(requestData.__build());
-					}
-					 catch(e) {
-						document.body.innerHTML = e;
-					 	console.log(e);
-					}
-				}
+			// Convert data from JSON to object
+			try {
+				requestData = eval('('+responseText+')');
+			} catch (e) {
+				callback({__def: ["error", "text"], __value: "Read error: "+e}.__build());
+				return;
 			}
 
-			httpRequest.open('GET', "../services/content.php?hycms_cmd=get_content&hycms_path="+this, true);
-			httpRequest.send(null);
+			if (requestData == null) {
+				callback({__def: ["error", "text"], __value: "Missing data"}.__build());
+				return;
+			}
+
+			// Transfer data to the caller
+			try {
+				callback(requestData.__build());
+			}
+			 catch(e) {
+				document.body.innerHTML = e;
+			 	console.log(e);
+			}			
 		}
+
+		// Send request
+		({
+			hycms_cmd:	"get_content",
+			hycms_path:	this
+		})._send({method: "GET", url: "../services/content.php", callback: __receive});
+	}
 });
 
