@@ -67,7 +67,7 @@ var theTestSuiteObject =
  *
  * III. Executing tests
  * ====================
- * To start a test, just open 'test/test.htm' on your web server. Select a test suite from the list.
+ * To start a test, just open 'test/test.php' on your web server. Select a test suite from the list.
  * If you are using Firefox, the results of the test will be displayed in the firebug console. If your
  * browser doesn't support the console-Interface the test results will be displayed in the browser window.
  *

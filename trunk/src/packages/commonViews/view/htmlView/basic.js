@@ -9,9 +9,9 @@
 // Structure view
 //
 HtmlView.View(
-	["*", "structure"], null,
+	{_this:			["*", "structure"]},
 
-	function HtmlView_Structure(request) 
+	function HtmlView_Structure() 
 	{
 		function viewFunction(elementOutput, element, key)
 		{
@@ -23,7 +23,7 @@ HtmlView.View(
 			return "<tr><td>"+id+"</td><td>"+  elementOutput + "</td></tr>";
 		}
 
-		return this._taggedIterate("table", request.extendOption("viewFunction", viewFunction));
+		return this._taggedIterate({tag: "table", viewFunction: viewFunction});
 	}
 );
 
@@ -31,16 +31,16 @@ HtmlView.View(
 // List view
 //
 HtmlView.View(
-	["*", "list"], null,
+	{_this:			["*", "list"]},
 	
-	function HtmlView_List(request) 
+	function HtmlView_List() 
 	{
 		function viewFunction(elementOutput, element, key)
 		{
 			return "<tr><td>"+key+"</td><td>"+  elementOutput + "</td></tr>";
 		}
 
-		return this._taggedIterate("table", request.extendOption("viewFunction", viewFunction));
+		return this._taggedIterate({tag: "table", viewFunction: viewFunction});
 	}
 );
 
@@ -48,11 +48,11 @@ HtmlView.View(
 // Plain text view
 //		 
 HtmlView.View(
-	["*", "text"], null,
+	{_this:			["*", "text"]},
 
 	function HtmlView_Text()
 	{
-		return this._htmlText()._tag("span", this, HtmlView_tagRequest)
+		return this._htmlText()._tag({tag: "span", object: this});
 	}
 
 );
@@ -61,11 +61,11 @@ HtmlView.View(
 // Plain text view
 //		 
 HtmlView.View(
-	["*", "important_text", "*", "text"], null,
+	{_this:			["*", "important_text", "*", "text"]},
 
 	function HtmlView_Text()
 	{
-		return this._htmlText()._tag("b", this, HtmlView_tagRequest)
+		return this._htmlText()._tag({tag: "b", object: this});
 	}
 );
 
@@ -73,21 +73,21 @@ HtmlView.View(
 // Simle URL
 //	
 HtmlView.View(
-	["*", "url", "*", "text"],
+	{_this:			["*", "url", "*", "text"]},
 
 	function HtmlView_Url() 
 	{
-		return this._htmlText()._tag("span", this, HtmlView_tagRequest.extendOption("attributes", "href='"+this+"'"));
+		return this._htmlText()._tag({tag: "span", object: this, attributes: ["href='"+this+"'"]});
 	}
 
 );
 
 HtmlView.View(
-	["*", "error"],
+	{_this:			["*", "error"]},
 
 	function HtmlView_Error(input, def) 
 	{
-		return this._htmlText()._tag("b", this, HtmlView_tagRequest)
+		return this._htmlText()._tag({tag: "b", object: this});
 	}
 
 );

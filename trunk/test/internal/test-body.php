@@ -1,4 +1,15 @@
 <div id='bodyField'>
+<!-- Helper functions of the test system -->
+	<script src="./internal/non-firebug.js"></script>
+	<script src="./internal/test.js"></script>
+
+	<script>
+
+		if (!non_firebug) {
+			console.clear();
+		}
+	</script>
+
 <?	if ($_GET["suite"] == "") {?> </divl> <?} else { ?>
 		<?
 			$src = file($_GET["suite"]);
@@ -10,6 +21,7 @@
 			<script src="../src/engine/tagging.js"></script>
 			<script src="../src/engine/serialization.js"></script>
 			<script src="../src/engine/dispatcher.js"></script>
+			<script src="../src/engine/declarator.js"></script>
 
 	<!-- Test requirements -->
 		<?
@@ -33,7 +45,7 @@
 				$parameter = trim(substr($line, strlen($TESTS)));
 			}
  			 else if (strpos($line, $SUITE) !== false) {
-				$suite_name = trim(substr($line, strlen($TESTS)));
+				$suite_name = trim(substr($line, strlen($SUITE)));
 			}			
 			
 			if ($parameter != "") {
@@ -48,20 +60,16 @@
 		
 		<!-- Show title and start test -->
 		<h1><?=$title?><br/></h1>
-<? } ?>
+
 </div>
-		<!-- Helper functions of the test system -->
-		<script src="./internal/non-firebug.js"></script>
-		<script src="./internal/test.js"></script>
-		
 		<script>
-	
+
 			if (!non_firebug) {
 				document.getElementById('bodyField').innerHTML += "The test output was written to the firebug console.";
-				console.clear();
 			}
 
 			doTest({	"<?=$title?>":	<?=$suite_name?>	});
 	
 		</script>
+<? } ?>
 

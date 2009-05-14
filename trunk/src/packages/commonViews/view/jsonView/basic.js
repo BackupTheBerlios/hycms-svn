@@ -10,10 +10,12 @@
 
 "view".__declare
 ({
-	output:		["json", "text"],
-	features:	["indenting"],
-	whereas:	["this.__is('structure')"],
-	does:
+	_this:		"structure",
+
+	_output:	["json", "text"],
+	_features:	["indenting"],
+
+	_does:
 
 	function JsonView_Structure(request) 
 	{
@@ -67,10 +69,12 @@
 //
 "view".__declare
 ({
-	output:		["json", "text"],
-	features:	["indenting"],
-	whereas:	["this.__is('list')"],
-	does:	
+	_this:		"list",
+
+	_output:	["json", "text"],
+	_features:	["indenting"],
+
+	_does:	
 
 	function JsonView_List(request)
 	{
@@ -105,10 +109,12 @@
 //		 
 "view".__declare
 ({
-	output:		["json", "text"],
-	features:	["indenting"],
-	whereas:	["this.__is('text') || this.__is('number') || this.__is('boolean')"],
-	does:	
+	_output:	["json", "text"],
+	_features:	["indenting"],
+
+	_whereas:	"this.__is('text') || this.__is('number') || this.__is('boolean')",
+
+	_does:	
 	
 	function JsonView_Text(request)
 	{

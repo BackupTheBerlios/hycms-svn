@@ -49,7 +49,7 @@ function __getJSTypeId(object)
 		return "list";
 		
 	if (object instanceof Function)
-		return "object";
+		return "function";
 		
 	return "structure";
 }
@@ -381,3 +381,16 @@ Object.prototype.__getByClass = function(name)
 	return null;
 }
 
+/*
+ * Object::__getTagging()
+ *
+ * Returns a copy of the tagging of the object.
+ *
+ */
+Object.prototype.__getTagging = function()
+{
+	if (this.__def == null)
+		return [__getJSTypeId(this)];
+		
+	return this.__def.__clone();
+}

@@ -53,16 +53,7 @@
 					{__def:		["paragraph", "list"],
 					 __value:
 						[
-							"Wer kennt nicht die vielen Science-Fiction-Serien, in denen Menschen mühelos Computer programmieren, ",
-							"indem sie diesen einfach mündlich mitteilen können, was getan werden soll und sich um das 'Wie' und all die kleinen ",
-							"Details aus API-Referenzen und Handbüchern keine Sorgen machen müssen? Auch wenn wir schon sehr große ",
-							"Fortschritte in diese Richtung gemacht haben - es gibt beim Programmieren immer wieder Dinge, die man eigentlich gerne weiter ",
-							"automatisieren würde. Aktuelle objektorientierte Programmiersprachen helfen uns schon sehr dabei. ",
-							"Will man eine bestimmte Methode aufrufen, wählen viele Programmiersprachen automatisch diejenige Implementierung aus, ",
-							"die wirklich zu dem jeweiligen Objekt passt (z.B. wenn für die Objekte vom Typ Button, Image oder TextBox jeweils ",
-							"unterschiedliche Implementierungen der gleich benannten Methode draw() existieren). Manche Programmiersprachen erlauben ",
-							"auch das Überladen der Parameter einer Methode, so dass je nach Typ der Parameter eine unterschiedliche Variante automatisch ",
-							"ausgewählt wird."
+							"Wer kennt nicht die vielen Science-Fiction-Serien, in denen Menschen mühelos Computer programmieren, indem sie diesen einfach mündlich mitteilen können, was getan werden soll und sich um das 'Wie' und all die kleinen Details aus API-Referenzen und Handbüchern keine Sorgen machen müssen? Auch wenn wir schon sehr große Fortschritte in diese Richtung gemacht haben - es gibt beim Programmieren immer wieder Dinge, die man eigentlich gerne weiter ",
 						]
 					},
 					

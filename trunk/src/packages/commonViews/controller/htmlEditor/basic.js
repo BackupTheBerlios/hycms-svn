@@ -9,20 +9,20 @@
 // Structure view
 //
 HtmlEditor.ReceiveFocus(
-	["*", "structure"], null,
+	{this:		["*", "structure"]},
 
-	function HtmlView_Structure(lastFocussed, eventDescription) 
+	function structure(lastFocussed, eventDescription) 
 	{
 		this.style["outline"] = "1px solid red";
-	
+
 		return true;
 	}
 );
 
 HtmlEditor.LostFocus(
-	["*", "structure"], null,
+	{this:		["*", "structure"]},
 
-	function HtmlView_Structure(editor, otherNode) 
+	function structure(editor, otherNode) 
 	{
 		this.style["outline"] = "";
 	
@@ -34,20 +34,20 @@ HtmlEditor.LostFocus(
 // List view
 //
 HtmlEditor.ReceiveFocus(
-	["*", "list"], null,
+	{this:		["*", "list"]},
 
-	function HtmlView_List(lastFocussed, eventDescription) 
+	function list(lastFocussed, eventDescription) 
 	{
 		this.style["outline"] = "1px solid red";
-	
+
 		return true;
 	}
 );
 
 HtmlEditor.LostFocus(
-	["*", "list"], null,
+	{this:		["*", "list"]},
 
-	function HtmlView_List(editor, otherNode) 
+	function list(editor, otherNode) 
 	{
 		this.style["outline"] = "";
 	
@@ -59,20 +59,20 @@ HtmlEditor.LostFocus(
 // Plain text view
 //		 
 HtmlEditor.ReceiveFocus(
-	["*", "text"], null,
+	{this:		["*", "text"]},
 
-	function HtmlView_Text(lastFocussed, eventDescription) 
+	function text(lastFocussed, eventDescription) 
 	{
 		this.style["outline"] = "1px solid red";
-	
+
 		return true;
 	}
 );
 
 HtmlEditor.LostFocus(
-	["*", "text"], null,
+	{this:		["*", "text"]},
 
-	function HtmlView_Text(editor, otherNode) 
+	function text(editor, otherNode) 
 	{
 		this.style["outline"] = "";
 	

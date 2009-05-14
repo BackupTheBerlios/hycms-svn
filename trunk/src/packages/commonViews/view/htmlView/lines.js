@@ -12,16 +12,16 @@
 // Lines view
 //
 HtmlView.View(
-	["*", "lines", "*", "list"], null,
+	{_this:		["*", "lines", "*", "list"]},
 
-	function HtmlView_Lines(request) 
+	function HtmlView_Lines() 
 	{
 		function viewFunction(elementOutput, element, key)
 		{
 			return elementOutput + "</br>";
 		}
 
-		return this._taggedIterate("div", request.addOption("viewFunction", viewFunction));
+		return this._taggedIterate({tag: "div", viewFunction: viewFunction});
 	}
 );
 
@@ -29,11 +29,11 @@ HtmlView.View(
 // Inline code view
 //
 HtmlView.View(
-	["*", "code", "*", "text"], null,
+	{_this:		["*", "code", "*", "text"]},
 
-	function HtmlView_InlineCode(request) 
+	function HtmlView_InlineCode() 
 	{
-		return HtmlView_renderLine(this, [])._tag("span", this, HtmlView_tagRequest);
+		return HtmlView_renderLine(this, [])._tag({tag: "span", object: this});
 	}
 );
 
@@ -41,7 +41,7 @@ HtmlView.View(
 // Code view
 //
 HtmlView.View(
-	["*", "code", "*", "list"], null,
+	{_this:		["*", "code", "*", "list"]},
 
 	function HtmlView_Code(request)
 	{
@@ -53,7 +53,7 @@ HtmlView.View(
 // jsCode view
 //
 HtmlView.View(
-	["*", "javascript", "*", "code", "*", "list"], null,
+	{_this:		["*", "javascript", "*", "code", "*", "list"]},
 
 	function HtmlView_Code(request)
 	{

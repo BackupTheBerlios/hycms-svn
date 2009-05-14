@@ -9,6 +9,7 @@
 	<script type='text/javascript' charset='UTF-8' src='../engine/tagging.js'></script>
 	<script type='text/javascript' charset='UTF-8' src='../engine/dispatcher.js'></script>
 	<script type='text/javascript' charset='UTF-8' src='../engine/serialization.js'></script>
+	<script type='text/javascript' charset='UTF-8' src='../engine/declarator.js'></script>
 
 <?
 		function search_packages($base_path, $suffix) 

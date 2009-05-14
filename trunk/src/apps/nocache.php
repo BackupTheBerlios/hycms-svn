@@ -10,13 +10,13 @@
 	<script type='text/javascript' charset='UTF-8'>
 		function viewFunction(content)
 		{
-			var html = content._view(Request(["*", "html", "text"], "?recursive_context"));
+			var html = content._view({_returns: ["*", "html", "text"], _features: "?recursive_context"});
 				
 			document.body.innerHTML = html;
 		}
 	
 		function main(contentPath) {		
-			contentPath._downloadContent( viewFunction );
+			contentPath._downloadContent({ callback: viewFunction });
 		}
 	</script>
 	

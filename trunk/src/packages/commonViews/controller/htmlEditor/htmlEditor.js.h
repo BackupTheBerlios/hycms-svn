@@ -9,15 +9,7 @@
 HtmlEditor = new Package();
 
 /*
- * [declarator] HtmlEditor::ReceiveFocus <type, whereas, method_body>
- *
- * This declarator will register an implementation of the method "receiveFocus" with the given method_body.
- * The applicability of the method can be restricted by the parameters <type> and <whereas>. The method
- * declared by this declarator has the following syntax and semantics:
- *
- * --------------------------------------------------------------------------------------------------------
- *
- * Element::receiveFocus( lastFocussed, eventDescription ) ==> [eventAccepted, boolean]
+ * [declarator] Element::receiveFocus( lastFocussed, eventDescription ) ==> [eventAccepted, boolean]
  *
  * Purpose:
  * 		This method will be called, if a view element inside a HTML-Editor receives the focus. The view
@@ -45,7 +37,7 @@ HtmlEditor = new Package();
  *			anchorOffset			Text position inside the anchorNode
  *
  *			editor					The editor which is related to the event
- *			event					The DOM Event descriptor	
+ *			event					The DOM Event descriptor (might be null)
  *
  * Return value:
  *		TRUE, if the focus is accepted. FALSE otherwise.
@@ -53,20 +45,12 @@ HtmlEditor = new Package();
  * --------------------------------------------------------------------------------------------------------
  *
  */
-HtmlEditor.ReceiveFocus = function( type, whereas, func )
+HtmlEditor.ReceiveFocus = buildDeclarator("receiveFocus",
 {
-	if (whereas == null)
-		whereas = [];
-		
-	if (!(whereas instanceof Array))
-		whereas = [whereas];
-
-	"receiveFocus".__declare(
-		({
-			input:		["lastFocussed", "eventDescription"],
-			output:		["eventAccepted", "boolean"],
-
-			whereas:	["(lastFocussed instanceof Element) || (lastFocussed == null)",
+	_lastFocussed:			"function",
+	_eventDescription:		"structure",
+	
+	_whereas:			["(lastFocussed instanceof Element) || (lastFocussed == null)",
 						 "eventDescription != null",
 						 "eventDescription.__is('event_description')",
 						 "eventDescription.content != null",
@@ -76,14 +60,12 @@ HtmlEditor.ReceiveFocus = function( type, whereas, func )
 						 "eventDescription.anchorNode instanceof Node",
 						 "eventDescription.anchorOffset != null",
 						 "eventDescription.editor instanceof Editor",						 
-						 "eventDescription.event instanceof Event"
-						].concat(whereas),
-			max:		["eventDescription.content.__taggedAs('"+type.join("','")+"')"],
-		
-			does:		func
-		})
-	);
-}
+						 "(eventDescription.event instanceof Event) || (eventDescription.event == null)"
+						],
+	_max:				["eventDescription.content.__taggedAs('"+type.join("','")+"')"],
+});
+
+
 
 /*
  * [declarator] HtmlEditor::LostFocus <type, whereas, method_body>
@@ -143,5 +125,4 @@ HtmlEditor.LostFocus = function( type, whereas, func )
 		})
 	);
 }
-
 

@@ -8,30 +8,21 @@
  */
 HtmlView = new Package();
 
+HtmlView.tagFeatures = {_returns: ["html", "text"], _features: ["set_type_as_css_class", "set_type_attribute", "set_uuid_attribute"]};
+
+
 /*
- * [declarator] HtmlView::View <type, whereas, method_body>
- *
- * This declarator will register an implementation of the method "view" with the given method_body.
- * The applicability of the method can be restricted by the parameters <type> and <whereas>. The method
- * declared by this declarator has the following syntax and semantics:
- *
- * --------------------------------------------------------------------------------------------------------
- *
- * OBJECT::view( [parentList] ) ==> [html, text]
+ * [declarator] OBJECT::view( [parentList] ) ==> [html, text]
  *
  * Purpose:
  * 		Shows OBJECT as HTML text. 
- *
- * Applicability:
- *		This method is applicable on OBJECT, if it is tagged with <type>. It will only be used if
- *		the clauses of <whereas> are satisfied.
  *
  * Parameters:
  * 		The method may receive the additional parameter "parentList" which contains the context, the object should be seen in. 
  * 		The context is represented as a list of the parent elements of the given OBJECT.
  *
  * Return value:
- *		String tagges as [html, text]
+ *		String tagged as [html, text]
  *
  * Features:
  *		recursive_context			The function passes the view context using the
@@ -54,6 +45,12 @@ HtmlView = new Package();
  *			  uses the calls [text]::tag and [*]::taggedIterate. The first two features will be
  *			  automatically fulfilled by the HtmlView_showInContext function.
  *
+ * Method prototypes:
+ *		This method	provides a prototype for "view", "tag" and "taggedIterate" calls. It enforces
+ *		that the "tag" call of the HtmlView pacakge will be used. It also enforces that 'view' and
+ *		'taggedIterate' propagate the context and the features of the call to all recursive
+ *		calls of these methods.	
+ *
  * Example:
  *
  *		"Hallo Welt"._view();
@@ -65,23 +62,19 @@ HtmlView = new Package();
  * --------------------------------------------------------------------------------------------------------
  *
  */
-HtmlView.View = function( type, whereas, func )
+HtmlView.View = buildDeclarator("view",
 {
-	"view".__declare(
-		({
-			features:	["recursive_context", "keep_method_conditions", "set_type_as_css_class", "set_type_attribute", "set_uuid_attribute"],
+	_optional_parentList:	"list",
+	_default_parentList:	[],
 
-			options:	{"parentList":		[]},
-			output:		["html", "text"],
+	_features:	["recursive_context", "keep_method_conditions", "set_type_as_css_class", "set_type_attribute", "set_uuid_attribute"],
+	_output:	["html", "text"],
+	
+	_prototype_tag:				HtmlView.tagFeatures,
+	_prototype_taggedIterate:	{parentList: Evaluates("parentList.concat([this])"), _features: Keep(), _returns: Keep()},
+	_prototype_view:			{parentList: Evaluates("parentList.concat([this])"), _features: Keep(), _returns: Keep()}
+});
 
-			whereas:	whereas,
-			max:		["this.__taggedAs('"+type.join("','")+"')"],
-		
-			does:		func
-		})
-	);
-}
- 
 /*
  * [text]::tag(tag, object[, attributes]) => [html, text]
  *
@@ -92,22 +85,26 @@ HtmlView.View = function( type, whereas, func )
  *
  */
 "tag".__declare({
-	input:		["tag", "object"],
-	features:	["set_type_as_css_class", "set_type_attribute", "set_uuid_attribute"],
-
-	options:	{"attributes": []},
-	output:		["html", "text"],
-
-	whereas:	["tag.__is('text')", "this.__is('text')", "object.__uuid != null"],
+	_this:		["*", "text"],
+	tag:		"text",
+	object:		"*",
 	
-	does:	
+	_optional_attributes:	"structure",
+	_default_attributes:	{},
+	
+	_output:	HtmlView.tagFeatures._returns,
+	_features:	HtmlView.tagFeatures._features,
 
-function HtmlView_tag(tag, object, request)
+	_whereas:	["object.__uuid != null"],
+	
+	_does:	
+
+function HtmlView_tag(tag, object, attributes)
 {
 	// Build attribute string
 	var attribStr = ""
 
-	if (request.options.attributes.length > 0)
+	if (attributes.length > 0)
 		attribStr = attributes.join(" ");
 
 	// Build type string
@@ -131,23 +128,6 @@ function HtmlView_tag(tag, object, request)
 
 });
 
-var HtmlView_tagRequest = Request(["html", "text"], "set_type_as_css_class", "set_type_attribute", "set_uuid_attribute");
-
-/*
- * HtmlView_showInContext(object, parent, request) => [html, text]
- *
- * Calls the method 'view' for the given object. The 'request' object will be copied
- * and the parentList will be extended by 'parent'.
- *
- */
-function HtmlView_showInContext(object, parent, request)
-{
-	var nRequest = request.copy();
-	nRequest.options.parentList.push(parent);
-
-	return object._view(nRequest);
-}
-
 /*
  * ["list"]::taggedIterate(tag, [viewFunction, parentList]) => [html, text]
  *
@@ -166,29 +146,34 @@ function HtmlView_showInContext(object, parent, request)
  *
  */
 "taggedIterate".__declare({
-	input:		["tag"],
-	features:	["recursive_context", "keep_method_conditions", "set_type_attribute", "set_uuid_attribute", "set_type_as_css_class"],
+	_this:					["*", "list"],
+	tag:					"text",
 
-	options:	{"parentList": [],  "viewFunction": function HtmlView_flatViewIterate(text) { return text; } },
-	output:		["html", "text"],
-
-	whereas:	["tag.__is('text')", "this.__is('list')", "__options.viewFunction instanceof Function"],
+	_optional_viewFunction:	"function",
+	_default_viewFunction:	function HtmlView_flatViewIterate(text) { return text; },
 	
-	does:	 
-function HtmlView_taggedIterate(tag, request, options)
+	_optional_parentList:	"list",
+	_default_parentList:	[],
+	
+	_features:				["recursive_context", "keep_method_conditions", "set_type_attribute", "set_uuid_attribute", "set_type_as_css_class"],
+	_output:				["html", "text"],
+
+	_prototype_tag:			HtmlView.tagFeatures,
+	_prototype_view:		{parentList: Keep(), _features: Keep(), _returns: Keep()},
+	
+	_does:	 
+function HtmlView_taggedIterate(tag, viewFunction, parentList)
 {
 	var output = "";
-	var viewFunction = options.viewFunction;
-	request.removeOption("viewFunction");
 	
 	for (var idx = 0; idx < this.length; idx ++)
 	{
-		var tmpOutput = HtmlView_showInContext(this[idx], this, request);
+		var tmpOutput = this[idx]._view();
 
 		output += viewFunction(tmpOutput, this[idx], idx);
 	}
 
-	return output._tag(tag, this, HtmlView_tagRequest);
+	return output._tag({tag: tag, object: this});
 }
 
 });
@@ -200,32 +185,36 @@ function HtmlView_taggedIterate(tag, request, options)
  *
  */
 "taggedIterate".__declare({
-	input:		["tag"],
-	features:	["recursive_context", "keep_method_conditions", "set_type_attribute", "set_uuid_attribute", "not_editable_attribute"],
+	_this:					["*", "structure"],
+	tag:					"text",
 
-	options:	{"parentList": [],  "viewFunction": function HtmlView_flatViewIterate(text) { return text; } },
-	output:		["html", "text"],
-
-	whereas:	["tag.__is('text')", "this.__is('structure')", "__options.viewFunction instanceof Function"],
+	_optional_viewFunction:	"function",
+	_default_viewFunction:	function HtmlView_flatViewIterate(text) { return text; },
 	
-	does:	 
+	_optional_parentList:	"list",
+	_default_parentList:	[],
+	
+	_features:				["recursive_context", "keep_method_conditions", "set_type_attribute", "set_uuid_attribute", "set_type_as_css_class"],
+	_output:				["html", "text"],
 
-function HtmlView_taggedIterate(tag, request, options)
+	_prototype_tag:			HtmlView.tagFeatures,
+	_prototype_view:		{parentList: Evaluates("parentList.concat([this])"), _features: Keep(), _returns: Keep()},
+	
+	_does:	 
+function HtmlView_taggedIterate(tag, viewFunction, parentList)
 {
 	var output = "";
-	var viewFunction = options.viewFunction;
-	request.removeOption("viewFunction");
-
+	
 	for (var idx in this)
 	{
-		if (idx[0] == '_')
-			continue;
-			
-		var tmpOutput = HtmlView_showInContext(this[idx], this, request);
+		if (idx[0] == "_") continue;
+	
+		var tmpOutput = this[idx]._view();
+
 		output += viewFunction(tmpOutput, this[idx], idx);
 	}
 
-	return output._tag(tag, this, HtmlView_tagRequest);
+	return output._tag({tag: tag, object: this});
 }
 
 });
@@ -240,11 +229,10 @@ function HtmlView_taggedIterate(tag, request, options)
  * 
  */
 "htmlText".__declare({
-	output:		["html", "text"],
-
-	whereas:	["this.__is('text')"],
+	_this:			["*", "text"],
+	_output:		["html", "text"],
 	
-	does:	
+	_does:	
 	
 function htmlText(text)
 {

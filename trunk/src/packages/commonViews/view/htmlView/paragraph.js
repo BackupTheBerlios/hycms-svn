@@ -8,11 +8,11 @@
 // Paragraph view
 //
 HtmlView.View(
-	["*", "paragraph", "*", "list"], null,
+	{_this:		["*", "paragraph", "*", "list"]},
 	
-	function HtmlView_Paragraph(request) 
+	function HtmlView_Paragraph() 
 	{
-		return this._taggedIterate("p", request);
+		return this._taggedIterate({tag: "p"});
 	}
 );
 
@@ -20,10 +20,10 @@ HtmlView.View(
 // Headline view
 //
 HtmlView.View(
-	["*", "headline", "*", "?paragraph", "*", "list"], null,
+	{_this:		["*", "headline", "*", "?paragraph", "*", "list"]},
 	
-	function HtmlView_Paragraph(request) 
+	function HtmlView_Paragraph(parentList) 
 	{
-		return this._taggedIterate("h4", request);
+		return this._taggedIterate({tag: "h4"});
 	}
 );

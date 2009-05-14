@@ -9,11 +9,11 @@
 // Page view
 //
 HtmlView.View(
-	["*", "page", "*", "list"], null,
+	{_this:		["*", "page", "*", "list"]},
 	
-	function HtmlView_Page(request) 
+	function HtmlView_Page() 
 	{
-		return this._taggedIterate("div", request);
+		return this._taggedIterate({tag: "div"});
 	}
 );
 
@@ -22,12 +22,13 @@ HtmlView.View(
 // Page Title view
 //
 HtmlView.View(
-	["*", "headline", "*", "?paragraph", "*", "list"], 
-	["__options.parentList.length > 0", "__options.parentList.__last().__is('page')"],
+	{_this:			["*", "headline", "*", "?paragraph", "*", "list"], 
+	 _whereas:		["parentList.length > 0", "parentList.__last().__is('page')"]
+	},
 	
-	function HtmlView_PageTitle(request) 
+	function HtmlView_PageTitle() 
 	{
-		return this._taggedIterate("h1", request);
+		return this._taggedIterate({tag: "h1"});
 	}
 );
 		  	   	    
@@ -35,11 +36,11 @@ HtmlView.View(
 // Section view
 //
 HtmlView.View(
-	["*", "section", "*", "list"], null,
+	{_this:			["*", "section", "*", "list"]},
 	
-	function HtmlView_Section(request) 
+	function HtmlView_Section() 
 	{
-		return this._taggedIterate("div", request);
+		return this._taggedIterate({tag: "div"});
 	}
 );
 
@@ -47,12 +48,14 @@ HtmlView.View(
 // Section headline view
 //
 HtmlView.View(
-	["*", "headline", "*", "?paragraph", "*", "list"], 
-	["__options.parentList.length > 0", "__options.parentList.__last().__is('section')"],
+	{_this:			["*", "headline", "*", "?paragraph", "*", "list"], 
+	 _whereas:		["parentList.length > 0", "parentList.__last().__is('section')"]
+	},
 	
-	function HtmlView_SectionHeadline(request) 
+	function HtmlView_SectionHeadline() 
 	{
-		return this._taggedIterate("h2", request);
+
+		return this._taggedIterate({tag: "h2"});
 	}
 );
 
@@ -60,12 +63,13 @@ HtmlView.View(
 // Subsection headline view
 //
 HtmlView.View(
-	["*", "headline", "*", "?paragraph", "*", "list"], 
-	["__options.parentList.length > 1", "__options.parentList.__last().__is('section')", "__options.parentList.__last(2).__is('section')"],
+	{_this:			["*", "headline", "*", "?paragraph", "*", "list"], 
+	 _whereas:		["parentList.length > 1", "parentList.__last().__is('section')", "parentList.__last(2).__is('section')"]
+	},
 	
-	function HtmlView_SubSectionHeadline(request) 
+	function HtmlView_SubSectionHeadline() 
 	{
-		return this._taggedIterate("h3", request);
+		return this._taggedIterate({tag: "h3"});
 	}
 );
 

@@ -8,12 +8,10 @@ var dispatcherTest =
 			methodHash = new Object();
 		
 			"view".__declare({
-				input:		null,
-				output:		null,
-				features:	null,
+				_features:	null,
 				
-				max:		null,
-				whereas:	null
+				_max:		null,
+				_whereas:	null
 			});
 
 			console.assert(methodHash["view"].length == 1);
@@ -31,11 +29,10 @@ var dispatcherTest =
 			methodHash = new Object();
 		
 			"view".__declare({
-				input:		null,
-				output:		["html", "text"],
+				_output:	["html", "text"],
 				
-				max:		["this.length"],
-				whereas:	["this instanceof String"]
+				_max:		["this.length"],
+				_whereas:	["this instanceof String"]
 			});
 			
 			console.assert(methodHash["view"].length == 1);
@@ -45,6 +42,46 @@ var dispatcherTest =
 			console.assert(methodHash["view"][0].whereas_precompiled[0].apply(String("abc")) == true);
 			console.assert(methodHash["view"][0].max_precompiled[0].apply("abc") == "3");
 		},
+	
+	"Registering a method (no parameters, but features)":
+		function()
+		{
+			methodHash = new Object();
+		
+			"view".__declare({
+				_output:	["html", "text"],
+				_features:	["myFeatures"],
+				
+				_max:		["this.length"],
+				_whereas:	["this instanceof String"]
+			});
+			
+			console.assert(methodHash["view"].length == 1);
+			console.assert(methodHash["view"][0].input.length == 0);
+			console.assert(methodHash["view"][0].inputAll.length == 0);
+			console.assert(methodHash["view"][0].output[0] == "html");
+			console.assert(methodHash["view"][0].output[1] == "text");
+			console.assert(methodHash["view"][0].features[0] == "myFeatures");			
+			console.assert(methodHash["view"][0].whereas_precompiled[0].apply(String("abc")) == true);
+			console.assert(methodHash["view"][0].max_precompiled[0].apply("abc") == "3");
+		},		
+
+	"Registering a method (this)":
+		function()
+		{
+			methodHash = new Object();
+
+			"view".__declare({
+				_this:		["list"],
+				
+				_output:	["html", "text"],
+				_max:		["parentList.length"],
+			});
+
+			console.assert(methodHash["view"].length == 1);
+			console.assert(methodHash["view"][0].input.length == 0);
+			console.assert(methodHash["view"][0].max_precompiled[0].apply([[1,2,3]]) == 1);
+		},
 
 	"Registering a method (one parameter)":
 		function()
@@ -52,135 +89,206 @@ var dispatcherTest =
 			methodHash = new Object();
 
 			"view".__declare({
-				input:		["parentList"],
-				output:		["html", "text"],
+				parentList:	["list"],
 				
-				max:		["parentList.length"],
-				whereas:	["parentList instanceof Array"]
+				_output:	["html", "text"],
+				_max:		["parentList.length"],
 			});
-			
+
 			console.assert(methodHash["view"].length == 1);
 			console.assert(methodHash["view"][0].input[0] == "parentList");
+			console.assert(methodHash["view"][0].inputAll[0] == "parentList");			
 			console.assert(methodHash["view"][0].output[0] == "html");
 			console.assert(methodHash["view"][0].output[1] == "text");
-			console.assert(methodHash["view"][0].whereas_precompiled[0].apply(String("abc"), [[1,2,3]]) == true);
-			console.assert(methodHash["view"][0].max_precompiled[0].apply("abc", [[1,2,3]]) == "3");
+			console.assert(methodHash["view"][0].max_precompiled[0].apply("abc", [[1,2,3]]) == 1);
+			console.assert(methodHash["view"][0].max_precompiled[1].apply("abc", [[1,2,3]]) == 3);			
 		},
 		
-	"Registering a method (multiple parameters)":
+	"Registering a method (multiple parameters - array and string)":
 		function()
 		{
 			methodHash = new Object();
 
 			"view".__declare({
-				input:		["parentList", "secondPar"],
-				output:		["html", "text"],
-				
-				max:		["parentList.length", "secondPar"],
-				whereas:	["parentList instanceof Array", "typeof(secondPar)=='number'"]
+				parentList:	"list",
+				secondPar:	["goo", "number"],
+
+				_output:	["html", "text"],
+				_max:		["parentList.length", "secondPar"],
 			});
+			
+			var num = (123).__tag("goo", "number");
 			
 			console.assert(methodHash["view"].length == 1);
 			console.assert(methodHash["view"][0].input[0] == "parentList");
 			console.assert(methodHash["view"][0].input[1] == "secondPar");
+			console.assert(methodHash["view"][0].inputAll[0] == "parentList");
+			console.assert(methodHash["view"][0].inputAll[1] == "secondPar");
 			console.assert(methodHash["view"][0].output[0] == "html");
 			console.assert(methodHash["view"][0].output[1] == "text");
-			console.assert(methodHash["view"][0].whereas_precompiled[0].apply(String("abc"), [[1,2,3], 456]) == true);
-			console.assert(methodHash["view"][0].max_precompiled[0].apply("abc", [[1,2,3], 4]) == 3);
-			console.assert(methodHash["view"][0].whereas_precompiled[1].apply(String("abc"), [[1,2,3], 456]) == true);
-			console.assert(methodHash["view"][0].max_precompiled[1].apply("abc", [[1,2,3], 4]) == 4);
+			console.assert(methodHash["view"][0].max_precompiled[0].apply("abc", [[1,2,3], num]) == 1);
+			console.assert(methodHash["view"][0].max_precompiled[1].apply("abc", [[1,2,3], num]) == 2);
+			console.assert(methodHash["view"][0].max_precompiled[2].apply("abc", [[1,2,3], num]) == 3);
+			console.assert(methodHash["view"][0].max_precompiled[3].apply("abc", [[1,2,3], num]) == 123);			
 		},
-		
-	"Testing returnType":
+	
+	"Registering a method (optional parameters)":
 		function()
 		{
-			var returnType = ["very_cool_stuff", "html", "text"];
-			var requestingSome = new Requesting(["*", "text"]);
-			var requestingAll  = new Requesting(["very_cool_stuff", "html", "text"]);
-			var requestingWrong = new Requesting(["number"]);
-			var requestingNone = new Requesting(null);
-			
-			console.assert( requestingSome.test(returnType) == 1 );
-			console.assert( requestingAll.test(returnType) == 3 );
-			console.assert( requestingWrong.test(returnType) == -1 );
-			console.assert( requestingNone.test(returnType) == 0 );
-		},
+			methodHash = new Object();
 
-	"Testing Feature Request":
+			"view".__declare({
+				parentList:					["list"],
+				_optional_secondPar:		["goo", "number"],
+				
+				_output:	["html", "text"],
+				_max:		["parentList.length", "secondPar"],
+			});
+			
+			var num = (123).__tag("goo", "number");
+			
+			console.assert(methodHash["view"].length == 1);
+			console.assert(methodHash["view"][0].input[0] == "parentList");
+			console.assert(methodHash["view"][0].options[0] == "secondPar");
+			console.assert(methodHash["view"][0].inputAll[0] == "parentList");
+			console.assert(methodHash["view"][0].inputAll[1] == "secondPar");			
+			console.assert(methodHash["view"][0].output[0] == "html");
+			console.assert(methodHash["view"][0].output[1] == "text");
+			console.assert(methodHash["view"][0].max_precompiled[0].apply("abc", [[1,2,3], num]) == 1);
+			console.assert(methodHash["view"][0].max_precompiled[1].apply("abc", [[1,2,3], num]) == 2);
+			console.assert(methodHash["view"][0].max_precompiled[2].apply("abc", [[1,2,3], num]) == 3);
+			console.assert(methodHash["view"][0].max_precompiled[3].apply("abc", [[1,2,3], num]) == 123);			
+		},		
+
+	"Registering a method (default values)":
 		function()
 		{
-			var features = ["very_cool_stuff", "required_stuff"];
-			var requestingSome  = new Requesting(null, "required_stuff");
-			var requestingAll   = new Requesting(null, "?very_cool_stuff", "required_stuff");
-			var requestingWrong = new Requesting(null, "stuff");
+			methodHash = new Object();
+
+			"view".__declare({
+				parentList:				["list"],
+				
+				_default_parentList:	"foobar",
+			});
 			
-			console.assert( requestingSome.test(null, features) == 1 );
-			console.assert( requestingAll.test(null, features) == 2 );
-			console.assert( requestingWrong.test(null, features) == -1 );
-		},
-		
-	"Testing request copying":
+			console.assert(methodHash["view"].length == 1);
+			console.assert(methodHash["view"][0].defaults.parentList == "foobar");
+		},		
+
+	"Registering a method (parameter delegation)":
 		function()
 		{
-			var request = new Requesting(["foo", "bar"], {"boo": ["bar"]}, "abc", "def");
-			var nRequest = request.copy();
-			
-			console.assert (nRequest.returnTypeRequest != request.returnTypeRequest );
-			console.assert (nRequest.returnTypeRequest[0] == request.returnTypeRequest[0] );
-			console.assert (nRequest.returnTypeRequest[1] == request.returnTypeRequest[1] );
-			
-			console.assert (nRequest.featureRequests != request.featureRequests );
-			console.assert (nRequest.featureRequests[0] == request.featureRequests[0] );
-			console.assert (nRequest.featureRequests[1] == request.featureRequests[1] );
+			methodHash = new Object();
 
-			console.assert (nRequest.options != request.options );
-			console.assert (nRequest.options["boo"] != request.options["boo"] );
-		},
-
+			"view".__declare({
+				parentList:				["list"],
+				
+				_prototype_view:		{_returns: Evaluates("[parentList,2,3]"), _features: Transfer("parentList"), foo: "1234"},
+			});
+			
+			console.assert(methodHash["view"].length == 1);
+			console.assert(methodHash["view"][0].prototypes["view"]._returns(1)[0] == 1);
+			console.assert(methodHash["view"][0].prototypes["view"]._returns(1)[1] == 2);
+			console.assert(methodHash["view"][0].prototypes["view"]._returns(1)[2] == 3);	
+			console.assert(methodHash["view"][0].prototypes["view"]._features("abc") == "abc");
+			console.assert(methodHash["view"][0].prototypes["view"].foo() == "1234");			
+		},	
+			
 	"Calling a method (no conditions)":
 		function()
 		{
 			methodHash = new Object();
 		
 			"view".__declare({
-				input:		null,
-				output:		["html", "text"],
-				
-				does:	function xy() { return "abcdef"; }
+				_output:		["html", "text"],
+				_does:	function xy() { return "abcdef"; }
 			});
 
 			"edit".__declare({
-				input:		null,
-				output:		["html", "text"],
-				
-				does:	function() { return "pqrst"; }
+				_output:		["html", "text"],
+				_does:	function() { return "pqrst"; }
 			});
 
 			console.assert( "ooo"._view() == "abcdef" );
 			console.assert( "ooo"._edit() == "pqrst" );
 		},
-
-	"Calling a method (boolean conditions)":
+			
+	"Calling a method (return type)":
 		function()
 		{
 			methodHash = new Object();
 		
 			"view".__declare({
-				input:		null,
-				output:		["html", "text"],
-				
-				whereas:	"this instanceof Number",
-				
-				does:	function () { return "abcdef"; }
+				_output:		["html", "text"],
+				_does:	function xy() { return "abcdef"; }
 			});
 
 			"view".__declare({
-				input:		null,
-				output:		["html", "text"],
+				_output:		["xml", "text"],
+				_does:	function() { return "pqrst"; }
+			});
+
+			console.assert( "ooo"._view({_returns: ["html", "text"]}) == "abcdef" );
+			console.assert( "ooo"._view({_returns: ["xml", "text"]}) == "pqrst" );
+		},
+		
+	"Calling a method (features)":
+		function()
+		{
+			methodHash = new Object();
+		
+			"view".__declare({
+				_features:		["abc", "def"],
+				_does:	function xy() { return "abcdef"; }
+			});
+
+			"view".__declare({
+				_features:		["abc", "xyz"],
+				_does:	function() { return "pqrst"; }
+			});
+
+			console.assert( "ooo"._view({_features: ["abc", "def"]}) == "abcdef" );
+			console.assert( "ooo"._view({_features: ["abc", "?xyz"]}) == "pqrst" );
+			console.assert( "ooo"._view({_features: ["abc", "def", "?xyz"]}) == "abcdef" );			
+		},
+
+	"Calling a method (access to request stack)":
+		function()
+		{
+			methodHash = new Object();
+		
+			"view".__declare({
+				_output:		["html", "text"],
+				_does:	function xy() { return topRequest()._features[0]; }
+			});
+
+			console.assert( "ooo"._view({_features: "?abcdef"}) == "?abcdef" );
+		},
 				
-				whereas:	"this instanceof String",
+	"Calling a method (boolean conditions, type-check)":
+		function()
+		{
+			methodHash = new Object();
+		
+			"view".__declare({
+				_output:		["html", "text"],
+				_whereas:		"this == 1234",
 				
-				does:	function() { return "pqrst"; }
+				_does:	function () { return "abcdef"; }
+			});
+			
+			"view".__declare({
+				_output:	["html", "text"],
+				_whereas:	"this == 5678",
+				
+				_does:	function () { return "lmnop"; }
+			});			
+
+			"view".__declare({
+				_output:	["html", "text"],
+				_whereas:	"this == 'abcd'",
+								
+				_does:	function() { return "pqrst"; }
 			});
 
 			console.assert( (1234)._view() == "abcdef" );
@@ -193,21 +301,17 @@ var dispatcherTest =
 			methodHash = new Object();
 		
 			"view".__declare({
-				input:		null,
-				output:		["html", "text"],
+				_this:		['foo', 'bar'],
 				
-				max:		"this.__taggedAs('foo', 'bar')",
-				
-				does:	function() { return "abcdef"; }
+				_output:	["html", "text"],
+				_does:		function() { return "abcdef"; }
 			});
 
 			"view".__declare({
-				input:		null,
-				output:		["html", "text"],
+				_this:		['*', 'bar'],
 				
-				max:		"this.__taggedAs('*', 'bar')",
-				
-				does:	function() { return "pqrst"; }
+				_output:	["html", "text"],
+				_does:		function() { return "pqrst"; }
 			});
 
 			var objA = "abc".__tag("foo", "bar");
@@ -218,28 +322,28 @@ var dispatcherTest =
 			console.assert( objB._view() == "pqrst" );
 			console.assert( objC._view() == "pqrst" );			
 		},
-		
+	
 	"Calling a method (parameter transmission)":
 		function()
 		{
 			methodHash = new Object();
 		
 			"view".__declare({
-				input:		["parentList"],
-				output:		["html", "text"],
-
-				whereas:	["parentList instanceof String", "this instanceof String"],
-				max:		"parentList.__taggedAs('foo', '*')",
+				_this:		"text",
+				parentList:	['foo', '*'],
 				
-				does:	function() { return "abcdef"; }
+				_whereas:	"parentList instanceof String",
+				
+				_output:	["html", "text"],
+				_does:	function(parentList) { return parentList+"def"; }
 			});
 
 			var objA = "abc".__tag("foo", "bar");
 
-			console.assert( "abc"._view(objA) == "abcdef" );
-			assertException( function() { (1234)._view(objA); }, MethodNotExistsError );
+			console.assert( "abc"._view({parentList: objA}) == "abcdef" );
+			assertException( function() { (1234)._view({parentList: objA}); }, MethodNotExistsError );
 		},		
-		
+	
 	"Calling a method (optional parameter transmission)":
 		function()
 		{
@@ -247,56 +351,83 @@ var dispatcherTest =
 
 			// FUNCTION WITHOUT OPTIONS
 			"view".__declare({
-				input:		["parentList"],
-				output:		["html", "text"],
-
-				whereas:	["parentList instanceof String", "this instanceof String"],
-				max:		"parentList.__taggedAs('foo', '*')",
-				
-				does:	function( parentList, request ) { return "one_arg"; }
+				_this:		"text",
+				standard:	"text",
+				_output:	["html", "text"],
+			
+				_does:	function() 		{ return "one_arg"; }
 			});
 		
 			// BETTER FUNCTION: Provides an handler for that option
 			"view".__declare({
-				input:		["parentList"],
-				output:		["html", "text"],
-				options:	{"additional": "none"},
+				_this:						"text",
+				standard:					"text",
+				_optional_parentList:		"text",
 
-				whereas:	["parentList instanceof String", "this instanceof String"],
-				max:		"parentList.__taggedAs('foo', '*')",
-				
-				does:	function( parentList, request ) { return parentList + "-" + request.options["additional"]; }
+				_output:					["html", "text"],				
+				_does:						function( standard, parentList ) { return this + "-" + standard + "-" + parentList; }
 			});
 
-			var objA = "abc".__tag("foo", "bar");
-
 			// Test optional parameter transmission
-			console.assert( "abc"._view(objA, Request(["html", "text"], {"additional": "foobar"})) == "abc-foobar" );
-
-			// Test no optional parameter (remember: this works only, because both function have the same count of boolean conditions!)
-			console.assert( "abc"._view(objA, Request(["html", "text"])) == "one_arg" );
+			console.assert( "abc"._view({standard: "def", parentList: "foobar"}) == "abc-def-foobar" );
 		},
-		
+				
 	"Calling a method (preset optional parameters)":		
 		function()
 		{
 			methodHash = new Object();
 		
 			"view".__declare({
-				input:		["parentList"],
-				output:		["html", "text"],
-				options:	{"additional": "none"},
-
-				whereas:	["parentList instanceof String", "this instanceof String", "__request.options.additional instanceof String"],
-				max:		"parentList.__taggedAs('foo', 'bar')",
+				_this:						"text",
+				standard:					"text",
+				_optional_parentList:		"text",
 				
-				does:	function( parentList, request ) { return parentList + "-" + request.options.additional; }
+				_default_parentList:		"default",
+
+				_output:					["html", "text"],				
+				_does:						function( standard, parentList ) { return this + "-" + standard + "-" + parentList; }
 			});
 
-			var objA = "abc".__tag("foo", "bar");
+			console.assert( "abc"._view({standard: "def", parentList: "foobar"}) == "abc-def-foobar" );
+			console.assert( "abc"._view({standard: "def"}) == "abc-def-default" );
+		},
 
-			// Test no optional parameter
-			console.assert( "abc"._view(objA) == "abc-none" );
+	"Calling a method (delegation prototyping)":
+		function()
+		{
+			methodHash = new Object();
+
+			"view".__declare({
+				_this:						"text",
+				standard:					"text",
+				goo:						"text",
+				_features:					["def"],
+				
+				_output:					["xml", "text"],				
+				_does:						function( standard, goo ) {  return goo+" with "+standard; }
+			});	
+		
+			"view".__declare({
+				_this:						"text",
+				standard:					"text",
+				parentList:					"list",
+				goo:						"text",
+				_features:					["abc"],								
+				
+				_prototype_view:			{_features: Evaluates("['def']"), _returns:  Transfer("parentList"),	goo: Keep(), standard: "delegation"},
+				
+				_output:					["html", "text"],				
+				_does:						function( standard, parentList ) {
+												var foo ={}; 
+												
+												if (standard != "non") foo = {standard: standard}; 
+												
+												return "123"._view(foo); 
+											}
+			});		
+		
+			console.assert( "abc"._view({_features: "abc", standard: "non", parentList: ["xml", "text"], goo: "done"}) == "done with delegation" );
+			console.assert( "abc"._view({_features: "abc", standard: "parameter", parentList: ["xml", "text"], goo: "done"}) == "done with parameter" );
 		},
 
 	"Registering an aspect to a method":
@@ -305,17 +436,17 @@ var dispatcherTest =
 			methodHash = new Object();
 		
 			"view".__declare({
-				input:		["parentList"],
-				output:		["foo", "text"],
+				parentList:		"text",
+				_output:		["foo", "text"],
 				
-				does:	function( parentList, request ) { return "1"; }
+				_does:			function( parentList ) { return "1"; }
 			});		
 		
 			"view".__declare({
-				input:		["parentList"],
-				output:		["html", "text"],
+				parentList:		"text",
+				_output:		["html", "text"],
 				
-				does:	function( parentList, request ) { return "2"; }
+				_does:			function( parentList ) { return "2"; }
 			});
 
 
@@ -332,17 +463,17 @@ var dispatcherTest =
 			console.assert(methodHash['view'][1].aspects.before.length == 0);
 			
 		},
-		
+	
 	"Using an aspect on a method":
 		function()
 		{
 			methodHash = new Object();
 		
 			"view".__declare({
-				input:		["parentList"],
-				output:		["html", "text"],
+				parentList:	["text"],
+				_output:	["html", "text"],
 				
-				does:	function( parentList, request ) { return parentList; }
+				_does:	function( parentList ) { return parentList; }
 			});		
 
 			function beforeAspect ( aspect, method, subject, arguments ) { arguments[0] = "before-"+subject+"-"+arguments[0]; return arguments; };
@@ -351,9 +482,8 @@ var dispatcherTest =
 			function afterAspect ( aspect, method, subject, arguments, retVal ) { return retVal+"-"+subject+"-after" };
 			afterAspect.__observes( "after", "name == 'view'", "input.indexOf('parentList') > -1", "output.__understoodAs('html', 'text') > -1" );		
 
-			console.assert("anything"._view("call") == "before-anything-call-anything-after");
+			console.assert("anything"._view({parentList: "call"}) == "before-anything-call-anything-after");
 			
 		}	
-		
 }
 

@@ -6,12 +6,12 @@
  */
 "downloadContent".__declare
 ({
-	input:		["callback"],
-	output:		["*"],
+	_this:			["text"],
+	callback:		"function",
 
-	whereas:		"this instanceof String",
+	_output:		["*"],
 	
-	does:
+	_does:
 
 		function SemanticDataProvider(callback) 
 		{

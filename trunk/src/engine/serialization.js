@@ -50,14 +50,18 @@ Object.prototype.__build = function()
 		
 		return newObject;
 	}
-	
+
+	// First-order array?
+	if ((this instanceof Array) && (valObject == null))
+		valObject = this;
+
 	// Array?
 	if (valObject instanceof Array)
 	{
 		var newObject = [];
-		
+
 		if (this.__def == null)
-			newObject.__tag.apply(newObject, [__getJsTypeId(this)]);
+			newObject.__tag.apply(newObject, [__getJSTypeId(this)]);
 		else
 			newObject.__tag.apply(newObject, this.__def);
 

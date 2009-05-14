@@ -7,9 +7,11 @@
  * Published under the terms of the GNU General Public License v2
  *
  */
-function MethodNotExistsError(message)
+function MethodNotExistsError(message, args)
 {
 	this.message = message;
+//	if (traceEvals == true) {console.log(args); console.trace();}
+	console.log("Error arguments:", args);
 }
 MethodNotExistsError.prototype = new Error();
 
@@ -24,12 +26,264 @@ MethodNotExistsError.prototype = new Error();
 var methodHash = new Object();
 
 /*
+ * requestStack
+ *
+ * Stack of current requests
+ *
+ */
+var requestStack = new Array();
+
+/*
  * aspectTable
  *
  * List of all aspects applied in the system.
  *
  */
 var aspectTable = new Array();
+
+
+/*
+ * topRequest()
+ *
+ * Returns the request responsible for the call of the current
+ * function. If "null", than no function was called by the dispatcher.
+ *
+ */
+function topRequest()
+{
+	if (requestStack.length == 0)
+		return null;
+		
+	return requestStack[requestStack.length - 1];
+}
+
+/*
+ * [static] __get_mandatory_parameters(method)
+ *
+ * Returns the list of all mandatory parameters of a method description.
+ * The "this" parameter will be ignored.
+ *
+ */
+function __get_mandatory_parameters(method)
+{
+	var inputs = [];
+
+	for (var idx in method) {
+		if (idx[0] == '_') continue;
+		if (idx == "_this") continue;
+		
+		inputs.push(idx);	
+	}
+	
+	return inputs;
+}
+
+/*
+ * [static] __get_optional_parameters(method)
+ *
+ * Returns the list of input parameters of a method description
+ *
+ */
+function __get_optional_parameters(method)
+{
+	var options = [];
+	var operator = "_optional_";
+	var operatorLen = operator.length;
+
+	for (var idx in method) {
+		if (idx.substr(0, operatorLen) != operator) continue;
+		
+		options.push(idx.substr(operatorLen));	
+	}
+	
+	return options;
+}
+
+/*
+ * [static] __get_mandatory_rules(method)
+ *
+ * Returns the list of max-rules for all mandatory parameters
+ *
+ */
+function __get_mandatory_rules(method)
+{
+	var inputs = [];
+
+	function __add_instr(idx, element) {		
+		if (!(element instanceof Array))
+			selector = [element];
+		else
+			selector = element;	
+			
+		inputs.push(idx + ".__taggedAs('" + selector.join("', '") + "')");				
+	}
+
+	// Add rules
+	for (var idx in method) {
+		var selector;
+	
+		if (idx[0] == '_') continue;
+
+		__add_instr(idx, method[idx]);		
+	}
+	
+	// Add rule for _this
+	if (method["_this"] != undefined)
+		__add_instr("this", method["_this"]);	
+		
+	return inputs;
+}
+
+/*
+ * [static] __get_options_rules(method)
+ *
+ * Returns the list of max-rules for all optional parameters
+ *
+ */
+function __get_options_rules(method)
+{
+	var options = [];
+	var operator = "_optional_";
+	var operatorLen = operator.length;
+
+	for (var idx in method) {
+		var value, selector;
+	
+		if (idx.substr(0, operatorLen) != operator) continue;
+
+		selector = idx.substr(operatorLen);
+		
+		if (!(method[idx] instanceof Array))
+			value = [method[idx]];
+		else
+			value = method[idx];		
+		
+		options.push(selector + ".__taggedAs('" + value.join("', '") + "')");	
+	}
+	
+	return options;
+}
+
+/*
+ * [static] __get_default_values(method)
+ *
+ * Returns the default values for all parameters
+ *
+ */
+function __get_default_values(method)
+{
+	var defaults = {};
+	var operator = "_default_";
+	var operatorLen = operator.length;
+
+	for (var idx in method) {
+		var selector;
+	
+		if (idx.substr(0, operatorLen) != operator) continue;
+		selector = idx.substr(operatorLen);
+		
+		defaults[selector] = method[idx];	
+	}
+	
+	return defaults;
+}
+
+/*
+ * Transfer(name)
+ *
+ * Indicates that the parameter 'name' should be replaced by this object.
+ *
+ */
+function __transfer(name) { this.transfer = name; }
+ 
+function Transfer(name)
+{
+	return new __transfer(name);
+}
+
+/*
+ * Transfer(name)
+ *
+ * Indicates that the parameter 'name' should be replaced by the value of the caller.
+ *
+ */
+function __keep(name) { return; }
+
+function Keep()
+{
+	return new __keep();
+}
+
+/*
+ * Evaluates(codestring)
+ *
+ * Indicates, that the evaluation of "codestring" should be placed inside a function.
+ *
+ */
+function __evaluates(codestring) { this.evaluates = codestring; }
+ 
+function Evaluates(codestring)
+{
+	return new __evaluates(codestring);
+}
+
+/*
+ * __get_prototype_function(inputAll, expression)
+ *
+ * Evaluates the given parameter prototyping expression and
+ * returns a function, that can be used to prototype the parameter of a call.
+ *
+ */
+function __get_prototype_function(inputAll, expression, id)
+{
+	var inputFull = inputAll.concat(["_request", "_returns", "_features"]);
+
+	if (expression instanceof __evaluates) {
+		return new Function(inputFull.join(","), "return ("+expression.evaluates+");");
+	}
+	 else if (expression instanceof __keep) {
+ 		return new Function(inputFull.join(","), "return ("+id+");");
+	}
+	 else if (expression instanceof __transfer) {
+		return new Function(inputFull.join(","), "return ("+expression.transfer+")");
+	}
+	 else {
+		return function() { return expression; };
+	}
+}
+
+/*
+ * [static] __get_call_prototypes(method, inputAll)
+ *
+ * Returns all call prototypes for a given method with input List "inputAll".
+ *
+ */
+function __get_call_prototypes(method, inputAll)
+{
+	var prototypes = ({});
+	var operator = "_prototype_";
+	var operatorLen = operator.length;
+	
+	for (var idx in method) {
+		if (idx.substr(0, operatorLen) == operator) {
+			var selector = idx.substr(operatorLen);
+			var builder = method[idx];
+			
+			prototypes[selector] = ({
+				_returns:	__get_prototype_function(inputAll, builder._returns, "_returns"),
+				_features:	__get_prototype_function(inputAll, builder._features, "_features")
+			});
+
+			for (var b_idx in builder) {
+				if (b_idx[0] == "_") continue;
+
+				prototypes[selector][b_idx] = __get_prototype_function(inputAll, builder[b_idx], b_idx);
+			}
+		}
+	}
+	
+	return prototypes;
+}
 
 /*
  * String::__declare(method)
@@ -38,19 +292,34 @@ var aspectTable = new Array();
  * methods parameter specification "method":
  *
  *	{
- *		input:		[name_of_parameter_1, ..., name_of_parameter_n] OR NULL,
- *		output:		tagging_of_return_value OR NULL,
+ *		*:				tagging_of_parameter_*,
  *
- *		features:	[available_feature_term_1, ..., available_feature_term_m] OR NULL,
+ *		_optional_*:	tagging_of_parameter_* (for optional parameters),
+ *		_default_*:		default_vale_of_*,
+ *
+ *		_output:		tagging_of_return_value OR NULL,
+ *
+ *		_features:		[available_feature_term_1, ..., available_feature_term_m] OR NULL,
  *		
- *		max:		[numeric_instruction_1, ..., numeric_instruction_k] OR NULL,
- *		whereas:	[boolean_instruction_1, ..., boolean_instruction_l] OR NULL,
+ *		_max:			[numeric_instruction_1, ..., numeric_instruction_k] OR NULL,
+ *		_whereas:		[boolean_instruction_1, ..., boolean_instruction_l] OR NULL,
  *
- *		does:		function(name_of_parameter_1, ..., name_of_parameter_n) { ... };
+ *		_prototype_*:	request_descriptor_for_*,
+ *
+ *		_does:			function(name_of_parameter_1, ..., name_of_parameter_n) { ... };
  *	}
  *
+ * For all specifiers which are accepting lists, also a single string can be given. The function will
+ * automatically create an array of the form [string].
+ *
  * Whereas:
- *	"name_of_parameter_N" 		is the identifier of the n-th parameter of the function.
+ *	"tagging_of_parameter_*"	specifies the tagging constraint on parameter *. This will be evaluated
+ *								using a _max-Clause "*.__taggedAs(tagging_of_parameter_*)". For optional
+ *								parameter a default value should be given, that satisfies this tagging.
+ *
+ *	"default_value_of_*"		specifies the default value of the given parameter, that should be used,
+ *								if the user didn't pass it to the function. The value will be copied using 
+ *								"default_value_of_*.__clone()" before passing as parameter.
  *
  *  "tagging_of_return_value"	is a list of tags describing the return value. After returning,
  *								of the function these tags will be applied to the return value (if the
@@ -69,6 +338,19 @@ var aspectTable = new Array();
  *								is called, the dispatcher will evaluate all boolean_instructions. If one boolean
  *								instruction evaluates to "false", the method will not be used for the method call.
  *
+ *	"request_descriptor_for_*"	this defines a default request for all calls to method "*" inside the declared method.
+ *								The definition is an object of the following form:
+ *
+ *								{
+ *									_returns:		tagging of the expected return type,
+ *									_features:		expected features,
+ *									*:				default value for parameter "*"
+ *								}
+ *
+ *								If one of these fields is set to Transfer(NAME) the value will be delegatet from the
+ *								parameter NAME. If it is set to Evaluates(CODESTRING) the given CODESTRING will be evaluated
+ *								to set the parameter. The CODESTRING has access to all parameters of the declared method.
+ *
  *	does						contains the actual implementation of the method. All parameters given to the dispatcher
  *								will be passed to the method. The "this" reference of the method inside the call is
  *								the object which was referenced at the call of the method.
@@ -81,62 +363,87 @@ var aspectTable = new Array();
 String.prototype.__declare = function(method)
 {
 	var identifier = "_"+this.valueOf();
+	var newMethod = ({name: "", 
+	
+					  input: [], 
+					  options: [], 
+					  allInput: [],
+					  defaults: ({}), 
+					  
+					  output: [], 
+
+					  features: [], 
+
+					  whereas: [], 
+					  max: [], 
+					  
+					  prototypes: ({}),
+					  
+					  whereas_precompiled: null,
+					  max_precompiled: null,
+					  
+					  does: null
+					});
 
 	// Register dispatcher globally for this method
 	if (Object.prototype[identifier] == null)
-		Object.prototype[identifier] = function __internalCaller() { return __callMethod(identifier.substr(1), this, arguments); };
+		Object.prototype[identifier] = function __internalCaller() { return __callMethod(identifier.substr(1), this, arguments[0]); };
 
 	// Set all empty fields as empty arrays
-	if (method.input == null)
-		method.input = [];
-	if (method.output == null)
-		method.output = [];
-	if (method.features == null)
-		method.features = [];
-	if (method.whereas == null)
-		method.whereas = [];
-	if (method.max == null)
-		method.max = [];
-	if (method.options == null)
-		method.options = new Object();
+	if (method._output == null)
+		method._output = [];
+	if (method._features == null)
+		method._features = [];
+	if (method._whereas == null)
+		method._whereas = [];
+	if (method._max == null)
+		method._max = [];
 	
 	// Arrayify non-array elements
-	if (!(method.input instanceof Array))
-		method.input = [method.input];
-	if (!(method.output instanceof Array))
-		method.output = [method.output];
-	if (!(method.features instanceof Array))
-		method.features = [method.features];
-	if (!(method.whereas instanceof Array))
-		method.whereas = [method.whereas];
-	if (!(method.max instanceof Array))
-		method.max = [method.max];
+	if (!(method._output instanceof Array))
+		method._output = [method._output];
+	if (!(method._features instanceof Array))
+		method._features = [method._features];
+	if (!(method._whereas instanceof Array))
+		method._whereas = [method._whereas];
+	if (!(method._max instanceof Array))
+		method._max = [method._max];
+
+	// Create input and options list
+	newMethod.input = __get_mandatory_parameters(method);
+	newMethod.options = __get_optional_parameters(method);
+	newMethod.inputAll = newMethod.input.concat(newMethod.options);
 	
-	// Search for undefined fields
-	for (var idx in method) {
-		if (idx[0] == '_') continue;
+	// Create input and options rules
+	var input_rules = __get_mandatory_rules(method);
+	var option_rules = __get_options_rules(method);
 		
-		switch(idx) {
-			case 'input':
-			case 'output':
-			case 'features':
-			case 'whereas':
-			case 'max':
-			case 'options':
-			case 'does':
-				break;
-				
-			default:
-				throw new Error("Invalid declarator - "+idx);
-		}
-	}
-			
+	// Create default values
+	newMethod.defaults = __get_default_values(method);
+
+	// Set up call prototypes
+	newMethod.prototypes = __get_call_prototypes(method, newMethod.inputAll);
+
+	// Set whereas / max clauses as string
+	newMethod.whereas = method._whereas;
+	newMethod.max = input_rules.concat(option_rules, method._max);
+	
 	// Precompile boolean and max instructions
-	method.whereas_precompiled = __precompile(method.whereas, method.input);
-	method.max_precompiled = __precompile(method.max, method.input);
+	newMethod.whereas_precompiled = __precompile(newMethod.whereas, newMethod.inputAll);
+	newMethod.max_precompiled = __precompile(newMethod.max, newMethod.inputAll);
+
+	// Set defaults and features
+	newMethod.output = method._output;
+	newMethod.features = method._features;
 
 	// Set name
-	method.name = this.valueOf();
+	newMethod.name = this.valueOf();
+	
+	// Set specification
+	newMethod.specification = method;
+	
+	// Set implementation
+	newMethod.does = method._does;
 
 	// Install asspects
 	__registerAspects(method);
@@ -145,7 +452,7 @@ String.prototype.__declare = function(method)
 	if (methodHash[identifier.substr(1)] == null)
 		methodHash[identifier.substr(1)] = [];
 
-	methodHash[identifier.substr(1)].push(method);
+	methodHash[identifier.substr(1)].push(newMethod);
 		
 	return true;
 }
@@ -162,7 +469,7 @@ function __precompile(functionList, inputList)
 	var funcList = [];
 	
 	if (inputList != null)
-		functionHeader = inputList.concat(["__request", "__options"]).join(",");
+		functionHeader = inputList.concat(["__request"]).join(",");
 	else
 		functionHeader = "";
 
@@ -179,290 +486,172 @@ function __precompile(functionList, inputList)
 }
 
 /*
- * class Requesting(returnTypeRequest, [optionMap,] [featureRequest1, ...])
+ * [static] __args_to_array(inputAll, argument_object[, defaults])
  *
- * Specifies certain requests to a method call. "returnTypeRequest" specifies
- * the requested return type as a list of tags (see __taggedAs). The optional parameter
- * optionMap may contain a map of named optional parameters. All parameters 
- * following it describing features the function should provide. If a feature
- * is prefixed by an "?", it is seen as optional feature.
- *
- * Properties:
- *	returnTypeRequest				Requested return type
- *	featureRequests					Requested features
- *	options							List of available options
- *
- * Methods:
- *	copy()							Creates a copy of the request object
- *	test(returnType, features)		Tests, whether the given parameters are satisfying
- *									the requested features.
- *	initOptions(optionMap)			Initializes all unitialized options using the given option map
- *
- *	addOption(name, value)			Appends the list of optionally requested parameters by a further parameter
- *  removeOption(name)				Removes a parameter from the request list
+ * Converts an argument object to an array according to the
+ * order in "inputAll_def". The function will preset all
+ * undefined arguments to a copy of a value in "defaults". Additionally
+ * the 'argument_object' will be added as the last element of the list.
  *
  */
-function Requesting(returnTypeRequest, optionMap)
+function __args_to_array(inputAll, argument_object, defaults)
 {
-	var fIdx = 1;
+	var list = [];
 
-	this.returnTypeRequest = returnTypeRequest;
-	this.featureRequests = [];
+	if (defaults == null) defaults = ({});
+
+	for (var idx = 0; idx < inputAll.length; idx ++) {
+		var selector = inputAll[idx];
+
+		if (argument_object[selector] == undefined) {
+			if (defaults[selector] != null)
+				list.push(defaults[selector].__clone());
+			else
+				list.push(null);
+		}
+		else {
+			list.push(argument_object[selector]);
+		}
+	}
 	
-	// If option map is given
-	if ((optionMap != null) && (typeof(optionMap) != "string")) {
-		this.options = optionMap;
-		fIdx ++;
-	}
-	 else {
-	 	this.options = new Object();
-	}
-
-	// Create feature map
-	for (var idx = fIdx; idx < arguments.length; idx ++)
-		this.featureRequests.push(arguments[idx]);
+	list.push(argument_object);
+	
+	return list;
 }
 
 /*
- * Requesting::copy()
+ * [static] __check_request(method, returnRequest, featureRequest)
  *
- * Returns a copy of the request object.
+ * Tests how much the method applies to the given return type and feature request.
  *
  */
-Requesting.prototype.copy = function()
+function __check_request(method, returnRequest, featureRequest)
 {
-	var nRequest = new Requesting();
+	var returnCount = 0;
+	var featureCount = 0;
 	
-	// Copy return type request
-	if (this.returnTypeRequest != null)
-		nRequest.returnTypeRequest = this.returnTypeRequest.concat([]);
+	if (returnRequest != null) {
+		if (!(returnRequest instanceof Array))
+			returnRequest = [returnRequest];
+	
+		returnCount = method.output.__understoodAs(returnRequest);
 		
-	// Copy features
-	nRequest.featureRequests = this.featureRequests.concat([]);
-	
-	// Copy option map
-	nRequest.options = new Object();
-	
-	for (var idx in this.options) {
-		if (idx[0] == "_") continue;
-
-		if (this.options[idx] != null)
-			nRequest.options[idx] = this.options[idx].__clone();
-		else
-			nRequest.options[idx] = null;
+		if (returnCount == -1) return -1;
 	}
-
-	return nRequest;
-}
-
-/*
- * Requesting::test(returnType, features, optionMap)
- *
- * Tests whether the given returnType, features and optionMap are satisfying
- * the request object.
- *
- * Return value:
- *		-1		If a required feature is missing or the return type is wrong
- *		> 0		Number of satisfied features
- *		0		Return type valid
- *
- */
-Requesting.prototype.test = function(returnType, features, optionMap)
-{
-	var tagCount = 0;
-
-	// Test return type
-	if (this.returnTypeRequest != null) {
-		tagCount = returnType.__understoodAs.apply(returnType, this.returnTypeRequest);
-
-		if (tagCount == -1)
-			return -1;
-	}
-
-	// Test features
-	var featuresCount = 0;
-	
-	if ((features != null) && (this.featureRequests.length > 0)) {
-		for (var rIdx = 0; rIdx < this.featureRequests.length; rIdx ++) {
-			var rFeature = this.featureRequests[rIdx];
-			var rIsOption = (rFeature[0] == "?");
-			var found = false;
-			
-			if (rIsOption)
-				rFeature = rFeature.substr(1);
 		
-			for (var tIdx = 0; tIdx < features.length; tIdx++) {
-				if (rFeature == features[tIdx])
-					found = true;
-			}
-			
-			if ((!found) && (!rIsOption))
-				return -1;
-				
-			featuresCount ++;
-		}
-	}
+	if (featureRequest != null) {
+		if (!(featureRequest instanceof Array))
+			featureRequest = [featureRequest];
 
-	// Test available options
-	var optionsCount = 0;
-
-	if (optionMap != null) {
-		for (var tOpt in this.options) {
-			if ((tOpt[0] != "_") && (tOpt in optionMap))
-				optionsCount ++;
-		}
-	}
-
-	return tagCount + featuresCount + optionsCount;
+ 	 	for (var idx = 0; idx < featureRequest.length; idx ++) {
+ 	 		var featureExpression, featureName, featureOptional;
+ 	 		
+ 	 		featureExpression = featureRequest[idx];
+ 	 		featureOptional = featureExpression[0] == '?';
+ 	 		featureName = featureOptional ? (featureExpression.substr(1)) : featureExpression;
+ 	 		
+ 	 		if (method.features.indexOf(featureName) > -1) {
+ 	 			featureCount ++;
+ 	 		}
+ 	 		 else if (!featureOptional) {
+ 	 		 	return -1;
+ 	 		}
+ 	 	}
+ 	}
+ 	
+ 	return returnCount + featureCount;
 }
 
-/*
- * Requesting::initOptions(optionMap)
- *
- * Initializes all unitialized options using the given optionMap.
- * The initialization will be done using the __clone()-Method of
- * each element object.
- *
- */
-Requesting.prototype.initOptions = function(optionMap)
-{
-	if (optionMap instanceof Array)
-		throw new Error("Invalid argument for optionMap");
-
-	for (var idx in optionMap) {
-		if (idx[0] == "_") continue;
-
-		if (this.options[idx] == null) {
-			this.options[idx] = optionMap[idx].__clone();
-		}
-	}
-}
 
 /*
- * Requesting::addOption(name, value)
+ * [static] __prototype_delegation(callerRequest, methodName, object, arguments)
  *
- * Appends the list of optional parameters by the named parameter ('name', 'value').
- * If a parameter with the same name already exists, it will be overwritten.
- *
- * Returns: reference to "this"
+ * Mixes in the call prototype for a certain method
  *
  */
-Requesting.prototype.addOption = function(name, value)
+function __prototype_delegation(callerRequest, methodName, object, arguments)
 {
-	this.options[name] = value;
+	var newArgs;
+	var proto;
+	var pars;
+	var lastRequest = callerRequest;
 
-	return this;
-}
+	// Called from outside a method
+	if (lastRequest == null)
+		return arguments;
 
-/*
- * Requesting::removeOption(name, value)
- *
- * Removes the named parameter 'name' from the list of optional parameters.
- *
- * Returns: reference to "this"
- *
- */
-Requesting.prototype.removeOption = function(name, value)
-{
-	delete this.options[name];
+	// No prototype given
+	if (lastRequest._method.prototypes[methodName] == null)
+		return arguments;
+		
+	// Load prototype
+	proto = lastRequest._method.prototypes[methodName];
+	newArgs = ({});
 	
-	return this;
-}
-
-/*
- * Requesting::extendOption(name, value)
- *
- * Copies the request object and extends the copy using addOption(name, value)
- *
- * See: addOption
- *
- * Returns: Copied instance of the request
- *
- */
-Requesting.prototype.extendOption = function(name, value)
-{
-	return this.copy().addOption(name, value);
-}
-
-/*
- * Requesting::reduceOption(name, ...)
- *
- * Copies the request object and reduces the copy using removeOption(name).
- * The function can receive an arbitrary number of options to remove.
- *
- * See: removeOption
- *
- * Returns: Copied instance of the request
- *
- */
-Requesting.prototype.reduceOption = function()
-{
-	var cp = this.copy();
+	pars = lastRequest._parameters.concat([lastRequest._returns, lastRequest._features]);
 	
-	for (var idx = 0; idx < arguments.length; idx ++) {
-		cp.removeOption(arguments[idx]);
+	// Apply prototypes
+	for (var idx in proto) {
+
+		if ((idx[0] == "_") && (idx != "_features") && (idx != "_returns")) continue;
+
+		if ((proto[idx] != null) && (arguments[idx] == undefined))
+			newArgs[idx] = proto[idx].apply(object, pars);
 	}
 	
-	return cp;
+	// Apply arguments
+	for (var idx in arguments) {
+		if ((idx[0] == "_") && (idx != "_features") && (idx != "_returns")) continue;
+		
+		newArgs[idx] = arguments[idx];
+	}
+
+	return newArgs;	
 }
 
 /*
- * Request(...)
- *
- * Creates a new request object by calling the Requesting constructor
- * with the given parameters.
- *
- * See: Requesting
- *
- */
-function Request()
-{
-	var request = new Requesting();
-	request.constructor.apply(request, arguments);
-	
-	return request;
-}
-
-
-/*
- * __callMethod(methodName, object, arguments)
+ * [static] __callMethod(methodName, object, arguments)
  *
  * Calls a given method "methodName" for the object "object" as THIS and the
  * given argument list.
  *
  */
+var traceEvals = false; 
+
 function __callMethod(methodName, object, args)
 {
+	var arguments;
+	var returnRequest = null;
+	var featureRequest = null;
+	
 	var maxValue = -1;
 	var maxFunction = [];
 	var maxBoolVal = -1;
 	var maxBoolFunc = 0;
 	var requestBase;
 
+	if (traceEvals) console.group(methodName);
+
 	if (methodHash[methodName] == null)
 		throw new MethodNotExistsError("Method not known: "+methodName);
 
-	// Convert "args" to array, if not done
-	if (!(args instanceof Array)) {
-		var tmpArgs = [];
-			
-		for (var argIdx = 0; argIdx < args.length; argIdx ++)
-			tmpArgs[argIdx] = args[argIdx];
-			
-		args = tmpArgs;
-	}
+	// Autodefine arguments
+	if (args == null) args = ({});	
 
-	// Get return type and feature list
-	if ((args.length > 0) && (args[args.length - 1] instanceof Requesting)) {
-		requestBase = args[args.length - 1];
-	}
-	 else 
-	{
-		requestBase = new Requesting();
-		args.push(requestBase);
-	}
+	// Apply parameter prototype from caller
+	args = __prototype_delegation(topRequest(), methodName, object, args);
 
-	args.push(0);
+	// Evaluate argument object
+	returnRequest = args._returns;
+	featureRequest = args._features;
+
+	// Arrayfy requests, if given
+	if ((returnRequest != null) && (!(returnRequest instanceof Array)))
+		returnRequest = [returnRequest];
+
+	if ((featureRequest != null) && (!(featureRequest instanceof Array)))
+		featureRequest = [featureRequest];
+
 
 	// Find best method
 	for (var idx = 0; idx < methodHash[methodName].length; idx ++) {
@@ -471,28 +660,24 @@ function __callMethod(methodName, object, args)
 		var boolCount = 0;
 
 		// Test expected return type and features
-		var requestCount = requestBase.test(method.output, method.features, method.options);
+		var requestCount = __check_request(method, returnRequest, featureRequest);
 
 		if (requestCount == -1)
 			continue;
 
 		value += requestCount;
 
-		// Set default values to optional parameters
-		requestInfo = requestBase.copy();
-		requestInfo.initOptions(method.options);
-	
-		args[args.length - 2] = requestInfo;
-		args[args.length - 1] = requestInfo.options;
+		// Set parameter array
+		var testArgs = __args_to_array(method.inputAll, args, method.defaults);
 
 		// If any boolean condition evaluates to false, ignore the function
-		boolCount = __evaluateBoolConditions(method, object, args);
+		boolCount = __evaluateBoolConditions(method, object, testArgs);
 
 		if (boolCount == -1)
 			continue;
 
 		// Maximize any conditions
-		var tmpValue = __evaluateMaxConditions(method, object, args);
+		var tmpValue = __evaluateMaxConditions(method, object, testArgs);
 
 		if (tmpValue == -1)
 			continue;
@@ -517,27 +702,31 @@ function __callMethod(methodName, object, args)
 		}
 	}
 
+	if (traceEvals) console.groupEnd();
 	// No method found...
 	if (maxFunction.length == 0)
-		throw new MethodNotExistsError("Method not available: "+methodName)	
+		throw new MethodNotExistsError("Method not available: "+methodName, args)	
 
 	// Select method
 	var method = methodHash[methodName][maxFunction[maxBoolFunc]];
 
 	// Prepare request parameter
-	requestInfo = requestBase.copy();
-	requestInfo.initOptions(method.options);	
-	args[args.length - 2] = requestInfo;
-	args[args.length - 1] = requestInfo.options;
-
+	var methodArgs = __args_to_array(method.inputAll, args, method.defaults);
+		
 	// Call before aspects
-	args = __callBeforeAspects(method, object, args);
+	methodArgs = __callBeforeAspects(method, object, methodArgs);
+
+	// Set request stack
+	requestStack.push({_returns: returnRequest, _features: featureRequest, _parameters: methodArgs, _method: method});
 
 	// Call method
-	var retval = method.does.apply(object, args);
+	var retval = method.does.apply(object, methodArgs);
+
+	// Remove from request stack
+	requestStack.pop(args);
 
 	// Call after aspects
-	retval = __callAfterAspects(method, object, args, retval);
+	retval = __callAfterAspects(method, object, methodArgs, retval);
 
 	// Apply return value
 	if (retval != null) {
@@ -567,8 +756,10 @@ function __evaluateBoolConditions(method, object, args)
 		var miniFunc = method.whereas_precompiled[idx];
 
 		try {
-			if (!miniFunc.apply(object, args))
+			if (!miniFunc.apply(object, args)) {
+				if (traceEvals) console.log("Failed bool", miniFunc.toSource());
 				return -1;
+			}
 		} catch(e) {
 			console.log("ERROR: ", e);
 			console.log("Evaluation failed:", miniFunc.toSource());
@@ -608,8 +799,12 @@ function __evaluateMaxConditions(method, object, args)
 			console.log("Called with:", args);
 		}
 
-		if (addVal == -1)
+		if (addVal == -1) {
+			if (traceEvals)
+				console.log("Failed max", miniFunc.toSource());
+		
 			return -1;
+		}
 		else
 			val += addVal;
 	}
@@ -645,8 +840,21 @@ function __evaluateMaxConditions(method, object, args)
  * version of it.
  *
  * The conditions are javascript instruction strings evaluating to 'true' or 'false'.
- * They may receive the parameters 'name', 'input', 'output', 'whereas', 'max', 'options'
- * from all methods tested with the conditions.
+ * They may receive the following parameters:
+ *		name			- The name of the method to observe
+ *		output			- The output type definition
+ *		features		- The list of method features
+ *
+ *		input			- The list of all mandatory input parameters
+ *		options			- The list of all optional input parameters
+ *		inputAll		- The list of all parameters (mandatory + optional)
+ *		defaults		- The default values for parameters
+ *
+ *		whereas			- All whereas clauses
+ *		max				- All max clauses
+ *
+ *		specifaction	- The specification as given by the programmer
+ *		does			- The implementation of the method
  *
  */
 Function.prototype.__observes = function( advice )
@@ -657,7 +865,10 @@ Function.prototype.__observes = function( advice )
 	// Build conditions list
 	for (var idx = 1; idx < arguments.length; idx ++) {
 		conditions.push(arguments[idx]);
-		conditions_precompiled.push(new Function("name, input, output, whereas, max, options", "return ("+arguments[idx]+");"));
+		conditions_precompiled.push(new Function("name, output, features, input, options, inputAll, defaults, whereas, max, specification, does", 
+												 "return ("+arguments[idx]+");"
+												)
+								   );
 	}
 
 	// Register aspect
@@ -717,7 +928,20 @@ function __aspectApplicable(method, aspect)
 	for (var idx = 0; idx < aspect.conditions_precompiled.length; idx ++) {
 		var condition = aspect.conditions_precompiled[idx];
 
-		if (!condition(method.name, method.input, method.output, method.whereas, method.max, method.options)) {
+		if (!condition(method.name, 
+					   method.output, 
+					   method.features, 
+					   method.input, 
+					   method.options, 
+					   method.inputAll, 
+					   method.defaults, 
+					   method.whereas, 
+					   method.max, 
+					   method.specification,
+					   method.does
+					  )
+			) 
+		{
 			return false;
 		}
 	}
@@ -785,5 +1009,33 @@ function __callAfterAspects(method, subject, args, returnValue)
  */
 function Package()
 {
+}
+
+/*
+ * Object::__with(request)
+ *
+ * Creates a new request, that inherits return type, features and
+ * all parameters from "request". Parameters specified in "Object"
+ * will override all parameters in request.
+ *
+ */
+Object.prototype.__with = function(request)
+{
+	var newObj = ({});
+	
+	for (var idx in request) {
+		if (idx[0] != "_")
+			newObj[idx] = request[idx];
+	}
+	
+	newObj._returns = request._returns;
+	newObj._features = request._features;
+	
+	for (var idx in this) {
+		if (idx[0] != "_")
+			newObj[idx] = this[idx];
+	}
+	
+	return newObj;
 }
 

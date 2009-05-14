@@ -9,15 +9,10 @@
 var Model = new Package();
 
 /*
- * [declarator] Model::Construct <type, initializer, whereas, method_body>
+ * [declarator]<type>	Tagging::construct( [initializer == <initializer>] ) ==> [<type>]
  *
- * This declarator will register an implementation of the method "construct" with the given method_body.
- * The applicability of the method can be restricted by the parameters <type>, <initializer> and <whereas>. The method
- * declared by this declarator has the following syntax and semantics:
- *
- * --------------------------------------------------------------------------------------------------------
- *
- * Tagging::construct( [initializer == <initializer>] ) ==> [<type>]
+ * Declarator:
+ *		The declarator is parameterized by <type>, which specifies the type of the object to create.
  *
  * Purpose:
  * 		Creates and initializes a new object. The method can be called on all arrays,
@@ -42,150 +37,17 @@ var Model = new Package();
  * --------------------------------------------------------------------------------------------------------
  *
  */
-Model.Construct = function( type, initializer, whereas, func )
+Model.Construct = buildDeclarator("construct", 
 {
-	if (whereas == null)
-		whereas = [];
-		
-	if (!(whereas instanceof Array))
-		whereas = [whereas];
-
-	"construct".__declare(
-		({
-			options:	{"initializer":	initializer},
-			output:		type,
-
-			whereas:	["(__options.initializer == null) ? true : (__options.initializer.__taggedAs('"+type.join("','")+"') != -1)"].concat(whereas),
-			max:		["this.__understoodAs('"+type.join("','")+"')"],
-		
-			does:		func
-		})
-	);
-}
-
-/*
- * [declarator] Model::Merge( type, part_type, position_type, whereas, method_body )
- *
- * This declarator will register an implementation of the method "merge" with the given method_body.
- * The applicability of the method can be restricted by the parameters <type>, <part_type>, <position_type>,
- * and <whereas>. The method declared by this declarator has the following syntax and semantics:
- *
- * --------------------------------------------------------------------------------------------------------
- *
- * OBJECT::merge( part, position ) ==> [replacement_list, list]
- *
- * Purpose:
- * 		Merges the object 'part' (which is of type <part_type>) into OBJECT at the given
- *		position. Whereas the type of "position" depends on <position_type>. The function returns
- *		a list, representing the object after merge. This can be:
- *
- *		- An empty list, if the object is not mergeable
- *		- A list of length 1, if "part" was sucessfully merged to 'position'
- *		- A list of length 3, if the merging of "part" result in splitting the original object
- *		  to the form of [ OBJECT[0...position], part, OBJECT[position+1, ..., SIZE] ]
- *
- *		The object returned in the list can be the original object or a new instance of the object.
- *
- * Applicability:
- *		This method is applicable on all OBJECT tagged with <type> and all parameters 'part' tagged with
- *		<part_type>. The position should be tagged with <position_type>. The method will only be called, 
- *		if <whereas> is satisfied or null.
- *
- * Parameters:
- *		part			The object, that should be merged
- *		position		The position inside OBJECT, where 'part' should be merged too. The semantics of
- *						position is specific to OBJECT.
- *
- * Return value:
- *		A list representing the result of the merge (see above).
- *
- * Example:
- *		var data = "Hello World"._construct("Foo ", 0);
- *
- *		Should return a list ["Foo Hello World"].
- *
- *		var data = "Hello World"._construct([1,2,3], 6);
- *
- *		Should return a list ["Hello ", [1,2,3], "World"]
- *
- * --------------------------------------------------------------------------------------------------------
- *
- */
-Model.Merge = function( type, part_type, position_type, whereas, func )
-{
-	"merge".__declare(
-		({
-			input:		["part", "position"],
-			output:		["replacement_list", "list"],
-
-			whereas:	whereas,
-			max:		["this.__taggedAs('"+type.join("','")+"')",
-						 "part.__taggedAs('"+part_type.join("','")+"')",
-						 "position.__taggedAs('"+position_type.join("','")+"')"
-						],
-		
-			does:		func
-		})
-	);
-}
-
-/*
- * [declarator] Model::Remove( type, position_type, whereas, method_body )
- *
- * This declarator will register an implementation of the method "remove" with the given method_body.
- * The applicability of the method can be restricted by the parameters <type>, <part_type>, <position_type>,
- * and <whereas>. The method declared by this declarator has the following syntax and semantics:
- *
- * --------------------------------------------------------------------------------------------------------
- *
- * OBJECT::remove( position, count ) ==> <type>
- *
- * Purpose:
- * 		Removes 'count' child objects of OBJECT at the given 'position'.
- *
- * Applicability:
- *		This method is applicable on all OBJECT tagged with <type>. The parameter 'position' is of the
- *		given <position_type>. The method will be only called if 'whereas' is satisfied or null.
- *
- * Parameters:
- *		position		The start position of the deletion. The type depends on OBJECT.
- *		count			The count of elements to delete after this position.
- *
- * Return value:
- *		The object after the modification. This can be the original object or a new instance of it.
- *
- * Example:
- *		var data = "Hello World"._remove(0, 6);
- *
- *		Should return "World"
- *
- *		var data = [1,2,3]._remove(1,2)
- *
- *		Should return [1]
- *
- * --------------------------------------------------------------------------------------------------------
- *
- */
-Model.Remove = function( type, position_type, whereas, func )
-{
-	if (whereas == null)
-		whereas = [];
-		
-	if (!(whereas instanceof Array))
-		whereas = [whereas];
-
-	"remove".__declare(
-		({
-			input:		["position", "count"],
-			output:		type,
-
-			whereas:	["count.__taggedAs('number')"].concat(whereas),
-			max:		["this.__taggedAs('"+type.join("','")+"')",
-						 "position.__taggedAs('"+position_type.join("','")+"')"
-						],
-		
-			does:		func
-		})
-	);
-}
+	_this: 				"list",
+	
+	_generic_type:		function(type) {
+							return {
+									_output:					type,
+									_max: 						"this.__understoodAs('"+type.join("', '")+"')",
+									
+									_optional_initializer:		type,
+							};
+						}
+});
 

@@ -9,7 +9,7 @@
 // Author view
 //
 HtmlView.View(
-	["*", "author", "*", "person", "*", "structure"], null,
+	{_this:			["*", "author", "*", "person", "*", "structure"]},
 
 	function HtmlView_Author(request) 
 	{
@@ -37,14 +37,14 @@ HtmlView.View(
 			if (idx[0] == '_') continue;
 			if (element.__is("name") || element.__is("mail_address")) continue;
 			
-			add_output += HtmlView_showInContext(element, this, request)+ "; ";			
+			add_output += element._view()+ "; ";			
 		}
 
 		// Append additional information only, if given
 		if (add_output != "")
 			add_output = " ("+add_output+")";
 
-		return (main_info + add_output)._tag("span", this);
+		return (main_info + add_output)._tag({tag: "span", object:this});
 	}
 
 );

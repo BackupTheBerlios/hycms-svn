@@ -8,7 +8,7 @@
 // DocumentInformation view
 //
 HtmlView.View(
-	["*", "document_information", "*", "list"], null,
+	{_this:		["*", "document_information", "*", "list"]},
 	
 	function HtmlView_DocumentInformation(request)
 	{
@@ -22,18 +22,18 @@ HtmlView.View(
 			// Display all inline elements in one line
 			if (!element.__is("list")) {
 				output_header += "<span class='document_information_head_item'>";
-				output_header += HtmlView_showInContext(element, this, request);
+				output_header += element._view();
 				output_header += "</span>,&nbsp;";		
 			} else {
 				output_items += "<div class='document_information_item'>";
-				output_items += HtmlView_showInContext(element, this, request);
+				output_items += element._view();
 				output_items += "</div>";		
 			}			
 		}
 
 		return (  "<div class='document_information_head'>"+ output_header.substr(0, output_header.length-7) +"</div>"
 				+ output_items
-			   )._tag("div", this, HtmlView_tagRequest);
+			   )._tag({tag: "div", object: this});
 	}
 
 );
@@ -43,11 +43,11 @@ HtmlView.View(
 // Abstract view
 //
 HtmlView.View(
-	["*", "abstract", "*", "paragraph", "*", "list"], null,
+	{_this:		["*", "abstract", "*", "paragraph", "*", "list"]},
 	
 	function HtmlView_Paragraph(request) 
 	{
-		return this._taggedIterate("p", request);
+		return this._taggedIterate({tag: "p"});
 	}
 );
 
@@ -56,7 +56,7 @@ HtmlView.View(
 // Version view
 //
 HtmlView.View(
-	["*", "version", "*", "text"], null,
+	{_this:		["*", "version", "*", "text"]},
 
 	function HtmlView_Version()
 	{
@@ -64,7 +64,7 @@ HtmlView.View(
 		
 		text = "Version "+text;
 	
-		return text._tag("span", this, HtmlView_tagRequest)
+		return text._tag({tag: "span", object: this});
 	}
 );
 

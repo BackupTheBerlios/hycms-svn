@@ -9,6 +9,7 @@
 	<span id='testIdentifier'>Test suite:</span>
 
 	<select id='testSel' onchange='reload()'>		
+	<option value=''></option>
 	<?
 
 		function search_packages($base_path, $suffix, $depth) 

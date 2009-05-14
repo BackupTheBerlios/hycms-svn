@@ -8,15 +8,29 @@
  *		contentHash				Map from HTML node tags to content objects
  *
  *		lastFocussed			Node with the current focus
+ *		focussedContent			Focussed content object
  *		currentSemantics		Current semantics selected by the user
  *
  * Methods:
  *		show					Visualizes the content inside the editor
  *		showReference			Visualizes the content of a reference inside the editor
  *
+ *		getViewContext			Returns the semantic context of a view
+ *		getAnchorViewNode		Returns a view node of an anchor node
+ *		getContentObject		Returns the content object of a view node
+ *		findNodes				Returns all view nodes with a certain uuid
+ *
+ *		switchFocus				Changes the focus inside the editor
+ *		makeDescription			Builds an event description
+ *		updateViews				Updates all view nodes with a certain UUID
+ *
+ *		saveCaret				Stores the caret coordinates in a node-independend format
+ *		restoreCaret			Places the caret accordings to a node-independend coordinate
+ *		setCaret				Sets the caret to a user-defined position
+ *
  * Aspects:
- *		htmlRenderAspect		Extends all HTML views with event handling and tags them
- *								to the contentHash
+ *		htmlRenderAspect		Registers all viewed elements to the contentHash
+ *		htmlMergeAspect			Updates views after merge
  *
  * Events:
  *		onClick					Click event (changes focus)
@@ -40,7 +54,12 @@
 function Editor(viewContainer)
 {
 	var self = this;
+	
+	// Register properties
 	this.viewContainer = viewContainer;
+	this.lastFocussed = null;
+	this.focussedContent = null;
+	this.currentSemantics = null;
 
 	// Register events Handlers
 	viewContainer.addEventListener("click", function(event) { try { self.onClick(self._makeDescription(event)); } catch(e) { console.log(e) } }, true);
@@ -51,11 +70,12 @@ function Editor(viewContainer)
 	viewContainer.addEventListener("contextmenu", function(event) { event.preventDefault(); event.stopPropagation(); }, true);
 
 	// Register all aspects
-	function aspectCallback() { return self.htmlRenderAspect.apply(self, arguments); }
-	aspectCallback.__observes("after", "name == 'view'");
+	function renderAspectCallback() { return self.htmlRenderAspect.apply(self, arguments); }
+	renderAspectCallback.__observes("after", "name == 'view'");
 
 	// Make the editor pane "contentEditable"
 	this.viewContainer.contentEditable = true;
+	
 }
 
 /*
@@ -65,6 +85,7 @@ function Editor(viewContainer)
  *
  */
 "show".__declare({
+	input:		"content",
 	whereas:	"this instanceof Editor",
 	does:
 	
@@ -89,6 +110,7 @@ function(content)
  *
  */
 "showReference".__declare({
+	input:		"contentPath",
 	whereas:	"this instanceof Editor",
 	does:
 	
@@ -107,11 +129,117 @@ function(contentPath)
 }
 
 });
+
+/*
+ * Editor::findNodes(uuid)
+ *
+ * Returns all nodes with a certain uuid.
+ *
+ */
+"findNodes".__declare({
+	input:		"uuid",
+	whereas:	["this instanceof Editor", "uuid.__is('number')"],
+	output:		["list"],
+	does:
+	
+function findNodes(uuid)
+{
+	var nodeList = [];
+	
+	function recursor(node) {
+		var children = node.childNodes;
+	
+		if ((node.getAttribute != null) && (node.getAttribute('uuid') == uuid)) {
+			nodeList.push(node);
+			
+			// TODO: Currently we will find only the first element, for performance reasons... [1]
+			return;
+		}
+			
+		if (children != null) {
+			for (var idx = 0; idx < children.length; idx ++) {
+				recursor(children[idx]);
+				
+				// TODO: [1]
+				if (nodeList.length > 1)
+					return;
+			}
+		}
+	}
+
+	recursor(this.viewContainer);	
+			
+	return nodeList;
+}
+
+});
+
+/*
+ * Editor::updateViews(uuid)
+ *
+ * Updates all views with the given UUID.
+ *
+ */
+"updateViews".__declare({
+	input:		"uuid",
+	whereas:	["this instanceof Editor", "uuid.__is('number')"],
+	does:
+	
+function updateViews(uuid)
+{
+	var nodeList = this._findNodes(uuid);
+
+	for (var idx = 0; idx < nodeList.length; idx ++) {
+		var viewNode = nodeList[idx];
+		var context = this._getViewContext(viewNode);
+		var model = context[context.length - 1];
+
+		var newHTML = model._view(Request(["*", "html", "text"], 
+										  {"parentList": context.slice(0, -1)}, 
+										  "?recursive_context", "keep_method_conditions", "set_uuid_attribute"
+										 )
+								 );
+
+		// Replace the view (this is hacky...)	
+		var tmpElement = document.createElement("div");
+		tmpElement.innerHTML = newHTML;
+
+		var tmpNew = tmpElement.firstChild;
+		tmpElement.removeChild(tmpNew);
+		
+		viewNode.parentNode.replaceChild(tmpNew, viewNode);
+	}
+}
+
+});
+
+/*
+ * Editor::updateViews(modelList, updateList)
+ *
+ * Updates all views responsible for the objects in 'modelList', if the
+ * corresponding entry in 'updateList' is 'true'.
+ *
+ */
+"updateViews".__declare({
+	input:		["modelList", "updateList"],
+	whereas:	["this instanceof Editor", "modelList instanceof Array", "updateList instanceof Array", "modelList.length == updateList.length"],
+	does:
+	
+function updateViews(modelList, updateList)
+{
+	for (var idx = modelList.length - 1; idx > -1; idx --) {
+		if (updateList[idx])
+			this._updateViews(modelList[idx].__uuid);
+	}
+}
+
+});
+
 /*
  * Editor::htmlRenderAspect(aspect, method, subject, arguments, returnValue)
  *
- * Watches all HTML-Render nodes for rendering some content. If this
- * is done, the aspect will register the content to the contentHash by
+ * Called on all view operations when rendering some content. If this
+ * is the case, the aspect will register the content to the contentHash by
  * a unique id.
  *
  */
@@ -149,8 +277,8 @@ function getViewContext(element)
 	
 	while (element != this.viewContainer) {
 	
-		if (element.getAttribute('type') != null)
-			list.push( element.getAttribute('type').split(",") );
+		if (element.getAttribute('uuid') != null)
+			list = [ this.contentHash[element.getAttribute('uuid')].link ].concat(list);
 			
 		element = element.parentNode;
 	}
@@ -161,7 +289,7 @@ function getViewContext(element)
 });
 
 /*
- * Editor::getViewNode(anchorNode)
+ * Editor::getAnchorViewNode(anchorNode)
  *
  * Returns the view node, which is responsible for the given
  * anchor node. The responsible view node is the first parent node
@@ -171,12 +299,12 @@ function getViewContext(element)
  *		- The view node (DOM)
  *		- null, if such a node does not exist
  */
-"getViewNode".__declare({
+"getAnchorViewNode".__declare({
 	input:		"anchorNode",
 	whereas:	["this instanceof Editor", "anchorNode instanceof Element", "anchorNode.getAttribute != null"],
 	does:
 
-function getViewNode(anchorNode)
+function getAnchorViewNode(anchorNode)
 {
 	var targetView = anchorNode;
 	var uuid;
@@ -198,14 +326,14 @@ function getViewNode(anchorNode)
 
 });
 
-"getViewNode".__declare({
+"getAnchorViewNode".__declare({
 	input:		"anchorNode",
 	whereas:	["this instanceof Editor", "anchorNode instanceof Node", "anchorNode.parentNode != null"],
 	does:
 	
-function getViewNode(anchorNode)
+function getAnchorViewNode(anchorNode)
 {
-	return this._getViewNode(anchorNode.parentNode);
+	return this._getAnchorViewNode(anchorNode.parentNode);
 }
 
 });
@@ -243,7 +371,9 @@ function getContentObject(viewNode)
 				 "eventDescription.__is('event_description')",
 				 "eventDescription.destNode instanceof Element",
 				 "eventDescription.anchorNode instanceof Node",
-				 "typeof(eventDescription.anchorOffset) == 'number'"
+				 "typeof(eventDescription.anchorOffset) == 'number'",
+				 
+				 "this.lastFocussed != eventDescription.destNode"
 				],
 	does:
 
@@ -258,7 +388,44 @@ function switchFocus(eventDescription)
 		return false;
 
 	this.lastFocussed = eventDescription.destNode;
+	this.focussedContent = this._getContentObject(this.lastFocussed);
+	this.currentSemantics = this.focussedContent.__def;
 	
+	document.title = this.currentSemantics.join(",");
+	
+	return true;
+}
+
+});
+
+"switchFocus".__declare({
+	input:		["eventDescription"],
+	whereas:	["this instanceof Editor", 
+				 
+				 "eventDescription.__is('event_description')",
+				 "eventDescription.destNode == null",
+				],
+	does:
+
+function switchFocus(eventDescription)
+{
+	return false;
+}
+
+});
+
+"switchFocus".__declare({
+	input:		["eventDescription"],
+	whereas:	["this instanceof Editor", 
+				 
+				 "eventDescription.__is('event_description')",
+				 "eventDescription.destNode instanceof Element",				
+				 "eventDescription.destNode == this.lastFocussed"
+				],
+	does:
+
+function switchFocus(eventDescription)
+{
 	return true;
 }
 
@@ -275,7 +442,7 @@ function switchFocus(eventDescription)
 	input:		"event",
 	output:		"event_description",
 	whereas:	["this instanceof Editor", 
-				 "event instanceof Event",
+				 "(event instanceof Event) || (event == null)",
 				 "window != null"
 				],
 	does:
@@ -288,15 +455,193 @@ function makeDescription(event)
 	eventDescription.anchorNode = eventDescription.selection.anchorNode;
 	eventDescription.anchorOffset = eventDescription.selection.anchorOffset;
 
-	eventDescription.destNode = this._getViewNode(eventDescription.anchorNode);
+	eventDescription.destNode = this._getAnchorViewNode(eventDescription.anchorNode);
 
-	eventDescription.content = this._getContentObject(eventDescription.destNode);
-	eventDescription.contextList = this._getViewContext(eventDescription.destNode);
+	if (eventDescription.destNode != null)
+	{
+		eventDescription.content = this._getContentObject(eventDescription.destNode);
+		eventDescription.contextList = this._getViewContext(eventDescription.destNode);
+	}
 
 	eventDescription.editor = this;
 	eventDescription.event = event;	
 	
 	return eventDescription;
+}
+
+});
+
+/*
+ * Editor::saveCaret(anchorNode, anchorOffset) => [list]
+ *
+ * Stores the coordinates of the caret in a node-independend format.
+ * The information stores the number of child nodes instead of
+ * the concreate DOM nodes. Therefore it is no problem to exchange
+ * a node to restore the caret position.
+ *
+ */
+"saveCaret".__declare({
+	input:		["anchorNode", "anchorOffset"],
+	output:		"list",
+	whereas:	["this instanceof Editor", 
+				 "anchorNode instanceof Node",
+				 "anchorOffset.__is('number')",
+				],
+	does:
+
+function saveCaret(anchorNode, anchorOffset)
+{
+	var path = [anchorOffset];
+	var current = anchorNode;
+
+	while(current != this.viewContainer) {
+		var parentList = current.parentNode.childNodes;
+		
+		for (var idx = 0; idx < parentList.length; idx ++) {
+			if (parentList[idx] == current)
+				path.push(idx);
+		}
+		
+		current = current.parentNode;	
+	}
+	
+	return path;
+}
+
+});
+
+/*
+ * Editor::restoreCaret(path)
+ *
+ * Restores the caret according to the given path. If one
+ * element of the path doesn't exist any more, the function
+ * tries to place the caret to the first position of the next
+ * successor in the tree's corner.
+ *
+ */
+"restoreCaret".__declare({
+	input:		["path"],
+	whereas:	["this instanceof Editor", 
+				 "path.__is('list')",
+				 "window != null"
+				],
+	does:
+
+function restoreCaret(path)
+{
+	var current = this.viewContainer;
+
+	for (var idx = path.length-1; idx > 0; idx --) {
+		var child = current.childNodes[path[idx]];
+
+		// Element removed
+		if (     (current.childNodes.length < path[idx]) 
+			 ||  (child == null)
+		     ||  ((idx == 1) && (child.nodeValue.length < path[0]))
+		   )
+		{
+			path[idx + 1] ++;
+			path[0] = 1;
+
+			idx += 2;
+			current = current.parentNode;
+
+			continue;
+		}
+
+		current = child;
+	}
+	
+	this._setCaret(current, path[0]);
+}
+
+});
+
+/*
+ * Editor::setCaret(anchor_node, anchor_offset)
+ *
+ * Sets the caret to a given position.
+ *
+ */
+"setCaret".__declare({
+	input:		["anchorNode", "anchorOffset"],
+	whereas:	["this instanceof Editor", 
+				 "anchorNode instanceof Node",
+				 "anchorOffset.__is('number')",				 
+				 "window != null"
+				],
+	does:
+
+function setCaret(anchorNode, anchorOffset)
+{
+	var selection = window.getSelection();
+	selection.collapse(anchorNode, anchorOffset);
+	
+	this._switchFocus(this._makeDescription(null));
+}
+
+});
+
+/*
+ * Editor::getCaret(anchor_node, anchor_offset)
+ *
+ * Gets the current position and returns an object {anchorNode: , anchorOffset}
+ *
+ */
+"getCaret".__declare({
+	input:		["anchorNode", "anchorOffset"],
+	output:		["caret_position", "structure"],
+	
+	whereas:	["this instanceof Editor", 
+				 "window != null"
+				],
+	does:
+
+function getCaret(anchorNode, anchorOffset)
+{
+	var selection = window.getSelection();
+	
+	return {anchorNode: selection.anchorNode, anchorOffset: selection.anchorOffset};
+}
+
+});
+
+/*
+ * Editor::insertContent(object, context, offset)
+ *
+ * Inserts a content object at the given context position and text offset.
+ * Whereas "context" is a list of all objects inside the content hierarchy
+ * from its top to the element to modify.
+ *
+ */
+"insertContent".__declare({
+	input:		["object", "context", "offset"],
+	whereas:	["this instanceof Editor", 
+				 "object != null",
+				 "window != null"
+				],
+	does:
+
+function insertContent(object, context, offset)
+{
+//console.profile();
+	var caretPosition, updateList, offsetContext, domCaret;
+
+	// Save caret position
+	domCaret = this._getCaret();
+	caretPosition = this._saveCaret(domCaret.anchorNode, domCaret.anchorOffset);
+
+	// Change model
+	offsetContext = context.concat([offset]);
+	updateList = context[0]._propagateMerge(offsetContext, 0, object);
+
+	// Update view
+	this._updateViews(context.slice(0,-1), updateList);
+
+	// Restore caret position
+	caretPosition[0] ++;
+	this._restoreCaret(caretPosition);
+//console.profileEnd();
 }
 
 });
@@ -312,7 +657,11 @@ function makeDescription(event)
  */
 Editor.prototype.onClick = function(eventDescription)
 {
-	this._switchFocus(eventDescription);
+	if (this._switchFocus(eventDescription))
+		return;
+		
+	this.stopPropagation();
+	this.preventDefault();
 }
 
 /*
@@ -335,6 +684,19 @@ Editor.prototype.onKeyPress = function(eventDescription)
 	// Ignore cursor events
 	if ((event.keyCode > 32) && (event.keyCode < 41)) {
 		return;
+	}
+	 else if (event.charCode != 0) {
+	 	// Insert text
+	 	if (this.currentSemantics.__understoodAs("*", "text") > -1) {
+	 		var newText = String.fromCharCode(event.charCode).__tag(this.currentSemantics);
+
+			this._insertContent(newText, eventDescription.contextList, eventDescription.anchorOffset);
+
+			event.preventDefault();
+			event.stopPropagation();
+			
+			return;
+		}
 	}
 
 	// Don't do anything else, if we didn't allowed it explicitly
@@ -360,9 +722,8 @@ Editor.prototype.onKeyUp = function(eventDescription)
 
 	// Move cursor
 	if ((event.keyCode > 32) && (event.keyCode < 41)) {
-		this._switchFocus(eventDescription);
-
-		return;
+		if (this._switchFocus(eventDescription))
+			return;
 	}
 
 	// Don't do anything else, if we didn't allowed it explicitly

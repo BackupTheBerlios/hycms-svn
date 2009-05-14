@@ -10,10 +10,11 @@
 //
 "view".__declare
 ({
-	output:		["text"],
-	whereas:	["this.__is('structure')"],
+	_this:		"structure",
+
+	_output:	["text"],
 	
-	does:
+	_does:
 		function TextView_Structure() 
 		{
 			var output = "";
@@ -38,10 +39,11 @@
 //
 "view".__declare
 ({
-	output:		["text"],
-	whereas:	["this.__is('list')"],
+	_this:		"list",
+
+	_output:	["text"],
 	
-	does:
+	_does:
 		function TextView_List() 
 		{
 			var output = "";
@@ -61,10 +63,10 @@
 //
 "view".__declare
 ({
-	output:		["text"],
-	whereas:	["this.__is('text') || this.__is('number') || this.__is('boolean')"],
+	_output:	["text"],
+	_whereas:	["this.__is('text') || this.__is('number') || this.__is('boolean')"],
 	
-	does:
+	_does:
 		function TextView_Text() 
 		{
 			return this.valueOf();
