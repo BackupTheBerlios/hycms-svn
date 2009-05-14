@@ -10,24 +10,21 @@
 	include "session.php";
 	$hycms_user_name 	= htmlspecialchars($_POST["hycms_user_name"]);
 	$hycms_password 	= htmlspecialchars($_POST["hycms_password"]);
+	
 
 	if(is_authorised($hycms_user_name, $hycms_password)){
 		if(has_session()) { 
-			$_SESSION["counter"]++;
-		        echo $_SESSION["counter"];
-			echo "anmeldungen mit --";
 			echo session_id();
 		}else {
-			$_SESSION["counter"]= 0;
-			$_SESSION["Login"] = true;
-			$_SESSION["Identify"] = session_id(); // maybe Changed to something more complicated (id+user+date) 
-			$_SESSION["User"] = $hycms_user_name;	
+			$_SESSION["login"] = true;
+			$_SESSION["identify"] = session_id(); // maybe Changed to something more complicated (id+user+date) 
+			$_SESSION["user"] = $hycms_user_name;	
 			echo session_id();					
 		}
 			
 
 	}else{
 		$_SESSION["Login"] = false;
-		echo "Wrong Password or Username";
+		echo "FAIL";
 	}	
 ?>
