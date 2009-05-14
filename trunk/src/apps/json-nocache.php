@@ -1,6 +1,6 @@
 <html>
 <head>
-	<title>View: <? echo $_GET["hycms_content"] ?></title>
+	<title>JSON-View: <? echo $_GET["hycms_content"] ?></title>
 
 	<link rel="stylesheet" type="text/css" href="nocache.css">
 

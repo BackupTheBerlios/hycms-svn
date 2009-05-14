@@ -8,14 +8,19 @@
 ?>
 <?php
  	session_start(); 
- 	// Checks if the password stored in /storage/private/passwd is valid for the user name
- 	// maybe extended to check also the group or other belongings 
- 	function is_authorised($hycms_user_name, $hycms_password)
+ 	
+ 	/*
+ 	 * is_authorized()
+ 	 *
+ 	 * Checks if the password stored in /storage/private/passwd is valid for the user name
+ 	 *
+ 	 */
+ 	function is_authorized($hycms_user_name, $hycms_password)
  	{
- 		$passwd = file_get_contents("../../storage/private/passwd");
+ 		$passwd = file_get_contents("../storage/private/passwd");
  		
- 		$passwd = json_decode($passwd);		// creates Object
- 		$passwd = get_object_vars( $passwd );	// creates array
+ 		$passwd = json_decode($passwd);
+ 		$passwd = get_object_vars( $passwd );
  		
  		if($passwd[$hycms_user_name]==$hycms_password){
  			return true;
@@ -25,13 +30,23 @@
  		}
  	}
  	
- 	/* has_session and delete_session maybe extended :-) */
- 	
+ 	/*
+ 	 * has_session
+ 	 *
+ 	 * Tests whether a valid session exists or not
+ 	 *
+ 	 */
  	function has_session()
  	{
  		return $_SESSION["Login"];
  	}
  	
+ 	/*
+ 	 * delete_session
+ 	 *
+ 	 * Destroys a running session.
+ 	 *
+ 	 */
  	function delete_session()
  	{
  		session_destroy();

@@ -4,6 +4,7 @@
 	<script src="./internal/test.js"></script>
 
 	<script>
+		window.__test_mode = true;
 
 		if (!non_firebug) {
 			console.clear();

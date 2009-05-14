@@ -8,23 +8,25 @@
 ?>
 <?php
 	include "session.php";
-	$hycms_user_name 	= htmlspecialchars($_POST["hycms_user_name"]);
-	$hycms_password 	= htmlspecialchars($_POST["hycms_password"]);
 	
+	$hycms_user_name 	= htmlspecialchars($_GET["hycms_user_name"]);
+	$hycms_password 	= htmlspecialchars($_GET["hycms_password"]);
 
-	if(is_authorised($hycms_user_name, $hycms_password)){
-		if(has_session()) { 
+	if (is_authorized($hycms_user_name, $hycms_password)) {
+		if (has_session()) { 
 			echo session_id();
-		}else {
+		} 
+		 else {
 			$_SESSION["login"] = true;
-			$_SESSION["identify"] = session_id(); // maybe Changed to something more complicated (id+user+date) 
-			$_SESSION["user"] = $hycms_user_name;	
-			echo session_id();					
+			$_SESSION["identify"] = session_id();
+			$_SESSION["user"] = $hycms_user_name;
+				
+			echo session_id();	
 		}
-			
-
-	}else{
+	}
+	 else{
 		$_SESSION["Login"] = false;
 		echo "FAIL";
 	}	
 ?>
+
