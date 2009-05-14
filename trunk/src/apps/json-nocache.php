@@ -10,13 +10,13 @@
 	<script type='text/javascript' charset='UTF-8'>
 		function viewFunction(content)
 		{
-			var html = content._view(Request(["*", "json", "*", "text"], "?indenting"));
+			var html = content._view({_returns: ["*", "json", "*", "text"], _features: "?indenting"});
 				
 			document.body.innerHTML = document.body.innerHTML = "<div style='white-space:pre; font-family:monospace'>"+html._htmlText()+"</div>";
 		}
 	
 		function main(content_path) {		
-			content_path._downloadContent( viewFunction );
+			content_path._downloadContent({callback: viewFunction });
 		}
 	</script>
 	

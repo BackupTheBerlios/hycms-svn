@@ -10,7 +10,7 @@
 //
 "view".__declare
 ({
-	_this:		"structure",
+	_this:		["*", "structure"],
 
 	_output:	["text"],
 	
@@ -39,7 +39,7 @@
 //
 "view".__declare
 ({
-	_this:		"list",
+	_this:		["*", "list"],
 
 	_output:	["text"],
 	
