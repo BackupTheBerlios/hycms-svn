@@ -155,6 +155,9 @@ BrowserKit.PrototypeEvent({
 _does:
 	function(eventDescription)
 	{
+		if ((eventDescription.keyCode >= 33) && (eventDescription.keyCode <= 40))
+			return;
+			
 		eventDescription._stopPropagation();
 	}
 });
