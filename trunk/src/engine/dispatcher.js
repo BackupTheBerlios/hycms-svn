@@ -10,8 +10,7 @@
 function MethodNotExistsError(message, args)
 {
 	this.message = message;
-//	if (traceEvals == true) {console.log(args); console.trace();}
-	console.log("Error arguments:", args);
+	if (traceEvals == true) {console.log(args); console.trace();}
 }
 MethodNotExistsError.prototype = new Error();
 
@@ -58,13 +57,13 @@ function topRequest()
 }
 
 /*
- * [static] __get_mandatory_parameters(method)
+ * [static] __getMandatoryParameters(method)
  *
  * Returns the list of all mandatory parameters of a method description.
  * The "this" parameter will be ignored.
  *
  */
-function __get_mandatory_parameters(method)
+function __getMandatoryParameters(method)
 {
 	var inputs = [];
 
@@ -79,12 +78,12 @@ function __get_mandatory_parameters(method)
 }
 
 /*
- * [static] __get_optional_parameters(method)
+ * [static] __getOptionalParameters(method)
  *
  * Returns the list of input parameters of a method description
  *
  */
-function __get_optional_parameters(method)
+function __getOptionalParameters(method)
 {
 	var options = [];
 	var operator = "_optional_";
@@ -100,22 +99,54 @@ function __get_optional_parameters(method)
 }
 
 /*
- * [static] __get_mandatory_rules(method)
+ * [static] __getParameterPredicate(object, setting)
+ *
+ * Returns a type-checking predicate for parameter "object"
+ * according to "setting". Depending on the value one of the
+ * following predicates will be created:
+ *
+ *	- If 'setting' is a list or a single string, without trailing "@":
+ *		OBJECT.__taggedAs( setting )
+ *
+ *  - If 'setting' is a single string with a trailing "@":
+ *		OBJECT instanceof setting
+ *
+ */
+function __getParameterPredicate(object, setting)
+{
+	if (typeof(setting.valueOf()) == 'string') {
+	
+		if (setting[0] != "@") {
+			// Just a single element of a tagging
+			setting = [setting];
+		}
+		 else {
+		 	// A instanceof predicate
+		 	return "( " +object+" instanceof "+setting.substr(1) + ") ? 0 : -1";
+		}
+	}
+	
+	if (setting instanceof Array) {
+		return object + ".__taggedAs('" + setting.join("', '") + "')";
+	}
+	
+	throw new Error("Invalid declaration - "+setting);
+	
+	return null;
+}
+
+/*
+ * [static] __getMandatoryRules(method)
  *
  * Returns the list of max-rules for all mandatory parameters
  *
  */
-function __get_mandatory_rules(method)
+function __getMandatoryRules(method)
 {
 	var inputs = [];
 
 	function __add_instr(idx, element) {		
-		if (!(element instanceof Array))
-			selector = [element];
-		else
-			selector = element;	
-			
-		inputs.push(idx + ".__taggedAs('" + selector.join("', '") + "')");				
+		inputs.push(__getParameterPredicate(idx, element));				
 	}
 
 	// Add rules
@@ -135,42 +166,37 @@ function __get_mandatory_rules(method)
 }
 
 /*
- * [static] __get_options_rules(method)
+ * [static] __getOptionsRules(method)
  *
  * Returns the list of max-rules for all optional parameters
  *
  */
-function __get_options_rules(method)
+function __getOptionsRules(method)
 {
 	var options = [];
 	var operator = "_optional_";
 	var operatorLen = operator.length;
 
 	for (var idx in method) {
-		var value, selector;
+		var selector;
 	
 		if (idx.substr(0, operatorLen) != operator) continue;
 
 		selector = idx.substr(operatorLen);
 		
-		if (!(method[idx] instanceof Array))
-			value = [method[idx]];
-		else
-			value = method[idx];		
-		
-		options.push(selector + ".__taggedAs('" + value.join("', '") + "')");	
+		options.push(__getParameterPredicate(selector, method[idx]));	
 	}
 	
 	return options;
 }
 
 /*
- * [static] __get_default_values(method)
+ * [static] __getDefaultValues(method)
  *
  * Returns the default values for all parameters
  *
  */
-function __get_default_values(method)
+function __getDefaultValues(method)
 {
 	var defaults = {};
 	var operator = "_default_";
@@ -181,8 +207,11 @@ function __get_default_values(method)
 	
 		if (idx.substr(0, operatorLen) != operator) continue;
 		selector = idx.substr(operatorLen);
-		
-		defaults[selector] = method[idx];	
+
+		if (method[idx] == null)
+			defaults[selector] = null;
+		else
+			defaults[selector] = method[idx];	
 	}
 	
 	return defaults;
@@ -228,13 +257,13 @@ function Evaluates(codestring)
 }
 
 /*
- * __get_prototype_function(inputAll, expression)
+ * __getPrototypeFunction(inputAll, expression)
  *
  * Evaluates the given parameter prototyping expression and
  * returns a function, that can be used to prototype the parameter of a call.
  *
  */
-function __get_prototype_function(inputAll, expression, id)
+function __getPrototypeFunction(inputAll, expression, id)
 {
 	var inputFull = inputAll.concat(["_request", "_returns", "_features"]);
 
@@ -253,12 +282,12 @@ function __get_prototype_function(inputAll, expression, id)
 }
 
 /*
- * [static] __get_call_prototypes(method, inputAll)
+ * [static] __getCallPrototypes(method, inputAll)
  *
  * Returns all call prototypes for a given method with input List "inputAll".
  *
  */
-function __get_call_prototypes(method, inputAll)
+function __getCallPrototypes(method, inputAll)
 {
 	var prototypes = ({});
 	var operator = "_prototype_";
@@ -270,14 +299,14 @@ function __get_call_prototypes(method, inputAll)
 			var builder = method[idx];
 			
 			prototypes[selector] = ({
-				_returns:	__get_prototype_function(inputAll, builder._returns, "_returns"),
-				_features:	__get_prototype_function(inputAll, builder._features, "_features")
+				_returns:	__getPrototypeFunction(inputAll, builder._returns, "_returns"),
+				_features:	__getPrototypeFunction(inputAll, builder._features, "_features")
 			});
 
 			for (var b_idx in builder) {
 				if (b_idx[0] == "_") continue;
 
-				prototypes[selector][b_idx] = __get_prototype_function(inputAll, builder[b_idx], b_idx);
+				prototypes[selector][b_idx] = __getPrototypeFunction(inputAll, builder[b_idx], b_idx);
 			}
 		}
 	}
@@ -410,19 +439,19 @@ String.prototype.__declare = function(method)
 		method._max = [method._max];
 
 	// Create input and options list
-	newMethod.input = __get_mandatory_parameters(method);
-	newMethod.options = __get_optional_parameters(method);
+	newMethod.input = __getMandatoryParameters(method);
+	newMethod.options = __getOptionalParameters(method);
 	newMethod.inputAll = newMethod.input.concat(newMethod.options);
 	
 	// Create input and options rules
-	var input_rules = __get_mandatory_rules(method);
-	var option_rules = __get_options_rules(method);
+	var input_rules = __getMandatoryRules(method);
+	var option_rules = __getOptionsRules(method);
 		
 	// Create default values
-	newMethod.defaults = __get_default_values(method);
+	newMethod.defaults = __getDefaultValues(method);
 
 	// Set up call prototypes
-	newMethod.prototypes = __get_call_prototypes(method, newMethod.inputAll);
+	newMethod.prototypes = __getCallPrototypes(method, newMethod.inputAll);
 
 	// Set whereas / max clauses as string
 	newMethod.whereas = method._whereas;
@@ -473,10 +502,15 @@ function __precompile(functionList, inputList)
 	else
 		functionHeader = "";
 
-	if (typeof(functionList) == "string")
+	if (typeof(functionList.valueOf()) == "string")
 		functionList = [functionList];
+	else if (functionList.valueOf() instanceof Function)
+		functionList = [functionList];	
 	
 	for (var idx = 0; idx < functionList.length; idx ++) {
+		if (typeof(functionList[idx]) != "string")
+			funcList.push(functionList[idx]);
+		
 		var body = "return ("+functionList[idx]+");";
 
 		funcList.push(new Function(functionHeader, body));
@@ -486,7 +520,7 @@ function __precompile(functionList, inputList)
 }
 
 /*
- * [static] __args_to_array(inputAll, argument_object[, defaults])
+ * [static] __argsToArray(inputAll, argument_object[, defaults])
  *
  * Converts an argument object to an array according to the
  * order in "inputAll_def". The function will preset all
@@ -494,7 +528,7 @@ function __precompile(functionList, inputList)
  * the 'argument_object' will be added as the last element of the list.
  *
  */
-function __args_to_array(inputAll, argument_object, defaults)
+function __argsToArray(inputAll, argument_object, defaults)
 {
 	var list = [];
 
@@ -520,12 +554,12 @@ function __args_to_array(inputAll, argument_object, defaults)
 }
 
 /*
- * [static] __check_request(method, returnRequest, featureRequest)
+ * [static] __checkRequest(method, returnRequest, featureRequest)
  *
  * Tests how much the method applies to the given return type and feature request.
  *
  */
-function __check_request(method, returnRequest, featureRequest)
+function __checkRequest(method, returnRequest, featureRequest)
 {
 	var returnCount = 0;
 	var featureCount = 0;
@@ -564,12 +598,12 @@ function __check_request(method, returnRequest, featureRequest)
 
 
 /*
- * [static] __prototype_delegation(callerRequest, methodName, object, arguments)
+ * [static] __prototypeDelegation(callerRequest, methodName, object, arguments)
  *
  * Mixes in the call prototype for a certain method
  *
  */
-function __prototype_delegation(callerRequest, methodName, object, arguments)
+function __prototypeDelegation(callerRequest, methodName, object, arguments)
 {
 	var newArgs;
 	var proto;
@@ -639,7 +673,7 @@ function __callMethod(methodName, object, args)
 	if (args == null) args = ({});	
 
 	// Apply parameter prototype from caller
-	args = __prototype_delegation(topRequest(), methodName, object, args);
+	args = __prototypeDelegation(topRequest(), methodName, object, args);
 
 	// Evaluate argument object
 	returnRequest = args._returns;
@@ -660,15 +694,27 @@ function __callMethod(methodName, object, args)
 		var boolCount = 0;
 
 		// Test expected return type and features
-		var requestCount = __check_request(method, returnRequest, featureRequest);
+		var requestCount = __checkRequest(method, returnRequest, featureRequest);
 
 		if (requestCount == -1)
 			continue;
 
 		value += requestCount;
 
+		// Test whether all mandatory parameters existing in the request
+		var missing = false;
+		
+		for (var in_idx = 0; in_idx < method.input.length; in_idx ++) {
+			if (args[method.input[in_idx]] == undefined) {
+				missing = true;
+				break;
+			}
+		}
+		
+		if (missing == true) continue;
+
 		// Set parameter array
-		var testArgs = __args_to_array(method.inputAll, args, method.defaults);
+		var testArgs = __argsToArray(method.inputAll, args, method.defaults);
 
 		// If any boolean condition evaluates to false, ignore the function
 		boolCount = __evaluateBoolConditions(method, object, testArgs);
@@ -703,6 +749,7 @@ function __callMethod(methodName, object, args)
 	}
 
 	if (traceEvals) console.groupEnd();
+
 	// No method found...
 	if (maxFunction.length == 0)
 		throw new MethodNotExistsError("Method not available: "+methodName, args)	
@@ -711,11 +758,11 @@ function __callMethod(methodName, object, args)
 	var method = methodHash[methodName][maxFunction[maxBoolFunc]];
 
 	// Prepare request parameter
-	var methodArgs = __args_to_array(method.inputAll, args, method.defaults);
-		
+	var methodArgs = __argsToArray(method.inputAll, args, method.defaults);
+
 	// Call before aspects
 	methodArgs = __callBeforeAspects(method, object, methodArgs);
-
+	
 	// Set request stack
 	requestStack.push({_returns: returnRequest, _features: featureRequest, _parameters: methodArgs, _method: method});
 
@@ -760,10 +807,12 @@ function __evaluateBoolConditions(method, object, args)
 				if (traceEvals) console.log("Failed bool", miniFunc.toSource());
 				return -1;
 			}
+			
 		} catch(e) {
 			console.log("ERROR: ", e);
 			console.log("Evaluation failed:", miniFunc.toSource());
 			console.log("Of Method:", method);
+			console.log("On object: ", object);
 			console.log("Called with:", args);
 			console.trace();
 			
@@ -796,6 +845,7 @@ function __evaluateMaxConditions(method, object, args)
 			console.log("ERROR: ", e);
 			console.log("Evaluation failed:", miniFunc.toSource());
 			console.log("Of Method:", method);			
+			console.log("On object: ", object);
 			console.log("Called with:", args);
 		}
 

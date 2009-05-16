@@ -8,14 +8,11 @@
 //
 // Structure model
 //
-Model.Construct(
-	{
-	 type:					["*", "structure"], 
-	 _default_initializer:	({}),
-	 
-	 _max:					"this.__understoodAs(['*', 'structure'])"
-	},
+Model.Construct({
+	 type:			[ "structure"], 
+	 initializer:	({}),
 
+_does:
 	function structure(initializer) 
 	{
 		var newObject = new Object();
@@ -28,19 +25,16 @@ Model.Construct(
 		
 		return newObject;
 	}
-);
+});
 
 //
 // List model
 //
-Model.Construct(
-	{
-	 type:					["*", "list"], 
-	 _default_initializer:	[],
-	 
-	 _max:					"this.__understoodAs(['*', 'list'])"	 
-	},
+Model.Construct({
+	 type:			["*", "list"], 
+	 initializer:	[],
 
+_does:
 	function list(initializer) 
 	{
 		var newObject = [];
@@ -51,23 +45,20 @@ Model.Construct(
 		
 		return newObject;
 	}
-);
+});
 
 //
 // Plain text model
 //		 
-Model.Construct(
-	{
-	 type:						["*", "text"], 
-	 _default_initializer:		"",
-	 
-	 _max:						"this.__understoodAs(['*', 'text'])"	 
-	},
+Model.Construct({
+	 type:				["*", "text"], 
+	 initializer:		"",
 
+_does:
 	function text(initializer) 
 	{
 		return initializer.valueOf();
 	}
-);
+});
 
 

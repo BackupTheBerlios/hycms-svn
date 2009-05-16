@@ -97,34 +97,33 @@ HtmlView.View = buildDeclarator("view",
 
 	_whereas:	["object.__uuid != null"],
 	
-	_does:	
+_does:	
+	function HtmlView_tag(tag, object, attributes)
+	{
+		// Build attribute string
+		var attribStr = ""
 
-function HtmlView_tag(tag, object, attributes)
-{
-	// Build attribute string
-	var attribStr = ""
+		if (attributes.length > 0)
+			attribStr = attributes.join(" ");
 
-	if (attributes.length > 0)
-		attribStr = attributes.join(" ");
+		// Build type string
+		var typeStr = "";
 
-	// Build type string
-	var typeStr = "";
-
-	if (object.__def == null)
-		typeStr = __getJSTypeId();
-	else
-		typeStr = object.__def.join(",");
+		if (object.__def == null)
+			typeStr = __getJSTypeId();
+		else
+			typeStr = object.__def.join(",");
 		
-	// Build CSS class
-	var css = "";
+		// Build CSS class
+		var css = "";
 
-	if (object.__def == null)
-		css = __getJSTypeId();
-	else
-		css = object.__def.join(" ");	
+		if (object.__def == null)
+			css = __getJSTypeId();
+		else
+			css = object.__def.join(" ");	
 
-	return "<"+tag+" class='"+css+"' uuid='"+object.__uuid+"' type='"+typeStr+"'"+attribStr+">"+this+"</"+tag+">";
-}
+		return "<"+tag+" class='"+css+"' uuid='"+object.__uuid+"' type='"+typeStr+"'"+attribStr+">"+this+"</"+tag+">";
+	}
 
 });
 
@@ -161,20 +160,20 @@ function HtmlView_tag(tag, object, attributes)
 	_prototype_tag:			HtmlView.tagFeatures,
 	_prototype_view:		{parentList: Keep(), _features: Keep(), _returns: Keep()},
 	
-	_does:	 
-function HtmlView_taggedIterate(tag, viewFunction, parentList)
-{
-	var output = "";
-	
-	for (var idx = 0; idx < this.length; idx ++)
+_does:	 
+	function HtmlView_taggedIterate(tag, viewFunction, parentList)
 	{
-		var tmpOutput = this[idx]._view();
+		var output = "";
+	
+		for (var idx = 0; idx < this.length; idx ++)
+		{
+			var tmpOutput = this[idx]._view();
 
-		output += viewFunction(tmpOutput, this[idx], idx);
+			output += viewFunction(tmpOutput, this[idx], idx);
+		}
+
+		return output._tag({tag: tag, object: this});
 	}
-
-	return output._tag({tag: tag, object: this});
-}
 
 });
 
@@ -200,22 +199,22 @@ function HtmlView_taggedIterate(tag, viewFunction, parentList)
 	_prototype_tag:			HtmlView.tagFeatures,
 	_prototype_view:		{parentList: Evaluates("parentList.concat([this])"), _features: Keep(), _returns: Keep()},
 	
-	_does:	 
-function HtmlView_taggedIterate(tag, viewFunction, parentList)
-{
-	var output = "";
-	
-	for (var idx in this)
+_does:	 
+	function HtmlView_taggedIterate(tag, viewFunction, parentList)
 	{
-		if (idx[0] == "_") continue;
+		var output = "";
 	
-		var tmpOutput = this[idx]._view();
+		for (var idx in this)
+		{
+			if (idx[0] == "_") continue;
+	
+			var tmpOutput = this[idx]._view();
 
-		output += viewFunction(tmpOutput, this[idx], idx);
+			output += viewFunction(tmpOutput, this[idx], idx);
+		}
+
+		return output._tag({tag: tag, object: this});
 	}
-
-	return output._tag({tag: tag, object: this});
-}
 
 });
 
@@ -232,15 +231,13 @@ function HtmlView_taggedIterate(tag, viewFunction, parentList)
 	_this:			["*", "text"],
 	_output:		["html", "text"],
 	
-	_does:	
-	
-function htmlText(text)
-{
-	return this.valueOf()
-			.replace(/\</g, "&lt;")
-			.replace(/\>/g, "&gt;")
-			.replace(/\n/g, "<br />");
-}
-
+_does:	
+	function htmlText(text)
+	{
+		return this.valueOf()
+				.replace(/\</g, "&lt;")
+				.replace(/\>/g, "&gt;")
+				.replace(/\n/g, "<br />");
+	}
 });
 

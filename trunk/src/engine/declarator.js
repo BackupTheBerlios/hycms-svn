@@ -38,6 +38,8 @@ function __clone_declaration(decl)
 		    || (idx.substr(0, operatorDefLength) == operatorDef) 
 		    || (idx.substr(0, operatorProtoLength) == operatorProto) 
 		    || (idx == "_this")
+		    || (idx == "_name")
+		    || (idx == "_does")
 		    || (idx[0] != "_")
 		   ) 
 		{
@@ -136,7 +138,6 @@ function __execute_generic(hash, name, value, declaration)
 		if (result._output != null) 
 			declaration._output = result._output.concat(declaration._output);
 
-
 		// Copy others	
 		for (var idx in result) {
 			var operatorOpt = "_optional_";
@@ -150,6 +151,8 @@ function __execute_generic(hash, name, value, declaration)
 				|| (idx.substr(0, operatorDefLength) == operatorDef) 
 				|| (idx.substr(0, operatorProtoLength) == operatorProto) 
 				|| (idx == "_this")
+				|| (idx == "_name")
+				|| (idx == "_does")
 				|| (idx[0] != "_")
 			   ) 
 			{
@@ -162,7 +165,7 @@ function __execute_generic(hash, name, value, declaration)
 }
 
 /*
- * buildDeclarator(name, declaration)
+ * buildDeclarator([name,] declaration)
  *
  * Returns a default declarator for a method named "name".
  *
@@ -174,11 +177,11 @@ function __execute_generic(hash, name, value, declaration)
  * The object returned by buildDeclarator is a function, declaring a given
  * method. This function has the following signature:
  *
- *		declarator(extensions, method)
+ *		declarator(extensions)
  *
  * Mixing of prototype declarator and extensions
  * ---------------------------------------------
- * Whereas "method" is the concrete implementation of the method and 'extensions' are
+ * Whereas "extension" contains a field "_does" with the concrete implementation of the method and 'extensions' are
  * extensions to the declarator. Also 'extensions' has the same structure as a normal
  * function declarator. However, whenever an element of 'extensions' already exists
  * in the declarator, it will extend it and not overwrite it. E.g. if a certain
@@ -205,6 +208,10 @@ function __execute_generic(hash, name, value, declaration)
  * of the method by passing an element "foo" to 'extensions'. This element contains all parameters
  * of the generic (if the generic receives multiple parameters this has to be a list).
  *
+ * Name
+ * ----
+ * The name of the method can also be set by the "_name"-Value in the extension.
+ *
  */
 function buildDeclarator(name, declaration)
 {
@@ -212,7 +219,7 @@ function buildDeclarator(name, declaration)
 
 	declaration = __clone_declaration(declaration);
 
-	return function __inlineDeclarator(extensions, method) {
+	return function __inlineDeclarator(extensions) {
 		var newDeclaration = __clone_declaration(declaration);
 		extensions = __clone_declaration(extensions);
 
@@ -240,6 +247,9 @@ function buildDeclarator(name, declaration)
 		newDeclaration._whereas = newDeclaration._whereas.concat(extensions._whereas);
 		newDeclaration._max = newDeclaration._max.concat(extensions._max);
 		newDeclaration._features = newDeclaration._features.concat(extensions._features);
+
+		// Apply name override, if given
+		newDeclaration._name = extensions._name;
 	
 		// Extend output
 		newDeclaration._output = extensions._output.concat(newDeclaration._output);
@@ -260,9 +270,13 @@ function buildDeclarator(name, declaration)
 				newDeclaration[idx] = extensions[idx].concat(newDeclaration[idx]);
 			}
 		}
-		
-		// Setup implementation
-		newDeclaration._does = method;
+
+		// Set method
+		newDeclaration._does = extensions._does;
+
+		// Name overwritten?
+		if (newDeclaration._name != undefined)
+			name = newDeclaration._name;
 
 		// Declare method
 		name.__declare(newDeclaration);

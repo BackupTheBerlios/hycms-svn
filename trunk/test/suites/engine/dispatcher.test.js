@@ -112,6 +112,7 @@ var dispatcherTest =
 			"view".__declare({
 				parentList:	"list",
 				secondPar:	["goo", "number"],
+				foo:		"@String",
 
 				_output:	["html", "text"],
 				_max:		["parentList.length", "secondPar"],
@@ -128,8 +129,10 @@ var dispatcherTest =
 			console.assert(methodHash["view"][0].output[1] == "text");
 			console.assert(methodHash["view"][0].max_precompiled[0].apply("abc", [[1,2,3], num]) == 1);
 			console.assert(methodHash["view"][0].max_precompiled[1].apply("abc", [[1,2,3], num]) == 2);
-			console.assert(methodHash["view"][0].max_precompiled[2].apply("abc", [[1,2,3], num]) == 3);
-			console.assert(methodHash["view"][0].max_precompiled[3].apply("abc", [[1,2,3], num]) == 123);			
+			console.assert(methodHash["view"][0].max_precompiled[2].apply("abc", [[1,2,3], num, "QRST"]) == 0);	
+			console.assert(methodHash["view"][0].max_precompiled[3].apply("abc", [[1,2,3], num]) == 3);
+			console.assert(methodHash["view"][0].max_precompiled[4].apply("abc", [[1,2,3], num]) == 123);			
+
 		},
 	
 	"Registering a method (optional parameters)":
@@ -342,6 +345,57 @@ var dispatcherTest =
 
 			console.assert( "abc"._view({parentList: objA}) == "abcdef" );
 			assertException( function() { (1234)._view({parentList: objA}); }, MethodNotExistsError );
+		},		
+
+	"Calling a method (correct mandatory parameter setting)":
+		function()
+		{
+			methodHash = new Object();
+
+			"view".__declare({
+				_this:		"text",
+				standard:	"text",
+				extended:	"text",
+
+				_features:	["abc"],
+			
+				_does:	function() 		{ return "unwanted"; }
+			});
+			
+			"view".__declare({
+				_this:		"text",
+				standard:	"text",
+
+				_does:	function() 		{ return "wanted"; }
+			});
+
+			// Test optional parameter transmission
+			console.assert( "abc"._view({standard: "def", _features: ["?abc"]}) == "wanted" );
+		},
+		
+	"Calling a method (prefering optional parameters)":
+		function()
+		{
+			methodHash = new Object();
+
+			"view".__declare({
+				_this:		"text",
+				standard:	"text",
+			
+				_does:	function() 		{ return "unwanted"; }
+			});
+			
+			"view".__declare({
+				_this:		"text",
+				standard:	"text",
+				_optional_extended:		"text",
+				_default_extended:		"123",
+
+				_does:	function() 		{ return "wanted"; }
+			});
+
+			// Test optional parameter transmission
+			console.assert( "abc"._view({standard: "def", extended: "bar"}) == "wanted" );
 		},		
 	
 	"Calling a method (optional parameter transmission)":

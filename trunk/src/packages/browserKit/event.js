@@ -1,0 +1,495 @@
+/*
+ * hyCMS
+ * Copyright(C)2008 by Friedrich Gräter
+ * Published under the terms of the Lesser GNU General Public License v2
+ *
+ * General event-related methods
+ *
+ */
+var BrowserKit = ({});
+
+BrowserKit.AvailableEvents = ["click", "mousedown", "mouseup", "keypress", "keydown", "keyup", "context", "focus", "blur"];
+BrowserKit.DOMHandledEvents = ["click", "mousedown", "mouseup", "keypress", "keydown", "keyup", "context"];
+BrowserKit.BrowserKitHandledEvents = ["focus", "blur"];
+BrowserKit.FocusEvents = ["focus", "blur"];
+ 
+BrowserKit.__protoEvent =({
+							selection:		{anchorNode:	null,	anchorOffset: -1},
+						
+							type:			"unknown",
+							
+							lastFocus:		null,
+							
+							targetNode:			null,
+							targetParentView:	null,
+							
+							parentNotification:	false,
+							
+							keyCode:		-1,
+							charCode:		-1,
+							
+							altKey:			false,
+							ctrlKey:		false,
+							shiftKey:		false,
+							
+							mouseX:			0,
+							mouseY:			0,
+							mouseButton:	0,
+							
+							__native:				null,
+							__propagationStopped:	false
+						 }).__tag("event_description", "structure");
+ 
+/*
+ * [constructor] event_description(domEvent)
+ *
+ * Creates a new "event_description" based on the given DOM-Event.
+ *
+ */
+Model.Construct({
+		type:			["event_description", "structure"],
+		initializer:	BrowserKit.__protoEvent,
+
+		domEvent:	"@Event",
+
+_does:
+	function(domEvent, initializer)
+	{
+		initializer.type = domEvent.type.toLowerCase();
+		
+		initializer.lastFocus = window.lastFocus;
+
+		initializer.targetNode = domEvent.target;
+		initializer.targetView = initializer.targetNode._getView();
+		
+		initializer.keyCode = domEvent.keyCode;
+		initializer.charCode = domEvent.charCode;
+		
+		initializer.altKey = domEvent.altKey;
+		initializer.ctrlKey = domEvent.ctrlKey;
+		initializer.shiftKey = domEvent.shiftKey;	
+		
+		initializer.mouseX = domEvent.pageX;
+		initializer.mouseY = domEvent.pageY;
+		initializer.mouseButton = domEvent.button;
+		
+		initializer.__native = domEvent;
+	
+		return initializer;
+	}
+});
+
+/*
+ * [constructor] event_description()
+ *
+ * Creates a new "event_description" based on the given DOM-Event.
+ *
+ */
+Model.Construct({
+		type:			["event_description", "structure"],
+		initializer:	BrowserKit.__protoEvent,
+_does:
+	function(initializer)
+	{
+		return initializer;
+	}
+});
+
+/* 
+ * Generic used for event declarators
+ *
+ */
+BrowserKit.__eventGeneric = function(event) { 
+								if (BrowserKit.AvailableEvents.indexOf(event) > -1) 
+									return {_name:	"on"+event, eventDescription: ["event_description", "structure"] }
+								else
+									throw new Error("Invalid event type");
+							}
+
+/*
+ * [declarator]<jsPrototype, event>	Object::on<event>(eventDescription)
+ *
+ * Declares an event handler for the given event name "eventID" (like mouseDown). The
+ * event applies on events.
+ * 
+ */
+BrowserKit.PrototypeEvent = buildDeclarator(null, {
+	_generic_jsPrototype:	function(proto) { return {_whereas:	"this instanceof "+proto } },
+	_generic_event:			BrowserKit.__eventGeneric
+});
+
+/*
+ * [declarator]<modelType, event>	Object::on<event>(eventDescription)
+ *
+ * Declares an event handler for all view nodes, that are representing model objects tagged with
+ * 'modelType'.
+ * 
+ */
+BrowserKit.ViewEvent = buildDeclarator(null, {
+	_generic_modelType:		function(tag) { return {_max:	"this._getModel() ? this._getModel().__taggedAs('"+ tag.join("','") + "') : -1" } },
+	_generic_event:			BrowserKit.__eventGeneric
+});
+
+/*
+ * event_description::stopPropagation()
+ *
+ * Stops the propagation of the given event.
+ *
+ */
+"stopPropagation".__declare({
+	_this:		["event_description", "structure"],
+	_whereas:	["this.__native instanceof Event"],
+
+_does:
+	function()
+	{
+		this.__propagationStopped = true;
+		this.__native.preventDefault();
+		this.__native.stopPropagation();
+	}
+});
+
+/*
+ * Element::addEventHandler(type, handler, useCapture = true, context = this)
+ *
+ * Whenever the event "type" occurs, the given handler function will be called. If 
+ * 'useCapture' is set to "true", the handler will be called before lower elements in
+ * the DOM tree. If "context" is given, the handlerFunction will receive "context"
+ * as "this"-reference.
+ *
+ * The valid types of events can be determined in BrowserKit.AvailableEvents.
+ *
+ * The handler is a regular javascript function of the type:
+ *
+ *	function(eventDescription)
+ *
+ * As parameter it receives an event_description object.
+ *
+ */
+ 
+// Method for all DOM events
+"addEventHandler".__declare({
+	_this:		"@Element",
+	type:		"text",
+	handler:	"function",
+	
+	_optional_useCapture:	"boolean",
+	_default_useCapture:	"true",
+	
+	_optional_context:		"*",
+	_default_context:		null,
+	
+	_whereas:	"BrowserKit.DOMHandledEvents.indexOf(type) > -1",
+	
+_does:
+	function (type, handler, useCapture, context)
+	{
+		if (context == null)
+			context = this;
+		
+		function ___internalHandler(event) 
+		{ 
+			try {
+				var eventDescription = ["event_description", "structure"]._construct(event);
+			
+				handler.apply(context, [eventDescription]);
+			} 
+			 catch(e) 
+			{ 
+				console.log("Unhandled exception in event handler");
+				console.log(e) 
+			} 
+		}
+	
+		handler.__backend = ___internalHandler;
+	
+		this.addEventListener(type.toLowerCase(), ___internalHandler, useCapture);
+	}
+});
+
+// Method for all browser-kit events
+"addEventHandler".__declare({
+	_this:		"@Element",
+	type:		"text",
+	handler:	"function",
+	
+	_optional_useCapture:	"boolean",
+	_default_useCapture:	"true",
+	
+	_optional_context:		"*",
+	_default_context:		null,
+	
+	_whereas:	["BrowserKit.FocusEvents.indexOf(type) > -1", "useCapture == true"],
+	
+_does:
+	function (type, handler, useCapture, context)
+	{
+		if (context == null)
+			context = this;
+		
+		function ___internalHandler(eventDescription) 
+		{ 
+			try {
+				handler.apply(context, [eventDescription]);
+			} 
+			 catch(e) 
+			{ 
+				console.log("Unhandled exception in event handler");
+				console.log(e) 
+			} 
+		}
+	
+		handler.__backend = ___internalHandler;
+	
+		if (this.__bkHandler == null)
+			this.__bkHandler = ({});
+		
+		if (this.__bkHandler[type] == null)
+			this.__bkHandler[type] = [];
+		
+		// Add only, if not already added
+		if (this.__bkHandler[type].indexOf(handler) < 0)
+			this.__bkHandler[type].push(handler);
+	}
+});
+
+
+/*
+ * Element::removeEventHandler(type, handler, useCapture = true)
+ *
+ * Removes the given "handler" for handling events of "type". If defined,
+ * the capture mode of the handler was defined in 'useCapture'.
+ *
+ */
+ 
+// Method for DOM events
+"removeEventHandler".__declare({
+	_this:		"@Element",
+	type:		"text",
+	handler:	"function",
+	
+	_optional_useCapture:	"boolean",
+	_default_useCapture:	"true",
+
+	_whereas:	"BrowserKit.DOMHandledEvents.indexOf(type) > -1",
+	
+_does:
+	function (type, handler, useCapture)
+	{
+		this.removeEventListener(type.toLowerCase(), handler.__backend, useCapture);
+	}
+});
+
+// Method for Browser-Kit events
+"removeEventHandler".__declare({
+	_this:		"@Element",
+	type:		"text",
+	handler:	"function",
+	
+	_optional_useCapture:	"boolean",
+	_default_useCapture:	"true",
+
+	_whereas:	["BrowserKit.FocusEvents.indexOf(type) > -1", "useCapture == true"],
+	
+_does:
+	function (type, handler, useCapture)
+	{
+		var handlers;
+	
+		if (this.__bkHandler == null)
+			return;
+		
+		if (this.__bkHandler[type] == null)
+			return;
+		
+		handlers = this.__bkHandler[type];
+		
+		// Find & Remove handler
+		var idx = handlers.indexOf(handler);
+		
+		if (idx > -1)
+			handlers.splice(idx, 1);
+		
+		// Garbage-collect handler list
+		if (handlers.length == 0)
+			delete this.__bkHandler[type];
+	}
+});
+
+/*
+ * BrowserKit::__raiseBKEvent(view, eventDescription)
+ *
+ */
+BrowserKit.__raiseBKEvent = function(view, type, eventDescription)
+{
+	if (view.__bkHandler == null) return;
+	if (view.__bkHandler[type] == null) return;	
+	
+	var handlers = view.__bkHandler[type];
+	
+	for (var idx = 0; idx < handlers.length; idx ++) {
+		handlers[idx](eventDescription);
+	}
+	
+	return;
+}
+
+/*
+ * BrowserKit::__globalHandler
+ *
+ * Will be called on all events first. This function will call
+ * predicate event handlers, if given.
+ *
+ * This function will propagate the event upwards.
+ *
+ */
+BrowserKit.__globalHandler = function(event)
+{
+	var eventDescription = ["event_description", "structure"]._construct({domEvent: event});
+	var view = eventDescription.targetView;
+
+	while ((view != null) && (!eventDescription.__propagationStopped)) {
+
+		try {	
+			view["_on"+eventDescription.type]({eventDescription: eventDescription});
+		} catch (e if MethodNotExistsError) {
+
+		} catch (e) {
+			console.log(e);
+		}
+
+		if (view.parentNode != null)
+			view = view.parentNode._getView();
+		else
+			break;
+			
+		eventDescription.parentNotification = true;			
+	}
+}
+
+/*
+ * BrowserKit::__focusTracking
+ *
+ * Implements improved focus tracking
+ *
+ */
+BrowserKit.__focusTracking = function(event) 
+{
+	var blurViewList = [];
+	var focusViewList = [];
+	var commonIdxFocus = -1;
+	var commonIdxBlur = -1;
+
+	//var destView = event.target._getView();
+	var destView = window._getCaret().anchorNode._getView();
+
+	// Identical => no event...
+	if (destView == window.lastFocus) return;
+
+	// No view => no event...	
+	if (destView == null) return;
+
+	// Get parent list of destination element
+	var view = destView;
+
+	while (view != null) {
+		focusViewList.push(view);
+		
+		view = view.parentNode._getView();
+	}
+
+	if (window.lastFocus != null) {
+		// Get parent list of blur element
+		var view = window.lastFocus;
+		
+		while (view != null) {
+			blurViewList.push(view);
+
+			view = view.parentNode._getView();
+			
+			if ((focusViewList.indexOf(view) > -1) && (commonIdxFocus == -1)) {
+				commonIdxFocus = focusViewList.indexOf(view);
+				commonIdxBlur = blurViewList.length;
+			}
+		}
+
+		// Create event description
+		var eventDescription = ["event_description", "structure"]._construct();
+		
+		eventDescription.type = "blur";
+		eventDescription.targetNode = event.target;
+		eventDescription.targetView = destView;
+		
+		// Bubble "blur" event to blur and its parent (unless they are not common to both elements)
+		for (idx = 0; idx < blurViewList.length && idx != commonIdxBlur; idx++) {
+			var view = blurViewList[idx];
+
+			try {	
+				view["_on"+eventDescription.type]({eventDescription: eventDescription});
+				BrowserKit.__raiseBKEvent(view, blur, eventDescription);
+			} catch (e if MethodNotExistsError) {
+			} catch (e) {
+				console.log(e);
+			}
+					
+			if (eventDescription.__propagationStopped) return;
+			
+			eventDescription.parentNotification = true;
+		}
+	}
+	
+	// Bubble focus event
+	var eventDescription = ["event_description", "structure"]._construct();
+
+	eventDescription.type = "focus";
+	eventDescription.targetNode = event.target;
+	eventDescription.targetView = destView;	
+	
+	for (idx = 0; idx < focusViewList.length && idx != commonIdxFocus; idx++) {
+		var view = focusViewList[idx];
+		
+		try {
+			view["_on"+eventDescription.type]({eventDescription: eventDescription});
+			BrowserKit.__raiseBKEvent(view, blur, eventDescription);			
+		} catch (e if MethodNotExistsError) {
+		} catch (e) {
+			console.log(e);
+		}
+		
+		if (eventDescription.__propagationStopped) return;
+		
+		eventDescription.parentNotification = true;
+	}
+	
+	window.lastFocus = destView;
+}
+
+
+/********************************************************
+ * 
+ * Pakage initialization
+ *
+ ********************************************************/
+
+/*
+ * BrowserKit::__initPredicateHandlers
+ *
+ * Enables global event handling, so that predicate events are
+ * handled.
+ *
+ */
+BrowserKit.__initPredicateHandlers = function ()
+{
+	var avlEvents = BrowserKit.DOMHandledEvents;
+
+	// Focus tracking
+	document.addEventListener("click", BrowserKit.__focusTracking, true);
+	document.addEventListener("keyup", BrowserKit.__focusTracking, true);
+
+	for (var idx = 0; idx < avlEvents.length; idx ++) {
+		document.addEventListener(avlEvents[idx].toLowerCase(), BrowserKit.__globalHandler, true);
+	}
+}
+ 
+BrowserKit.__initPredicateHandlers();
+

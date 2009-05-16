@@ -9,7 +9,7 @@
 var Model = new Package();
 
 /*
- * [declarator]<type>	Tagging::construct( [initializer == <initializer>] ) ==> [<type>]
+ * [declarator]<type, initializer>	Tagging::construct( [initializer == <initializer>] ) ==> [<type>]
  *
  * Declarator:
  *		The declarator is parameterized by <type>, which specifies the type of the object to create.
@@ -48,6 +48,10 @@ Model.Construct = buildDeclarator("construct",
 									
 									_optional_initializer:		type,
 							};
-						}
+						},
+						
+	_generic_initializer:	function(initializer) {
+								return { _default_initializer: initializer };
+							}
 });
 

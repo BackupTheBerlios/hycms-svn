@@ -7,9 +7,10 @@
 //
 // DocumentInformation view
 //
-HtmlView.View(
-	{_this:		["*", "document_information", "*", "list"]},
+HtmlView.View({
+	_this:		["*", "document_information", "*", "list"],
 	
+_does:	
 	function HtmlView_DocumentInformation(request)
 	{
 		var output_header = "";
@@ -35,29 +36,30 @@ HtmlView.View(
 				+ output_items
 			   )._tag({tag: "div", object: this});
 	}
-
-);
+});
 
 
 //
 // Abstract view
 //
-HtmlView.View(
-	{_this:		["*", "abstract", "*", "paragraph", "*", "list"]},
-	
+HtmlView.View({
+	_this:		["*", "abstract", "*", "paragraph", "*", "list"],
+
+_does:	
 	function HtmlView_Paragraph(request) 
 	{
 		return this._taggedIterate({tag: "p"});
 	}
-);
+});
 
 
 //
 // Version view
 //
-HtmlView.View(
-	{_this:		["*", "version", "*", "text"]},
+HtmlView.View({
+	_this:		["*", "version", "*", "text"],
 
+_does:
 	function HtmlView_Version()
 	{
 		var text = this._htmlText();
@@ -66,5 +68,5 @@ HtmlView.View(
 	
 		return text._tag({tag: "span", object: this});
 	}
-);
+});
 

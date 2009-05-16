@@ -7,23 +7,25 @@
 //
 // Paragraph view
 //
-HtmlView.View(
-	{_this:		["*", "paragraph", "*", "list"]},
-	
+HtmlView.View({
+	_this:		["*", "paragraph", "*", "list"],
+
+_does:	
 	function HtmlView_Paragraph() 
 	{
 		return this._taggedIterate({tag: "p"});
 	}
-);
+});
 
 //
 // Headline view
 //
-HtmlView.View(
-	{_this:		["*", "headline", "*", "?paragraph", "*", "list"]},
-	
+HtmlView.View({
+	_this:		["*", "headline", "*", "?paragraph", "*", "list"],
+
+_does:	
 	function HtmlView_Paragraph(parentList) 
 	{
 		return this._taggedIterate({tag: "h4"});
 	}
-);
+});

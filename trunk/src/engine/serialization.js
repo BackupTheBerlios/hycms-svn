@@ -175,7 +175,7 @@ Object.prototype.__clone = function()
 			
 		nObject[idx] = this[idx];
 	}
-	
+
 	return nObject;
 }
 

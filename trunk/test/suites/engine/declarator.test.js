@@ -40,10 +40,11 @@ var declaratorTest =
 				 	_output:		["*"],
 				 	_max:			["bar.length"],
 
-				  _prototype_bar:	{_returns: "456"}
-				 },
-				function() {}
-			);
+				  _prototype_bar:	{_returns: "456"},
+
+				_does:
+					function() {}
+			});
 
 			console.assert(methodHash["myMethod"].length == 1);
 			
@@ -107,10 +108,10 @@ var declaratorTest =
 					_optional_other:	["opt_other", "text"],
 					_default_other:		"other is better!",
 
-				  _prototype_boo:		{_returns: "456"}
-				 },
-				function() {}
-			);
+					 _prototype_boo:		{_returns: "456"},
+				_does:				
+					function() {}
+			});
 			
 			console.assert(methodHash["myMethod"].length == 1);
 			
@@ -165,9 +166,10 @@ var declaratorTest =
 					anything:	["12", "34"],
 					multithing:	["multi", "params"],
 					direct:		["text"]
-				},
-				function() {}
-			);
+				
+				_does:
+					function() {}
+			});
 
 			console.assert(methodHash["myMethod"].length == 1);
 			console.assert(methodHash["myMethod"][0].max.length == 3);

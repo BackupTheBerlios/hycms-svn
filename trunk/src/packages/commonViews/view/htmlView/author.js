@@ -8,9 +8,10 @@
 //
 // Author view
 //
-HtmlView.View(
-	{_this:			["*", "author", "*", "person", "*", "structure"]},
+HtmlView.View({
+	_this:			["*", "author", "*", "person", "*", "structure"],
 
+_does:
 	function HtmlView_Author(request) 
 	{
 		var add_output = "";
@@ -47,5 +48,5 @@ HtmlView.View(
 		return (main_info + add_output)._tag({tag: "span", object:this});
 	}
 
-);
+});
 

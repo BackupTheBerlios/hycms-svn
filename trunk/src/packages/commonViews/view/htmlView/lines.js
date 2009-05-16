@@ -11,9 +11,10 @@
 //
 // Lines view
 //
-HtmlView.View(
-	{_this:		["*", "lines", "*", "list"]},
+HtmlView.View({
+	_this:		["*", "lines", "*", "list"],
 
+_does:
 	function HtmlView_Lines() 
 	{
 		function viewFunction(elementOutput, element, key)
@@ -23,43 +24,46 @@ HtmlView.View(
 
 		return this._taggedIterate({tag: "div", viewFunction: viewFunction});
 	}
-);
+});
 
 //
 // Inline code view
 //
-HtmlView.View(
-	{_this:		["*", "code", "*", "text"]},
+HtmlView.View({
+	_this:		["*", "code", "*", "text"],
 
+_does:
 	function HtmlView_InlineCode() 
 	{
 		return HtmlView_renderLine(this, [])._tag({tag: "span", object: this});
 	}
-);
+});
 
 //
 // Code view
 //
-HtmlView.View(
-	{_this:		["*", "code", "*", "list"]},
+HtmlView.View({
+	_this:		["*", "code", "*", "list"],
 
+_does:
 	function HtmlView_Code(request)
 	{
 		return HtmlView_renderCode(this, []);
 	}
-);
+});
 
 //
 // jsCode view
 //
-HtmlView.View(
-	{_this:		["*", "javascript", "*", "code", "*", "list"]},
+HtmlView.View({
+	_this:		["*", "javascript", "*", "code", "*", "list"],
 
+_does:
 	function HtmlView_Code(request)
 	{
 		return HtmlView_renderCode(this, js_replacement_table);
 	}
-);
+});
 
 
 

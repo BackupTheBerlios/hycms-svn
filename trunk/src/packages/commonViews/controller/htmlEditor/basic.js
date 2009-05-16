@@ -8,75 +8,94 @@
 //
 // Structure view
 //
-HtmlEditor.ReceiveFocus(
-	{this:		["*", "structure"]},
+BrowserKit.ViewEvent({
+	modelType:		["*", "structure"],
+	event:			"focus",
 
-	function structure(lastFocussed, eventDescription) 
+	_whereas:		["eventDescription.parentNotification == false"],
+
+_does:
+	function structure(eventDescription) 
 	{
 		this.style["outline"] = "1px solid red";
 
 		return true;
 	}
-);
+});
 
-HtmlEditor.LostFocus(
-	{this:		["*", "structure"]},
+BrowserKit.ViewEvent({
+	modelType:		["*", "structure"],
+	event:			"blur",
 
-	function structure(editor, otherNode) 
+_does:
+	function structure(eventDescription) 
 	{
 		this.style["outline"] = "";
 	
 		return true;
 	}
-);
+});
 
 //
 // List view
 //
-HtmlEditor.ReceiveFocus(
-	{this:		["*", "list"]},
+BrowserKit.ViewEvent({
+	modelType:		["*", "list"],
+	event:			"focus",
 
-	function list(lastFocussed, eventDescription) 
+	_whereas:		["eventDescription.parentNotification == false"],
+
+_does:
+	function list(eventDescription) 
 	{
 		this.style["outline"] = "1px solid red";
 
 		return true;
 	}
-);
+});
 
-HtmlEditor.LostFocus(
-	{this:		["*", "list"]},
+BrowserKit.ViewEvent({
+	modelType:		["*", "list"],
+	event:			"blur",
 
-	function list(editor, otherNode) 
+_does:
+	function list(eventDescription) 
 	{
 		this.style["outline"] = "";
 	
 		return true;
 	}
-);
+});
 
 //
 // Plain text view
 //		 
-HtmlEditor.ReceiveFocus(
-	{this:		["*", "text"]},
+BrowserKit.ViewEvent({
+	modelType:		["*", "text"],
+	event:			"focus",
 
-	function text(lastFocussed, eventDescription) 
+	_whereas:		["eventDescription.parentNotification == false"],
+
+_does:
+	function text(eventDescription) 
 	{
 		this.style["outline"] = "1px solid red";
 
 		return true;
 	}
-);
+});
 
-HtmlEditor.LostFocus(
-	{this:		["*", "text"]},
+BrowserKit.ViewEvent({
+	modelType:		["*", "text"],
+	event:			"blur",
 
-	function text(editor, otherNode) 
+_does:
+	function text(eventDescription) 
 	{
 		this.style["outline"] = "";
 	
 		return true;
 	}
-);
+});
+
 
