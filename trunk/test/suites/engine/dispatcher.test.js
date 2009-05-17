@@ -113,6 +113,7 @@ var dispatcherTest =
 				parentList:	"list",
 				secondPar:	["goo", "number"],
 				foo:		"@String",
+				boo:		"@Element",
 
 				_output:	["html", "text"],
 				_max:		["parentList.length", "secondPar"],
@@ -127,11 +128,12 @@ var dispatcherTest =
 			console.assert(methodHash["view"][0].inputAll[1] == "secondPar");
 			console.assert(methodHash["view"][0].output[0] == "html");
 			console.assert(methodHash["view"][0].output[1] == "text");
-			console.assert(methodHash["view"][0].max_precompiled[0].apply("abc", [[1,2,3], num]) == 1);
-			console.assert(methodHash["view"][0].max_precompiled[1].apply("abc", [[1,2,3], num]) == 2);
-			console.assert(methodHash["view"][0].max_precompiled[2].apply("abc", [[1,2,3], num, "QRST"]) == 0);	
-			console.assert(methodHash["view"][0].max_precompiled[3].apply("abc", [[1,2,3], num]) == 3);
-			console.assert(methodHash["view"][0].max_precompiled[4].apply("abc", [[1,2,3], num]) == 123);			
+			console.assert(methodHash["view"][0].max_precompiled[0].apply("abc", [[1,2,3], null]) == 1);
+			console.assert(methodHash["view"][0].max_precompiled[1].apply("abc", [null, num]) == 2);
+			console.assert(methodHash["view"][0].max_precompiled[2].apply("abc", [null, null, "QRST"]) == 0);	
+			console.assert(methodHash["view"][0].max_precompiled[3].apply("abc", [null, null, null, document.body]) == 0);	
+			console.assert(methodHash["view"][0].max_precompiled[4].apply("abc", [[1,2,3], null]) == 3);
+			console.assert(methodHash["view"][0].max_precompiled[5].apply("abc", [null, num]) == 123);			
 
 		},
 	

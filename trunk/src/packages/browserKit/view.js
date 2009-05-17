@@ -109,3 +109,38 @@ _does:
 	}
 });
 
+/*
+ * Node::getModelContext
+ * Element::getModelContext
+ *
+ * Returns the list of the model objects of all parent objects of the given
+ * view object.
+ *
+ */
+"getModelContext".__declare({
+	_output:	["list"],
+	_features:	["use_uuid_attribute", "use_head_container", "cache_model"],
+	
+	_whereas:	"(this instanceof Node) || (this instanceof Element)",
+	
+_does:
+	function getModelContext()
+	{
+		var list = [];
+		var view = this._getView();
+		if (view == null) return null;
+
+		while (view.parentNode != null) {
+			var parentView = view.parentNode._getView();
+			
+			if (parentView == null) break;
+		
+			list.push(parentView._getModel());
+			
+			view = parentView;
+		}
+		
+		return list;
+	}
+});
+ 

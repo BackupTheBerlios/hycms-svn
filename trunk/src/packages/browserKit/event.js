@@ -21,7 +21,9 @@ BrowserKit.__protoEvent =({
 							lastFocus:		null,
 							
 							targetNode:			null,
-							targetParentView:	null,
+							targetView:			null,
+							targetModel:		null,
+							targetViewContext:	null,
 							
 							parentNotification:	false,
 							
@@ -61,6 +63,8 @@ _does:
 
 		initializer.targetNode = domEvent.target;
 		initializer.targetView = initializer.targetNode._getView();
+		initializer.targetModel = initializer.targetView._getModel();
+		initializer.targetViewContext = initializer.targetView._getModelContext();
 		
 		initializer.keyCode = domEvent.keyCode;
 		initializer.charCode = domEvent.charCode;
@@ -179,7 +183,7 @@ _does:
 	_optional_context:		"*",
 	_default_context:		null,
 	
-	_whereas:	"BrowserKit.DOMHandledEvents.indexOf(type) > -1",
+	_whereas:	"BrowserKit.DOMHandledEvents.indexOf(type.toLowerCase()) > -1",
 	
 _does:
 	function (type, handler, useCapture, context)
@@ -219,7 +223,7 @@ _does:
 	_optional_context:		"*",
 	_default_context:		null,
 	
-	_whereas:	["BrowserKit.FocusEvents.indexOf(type) > -1", "useCapture == true"],
+	_whereas:	["BrowserKit.FocusEvents.indexOf(type.toLowerCase()) > -1", "useCapture == true"],
 	
 _does:
 	function (type, handler, useCapture, context)
@@ -271,7 +275,7 @@ _does:
 	_optional_useCapture:	"boolean",
 	_default_useCapture:	"true",
 
-	_whereas:	"BrowserKit.DOMHandledEvents.indexOf(type) > -1",
+	_whereas:	"BrowserKit.DOMHandledEvents.indexOf(type.toLowerCase()) > -1",
 	
 _does:
 	function (type, handler, useCapture)
@@ -350,13 +354,16 @@ BrowserKit.__globalHandler = function(event)
 
 	while ((view != null) && (!eventDescription.__propagationStopped)) {
 
-		try {	
-			view["_on"+eventDescription.type]({eventDescription: eventDescription});
-		} catch (e if MethodNotExistsError) {
-
+		try {
+			if (view["_on"+eventDescription.type])	
+				view["_on"+eventDescription.type]({eventDescription: eventDescription});
 		} catch (e) {
-			console.log(e);
+			if (!(e instanceof MethodNotExistsError)) {
+				console.log(e);
+				break;
+			}
 		}
+
 
 		if (view.parentNode != null)
 			view = view.parentNode._getView();
@@ -425,12 +432,16 @@ BrowserKit.__focusTracking = function(event)
 			var view = blurViewList[idx];
 
 			try {	
-				view["_on"+eventDescription.type]({eventDescription: eventDescription});
+				if (view["_on"+eventDescription.type])	
+					view["_on"+eventDescription.type]({eventDescription: eventDescription});
 				BrowserKit.__raiseBKEvent(view, blur, eventDescription);
-			} catch (e if MethodNotExistsError) {
 			} catch (e) {
-				console.log(e);
+				if (!(e instanceof MethodNotExistsError)) {
+					console.log(e);
+					break;
+				}
 			}
+
 					
 			if (eventDescription.__propagationStopped) return;
 			
@@ -449,11 +460,14 @@ BrowserKit.__focusTracking = function(event)
 		var view = focusViewList[idx];
 		
 		try {
-			view["_on"+eventDescription.type]({eventDescription: eventDescription});
+			if (view["_on"+eventDescription.type])	
+				view["_on"+eventDescription.type]({eventDescription: eventDescription});
 			BrowserKit.__raiseBKEvent(view, blur, eventDescription);			
-		} catch (e if MethodNotExistsError) {
 		} catch (e) {
-			console.log(e);
+			if (!(e instanceof MethodNotExistsError)) {
+				console.log(e);
+				break;
+			}
 		}
 		
 		if (eventDescription.__propagationStopped) return;

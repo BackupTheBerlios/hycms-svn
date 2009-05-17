@@ -105,24 +105,30 @@ function __getOptionalParameters(method)
  * according to "setting". Depending on the value one of the
  * following predicates will be created:
  *
- *	- If 'setting' is a list or a single string, without trailing "@":
+ *	- If 'setting' is a list or a single string, without trailing "@" or "~":
  *		OBJECT.__taggedAs( setting )
  *
  *  - If 'setting' is a single string with a trailing "@":
- *		OBJECT instanceof setting
+ *		OBJECT instanceof setting || (typeof(OBJECT) == 'setting'.toLowerCase())
+ *
+ *	- If 'setting' is a single string with a trailing "~":
+ *		(OBJECT instanceof setting) 
  *
  */
 function __getParameterPredicate(object, setting)
 {
 	if (typeof(setting.valueOf()) == 'string') {
 	
-		if (setting[0] != "@") {
+		if ((setting[0] != "@") && (setting[0] != "~")) {
 			// Just a single element of a tagging
 			setting = [setting];
 		}
-		 else {
+		 else if (setting[0] == "@") {
 		 	// A instanceof predicate
-		 	return "( " +object+" instanceof "+setting.substr(1) + ") ? 0 : -1";
+		 	return "( ( " +object+" instanceof "+setting.substr(1) + ") || (typeof("+object+") == '"+setting.substr(1).toLowerCase()+"' )) ? 0 : -1";
+		}
+		 else if (setting[0] == "~") {
+			return "( " +object+" instanceof "+setting.substr(1) + ") ? 0 : -1";
 		}
 	}
 	
@@ -810,7 +816,12 @@ function __evaluateBoolConditions(method, object, args)
 			
 		} catch(e) {
 			console.log("ERROR: ", e);
-			console.log("Evaluation failed:", miniFunc.toSource());
+			
+			if (miniFunc.toSource != undefined)
+				console.log("Evaluation failed:", miniFunc.toSource());
+			else
+				console.log("Evaluation failed:", console.log(miniFunc));
+				
 			console.log("Of Method:", method);
 			console.log("On object: ", object);
 			console.log("Called with:", args);
@@ -842,8 +853,15 @@ function __evaluateMaxConditions(method, object, args)
 		try {
 			var addVal = miniFunc.apply(object, args);
 		} catch (e) {
-			console.log("ERROR: ", e);
-			console.log("Evaluation failed:", miniFunc.toSource());
+			addVal = -1;
+		
+			console.log("ERROR: ", e.message);
+			
+			if (miniFunc.toSource != undefined)
+				console.log("Evaluation failed:", miniFunc.toSource());
+			else
+				console.log("Evaluation failed:", console.log(miniFunc));
+				
 			console.log("Of Method:", method);			
 			console.log("On object: ", object);
 			console.log("Called with:", args);

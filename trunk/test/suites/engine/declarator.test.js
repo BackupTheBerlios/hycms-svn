@@ -165,7 +165,7 @@ var declaratorTest =
 			decl({
 					anything:	["12", "34"],
 					multithing:	["multi", "params"],
-					direct:		["text"]
+					direct:		["text"],
 				
 				_does:
 					function() {}

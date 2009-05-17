@@ -144,7 +144,7 @@ _does:
 });
 
 /*
- * OnClick event
+ * OnKeyPress event
  *
  */
 BrowserKit.PrototypeEvent({

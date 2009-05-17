@@ -9,7 +9,7 @@
 // Structure model
 //
 Model.Construct({
-	 type:			[ "structure"], 
+	 type:			["*", "structure"], 
 	 initializer:	({}),
 
 _does:

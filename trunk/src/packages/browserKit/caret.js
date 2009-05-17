@@ -13,7 +13,10 @@
  *
  */
 "setCaret".__declare({
-	_this:			"@Window",
+	/* Due to a bug in WebKit, where window is not instanceof Window */
+	//_this:			"@Window",
+	_whereas:			"this == window",
+	
 	anchorNode:		"@Node",
 	anchorOffset:	"number",
 
@@ -35,7 +38,10 @@ _does:
  *
  */
 "getCaret".__declare({
-	_this:			"@Window",
+	/* Due to a bug in WebKit, where window is not instanceof Window */
+	//_this:			"@Window",
+	_whereas:			"this == window",
+	
 	_output:		["caret_position", "structure"],
 
 _does:
@@ -59,7 +65,10 @@ _does:
  *
  */
 "saveCaret".__declare({
-	_this:		"@Window",
+	/* Due to a bug in WebKit, where window is not instanceof Window */
+	//_this:			"@Window",
+	_whereas:			"this == window",
+	
 	_output:	"list",
 
 	anchorNode:		"@Element",
@@ -88,7 +97,10 @@ _does:
 });
 
 "saveCaret".__declare({
-	_this:		"@Window",
+	/* Due to a bug in WebKit, where window is not instanceof Window */
+	//_this:			"@Window",
+	_whereas:			"this == window",
+	
 	_output:	"list",
 	
 _does:
@@ -110,7 +122,10 @@ _does:
  *
  */
 "restoreCaret".__declare({
-	_this:		"Window",
+	/* Due to a bug in WebKit, where window is not instanceof Window */
+	//_this:			"@Window",
+	_whereas:			"this == window",
+	
 	path:		"list",
 
 _does:
