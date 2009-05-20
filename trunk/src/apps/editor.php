@@ -9,21 +9,23 @@
 <? include "../services/packages.php" ?>
 
 	<script type='text/javascript' src='editor/main.js' charset='UTF-8'></script>
-
-	<script type='text/javascript' charset='UTF-8'>
-		function main(contentPath) 
-		{
-			var editor = new Editor(document.getElementById("container"));
-
-			editor._showReference({contentPath: contentPath});
-		}
-	</script>
-
 </head>
-<body onload="main('<?=$_GET['hycms_content']?>')">
+<body>
 <div id='container'>
  Loading and rendering content...
 </div>
 </body>
+
+<script type='text/javascript' charset='UTF-8'>
+	function main(contentPath) 
+	{
+		var editor = new Editor(document.getElementById("container"));
+
+		editor._showReference({contentPath: contentPath});
+	}
+	
+	main('<?=$_GET['hycms_content']?>');
+</script>
+
 </html>
 

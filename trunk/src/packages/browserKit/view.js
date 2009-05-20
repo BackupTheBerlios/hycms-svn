@@ -6,10 +6,90 @@
  * General view-related methods
  *
  */
+/*
+ * Node::postOrderOperation( nodeOperation[, leafOperation] )
+ *
+ * Executes "nodeOperation" for each node in post-order on the given
+ * DOM-Tree. If 'leafOperation' is given the leafOperation will be
+ * executed instead on each leaf node of the DOM tree.
+ *
+ * The nodeOperation and leafOperation have the signature "function(node)"
+ *
+ */
+"postOrderOperation".__declare({
+	_this:				"@Node",
+	nodeOperation:		"function",
+
+	_optional_leafOperation:	"?function",
+
+_does:
+	function (nodeOperation, leafOperation)
+	{
+		function __recursor(node) {
+			if ((!(node instanceof Element)) || (node.childNodes.length == 0)) {
+				return (leafOperation != null) ? leafOperation(node) : nodeOperation(node);
+			}
+			 else {
+			 	for (var idx = 0; idx < node.childNodes.length; idx ++) {
+			 		__recursor(node.childNodes[idx]);
+
+			 		nodeOperation(node);
+			 	}
+			}
+		}
+
+		__recursor(this);
+	}
+});
+ 
+/*
+ * Element::setInnerHTML
+ *
+ * Changes the inner HTML of a view and inherits the controller, con
+ *
+ */
+"setInnerHTML".__declare({
+	html:		["*", "?html", "text"],
+
+	_this:		"@Element",
+	_features:	["use_uuid_attribute", "inherit_controller"],
+	
+	_whereas:	["this.__controller != undefined"],
+	
+_does:
+	function setInnerHTML(html)
+	{
+		var controller = this.__controller;
+	
+		// Remove child references from controller
+		this._postOrderOperation({
+			nodeOperation:	function(node) { 
+				if ((node.getAttribute) && (node.getAttribute("uuid"))) {
+					node.__controller._unregisterView({view: node, _features: "use_uuid_attribute"});
+				}
+			}
+		});
+	
+		// Apply content change
+		this.innerHTML = html;
+
+		// Inherit controller property and register at controller
+		this._postOrderOperation({
+				nodeOperation:	function(node) { 
+					if ((node.getAttribute) && (node.getAttribute("uuid"))) {
+						node.__controller = controller; 
+						node.__controller._registerView({view: node, _features: "use_uuid_attribute"});
+
+						node.__model = node.__controller._getModel({uuid: node.getAttribute("uuid")});
+					}
+				}
+		});
+	}
+});
+
 
 /*
  * Node::getView
- * Element::getView
  *
  * Returns the view that is responsible for the given DOM element. If
  * the element itself is a view, the element itself will be returned. A
@@ -17,21 +97,20 @@
  *
  */
 "getView".__declare({
+	_this:		"@Node",
 	_features:	["use_uuid_attribute", "stop_at_head_container"],
-	
-	_whereas:	"(this instanceof Node) || (this instanceof Element)",
 	
 	_prototype_getView:		{_features: ["use_uuid_attribute", "stop_at_head_container"]},
 	
 _does:
 	function getView()
 	{
-		if (this.isHeadContainer)
+		if (this.__isHeadContainer)
 			return this;
 	
 		if ((this.getAttribute == null) || (this.getAttribute("uuid") == null)) {
 			// No view? Propagate upwards, if not a head container
-			if ((!this.isHeadContainer) && (this.parentNode != null))
+			if ((!this.__isHeadContainer) && (this.parentNode != null))
 				return this.parentNode._getView();
 			else
 				return null;
@@ -42,86 +121,54 @@ _does:
 });
 
 /*
- * Node::getHeadContainer
- * Element::getHeadContainer
+ * Node::getController
  *
- * Returns the view that is associated with the model database
- * and is the head container of the element.
+ * Returns the controller, that is responsible for this view.
  *
  */
-"getHeadContainer".__declare({
+"getController".__declare({
+	_this:		"@Node",
 	_features:	["use_uuid_attribute"],
 	
-	_whereas:	"(this instanceof Node) || (this instanceof Element)",
-	
-	_prototype_getHeadContainer:		{_features: ["use_uuid_attribute"]},
-	
 _does:
-	function getHeadContainer()
+	function getController()
 	{
-		if (this.isHeadContainer)
-			return this;
-	
-		if (this.parentNode != null)
-			return this.parentNode._getHeadContainer();
-		else
-			return null;
+		return this.__controller;
 	}
 });
 
 /*
  * Node::getModel
- * Element::getModel
  *
  * Returns the model object associated with the view of the current
  * DOM element or node.
  *
- * The head container of the view has to provide a property "relatedContentHash",
- * that contains a map between a UUID and an object of the following form:
- *
- * {link: MODEL_OBJECT_REFERENCE}
- *
  */
 "getModel".__declare({
-	_features:	["use_uuid_attribute", "use_head_container", "cache_model"],
-	
-	_whereas:	"(this instanceof Node) || (this instanceof Element)",
+	_this:		"@Node",
+	_features:	["use_uuid_attribute", "use_model_reference"],
 	
 _does:
 	function getModel()
 	{
 		var view = this._getView();
-		if (view == null) return null;
-
-		var uuid = view.getAttribute("uuid");
-	
-		// Cache model
-		if ((view.__cachedModel == null) || (view.__cachedModel.__uuid != uuid)) {
-			headContainer = this._getHeadContainer();
-	
-			if ((headContainer == null) || (headContainer.relatedContentHash == null) || (headContainer.relatedContentHash[uuid] == null))
-				return null;
-				
-			view.__cachedModel = headContainer.relatedContentHash[uuid].link;
-		}
-
-		return view.__cachedModel;
+		
+		return view.__model;
 	}
 });
 
 /*
  * Node::getModelContext
- * Element::getModelContext
  *
  * Returns the list of the model objects of all parent objects of the given
  * view object.
  *
  */
 "getModelContext".__declare({
+	_this:		"@Node",
+
 	_output:	["list"],
-	_features:	["use_uuid_attribute", "use_head_container", "cache_model"],
-	
-	_whereas:	"(this instanceof Node) || (this instanceof Element)",
+	_features:	["use_uuid_attribute", "use_head_container"],
 	
 _does:
 	function getModelContext()

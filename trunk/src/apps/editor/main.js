@@ -15,6 +15,10 @@
  *		show					Visualizes the content inside the editor
  *		showReference			Visualizes the content of a reference inside the editor
  *		associateContent		Associates all view nodes with their content nodes
+ *		
+ *		getModel				Returns the model reference of a UUID
+ *		registerViewNode		Registers a DOM view node to the editor and sets its model attribute
+ *		unregisterViewNode		Removes a DOM view node from the editor
  *
  * Aspects:
  *		htmlRenderAspect		Registers all viewed elements to the contentHash
@@ -47,8 +51,8 @@ function Editor(viewContainer)
 	this.viewContainer.contentEditable = true;
 	
 	// Mark up view container
-	this.viewContainer.isHeadContainer = true;
-	this.viewContainer.relatedEditor = this;
+	this.viewContainer.__isHeadContainer = true;
+	this.viewContainer.__controller = this;
 }
 
 /*
@@ -67,13 +71,11 @@ _does:
 		// Flush old content tree
 		this.content = content;
 		this.contentHash = new Object();
-		
-		this.viewContainer.relatedContentHash = this.contentHash;
 
 		// We only accept those HTML views, that can set us the uuid_attribute
 		var html = content._view({_returns: ["*", "html", "text"], _features: ["?recursive_context", "keep_method_conditions", "set_uuid_attribute"]});
 
-		this.viewContainer.innerHTML = html;
+		this.viewContainer._setInnerHTML({html: html});
 	}
 
 });
@@ -106,6 +108,81 @@ _does:
 });
 
 /*
+ * Editor::getModel(uuid)
+ *
+ * Returns the model reference to an UUID.
+ *
+ */
+"getModel".__declare({
+	_this:		"@Editor",
+	uuid:		"text",
+	
+_does:
+	function(uuid)
+	{
+		return this.contentHash[uuid].link;
+	}
+});
+
+/*
+ * Editor::registerView(node)
+ *
+ * Registers a given view element to the editor.
+ *
+ */
+"registerView".__declare({
+	_this:		"@Editor",
+	view:		"@Element",
+	
+	_features:	"use_uuid_attribute",
+	
+	_whereas:	"view.getAttribute('uuid') != null",
+	
+_does: 
+	function(node)
+	{
+		var uuid = node.getAttribute("uuid");
+		var viewList = this.contentHash[uuid].views;
+		
+		if (viewList.indexOf(node) > -1) return;
+		
+		viewList.push(node);
+	}
+});
+
+/*
+ * Editor::unregisterView(node)
+ *
+ * Unregisters a view. If there is no view referencing to a model
+ * object anymore, the model object will also be freed.
+ *
+ */
+"unregisterView".__declare({
+	_this:		"@Editor",
+	view:		"@Element",
+	
+	_features:	"use_uuid_attribute",
+	
+	_whereas:	"view.getAttribute('uuid') != null",
+	
+_does: 
+	function(node)
+	{
+		var uuid = node.getAttribute("uuid");
+		var refEntry = this.contentHash[uuid];
+		var index = refEntry.views.indexOf(node);
+		
+		if (index > -1) return;
+		
+		refEntry.views.splice(index, 1);
+		
+		// Garbage-collect view table entry
+		if (refEntry.views.length == 0)
+			delete this.contentHash[uuid];
+	}
+});
+
+/*
  * Editor::htmlRenderAspect(aspect, method, subject, arguments, returnValue)
  *
  * Called on all view operations when rendering some content. If this
@@ -116,32 +193,11 @@ _does:
 Editor.prototype.htmlRenderAspect = function(aspect, method, subject, arguments, returnValue)
 {
 	var uuid = arguments.__uuid;
-	var refCount = 0;
-
-	// Register object by its UUID
-	if (this.contentHash[uuid] != null)
-		refCount = this.contentHash[uuid].refCount;
 		
-	this.contentHash[subject.__uuid] = ({link: subject, refCount: refCount});
+	this.contentHash[subject.__uuid] = ({link: subject, views: []});
 
 	return returnValue;
 }
-
-/*
- * OnClick event
- *
- */
-BrowserKit.PrototypeEvent({
-	jsPrototype:		"Element",
-	event:				"click",
-	_whereas:			"this.relatedEditor != undefined",
-
-_does:
-	function(eventDescription)
-	{
-		console.log("FOO");
-	}
-});
 
 /*
  * OnKeyPress event
@@ -157,7 +213,18 @@ _does:
 	{
 		if ((eventDescription.keyCode >= 33) && (eventDescription.keyCode <= 40))
 			return;
-			
+		
+		if (eventDescription.charCode) {
+			var insertedText = String.fromCharCode(eventDescription.charCode);
+		
+			this.content._insertChild({newChild: insertedText, 
+									   context: eventDescription.targetViewContext, 
+									   contextPosition: 0, 
+									   insertOffset: eventDescription.anchorOffset
+									  });
+		}
+		
+				
 		eventDescription._stopPropagation();
 	}
 });

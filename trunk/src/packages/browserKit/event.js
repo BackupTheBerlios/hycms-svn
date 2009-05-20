@@ -328,7 +328,7 @@ BrowserKit.__raiseBKEvent = function(view, type, eventDescription)
 {
 	if (view.__bkHandler == null) return;
 	if (view.__bkHandler[type] == null) return;	
-	
+
 	var handlers = view.__bkHandler[type];
 	
 	for (var idx = 0; idx < handlers.length; idx ++) {
@@ -434,6 +434,14 @@ BrowserKit.__focusTracking = function(event)
 			try {	
 				if (view["_on"+eventDescription.type])	
 					view["_on"+eventDescription.type]({eventDescription: eventDescription});
+			} catch (e) {
+				if (!(e instanceof MethodNotExistsError)) {
+					console.log(e);
+					break;
+				}
+			}
+			
+			try {	
 				BrowserKit.__raiseBKEvent(view, blur, eventDescription);
 			} catch (e) {
 				if (!(e instanceof MethodNotExistsError)) {
@@ -455,14 +463,23 @@ BrowserKit.__focusTracking = function(event)
 	eventDescription.type = "focus";
 	eventDescription.targetNode = event.target;
 	eventDescription.targetView = destView;	
-	
+
 	for (idx = 0; idx < focusViewList.length && idx != commonIdxFocus; idx++) {
 		var view = focusViewList[idx];
-		
-		try {
+
+		try {							
 			if (view["_on"+eventDescription.type])	
 				view["_on"+eventDescription.type]({eventDescription: eventDescription});
-			BrowserKit.__raiseBKEvent(view, blur, eventDescription);			
+
+		} catch (e) {
+			if (!(e instanceof MethodNotExistsError)) {
+				console.log(e);
+				break;
+			}
+		}
+
+		try {
+			BrowserKit.__raiseBKEvent(view, blur, eventDescription);		
 		} catch (e) {
 			if (!(e instanceof MethodNotExistsError)) {
 				console.log(e);

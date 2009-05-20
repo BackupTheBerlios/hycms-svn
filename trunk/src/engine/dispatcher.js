@@ -114,6 +114,9 @@ function __getOptionalParameters(method)
  *	- If 'setting' is a single string with a trailing "~":
  *		(OBJECT instanceof setting) 
  *
+ *	- If 'setting' is a single string with "?", no predicate will be created.
+ *	  This is usefull, if just the parameter name should be registered.
+ *
  */
 function __getParameterPredicate(object, setting)
 {
@@ -129,6 +132,9 @@ function __getParameterPredicate(object, setting)
 		}
 		 else if (setting[0] == "~") {
 			return "( " +object+" instanceof "+setting.substr(1) + ") ? 0 : -1";
+		}
+		 else if (setting == "?") {
+		 	return "(0)";
 		}
 	}
 	
@@ -190,7 +196,7 @@ function __getOptionsRules(method)
 
 		selector = idx.substr(operatorLen);
 		
-		options.push(__getParameterPredicate(selector, method[idx]));	
+		options.push("("+selector+" == null) || "+__getParameterPredicate(selector, method[idx]));	
 	}
 	
 	return options;
@@ -350,7 +356,8 @@ function __getCallPrototypes(method, inputAll)
  * Whereas:
  *	"tagging_of_parameter_*"	specifies the tagging constraint on parameter *. This will be evaluated
  *								using a _max-Clause "*.__taggedAs(tagging_of_parameter_*)". For optional
- *								parameter a default value should be given, that satisfies this tagging.
+ *								parameter the default value must satisfy this tagging or has to be "unknown"
+ *								otherwise.
  *
  *	"default_value_of_*"		specifies the default value of the given parameter, that should be used,
  *								if the user didn't pass it to the function. The value will be copied using 
