@@ -41,26 +41,22 @@ _does:
 		__recursor(this);
 	}
 });
- 
+
 /*
- * Element::setInnerHTML
+ * Element::removeControllerReferences
  *
- * Changes the inner HTML of a view and inherits the controller, con
+ * Removes all references of the view and its child from the controller.
+ * This function traverses the view hierarchy and calls 'unregisterView'
+ * for each child node.
  *
  */
-"setInnerHTML".__declare({
-	html:		["*", "?html", "text"],
-
+"removeControllerReferences".__declare({
 	_this:		"@Element",
-	_features:	["use_uuid_attribute", "inherit_controller"],
-	
-	_whereas:	["this.__controller != undefined"],
+	_features:	["use_uuid_attribute"],
 	
 _does:
-	function setInnerHTML(html)
+	function removeControllerReferences()
 	{
-		var controller = this.__controller;
-	
 		// Remove child references from controller
 		this._postOrderOperation({
 			nodeOperation:	function(node) { 
@@ -68,12 +64,26 @@ _does:
 					node.__controller._unregisterView({view: node, _features: "use_uuid_attribute"});
 				}
 			}
-		});
-	
-		// Apply content change
-		this.innerHTML = html;
+		});	
+	}
+});
 
-		// Inherit controller property and register at controller
+/*
+ * Element::inheritControllerReferences
+ *
+ * Inherits the controller references of the current node to all of its
+ * children and sets the model reference.
+ *
+ */
+"inheritControllerReferences".__declare({
+	_this:		"@Element",
+	_features:	["use_uuid_attribute", "set_model_reference"],
+	
+_does:
+	function inheritControllerReferences()
+	{
+		var controller = this.__controller;
+	
 		this._postOrderOperation({
 				nodeOperation:	function(node) { 
 					if ((node.getAttribute) && (node.getAttribute("uuid"))) {
@@ -87,6 +97,86 @@ _does:
 	}
 });
 
+/*
+ * Element::setInnerHTML
+ *
+ * Changes the inner HTML of a view and inherits the controller reference
+ * to all child nodes. Also the model reference will be set up.
+ *
+ */
+"setInnerHTML".__declare({
+	html:		["*", "?html", "text"],
+
+	_this:		"@Element",
+	_features:	["use_uuid_attribute", "inherit_controller", "set_model_reference"],
+	
+	_whereas:	["this.__controller != undefined"],
+	
+_does:
+	function setInnerHTML(html)
+	{
+		var controller = this.__controller;
+		
+		this._removeControllerReferences({_features: "use_uuid_attribute"});
+	
+		this.innerHTML = html;
+
+		this._inheritControllerReferences({_features: ["use_uuid_attribute", "set_model_reference"]});
+	}
+});
+
+/*
+ * Element::setOuterHTML
+ *
+ * Changes the entire HTML of a view and restores/inherits the controller reference to
+ * all child nodes. Also the model references will be set up.
+ *
+ */
+"setOuterHTML".__declare({
+	html:		["*", "?html", "text"],
+
+	_this:		"@Element",
+	_features:	["use_uuid_attribute", "inherit_controller", "set_model_reference"],
+	
+	_whereas:	["this.__controller != undefined"],
+	
+_does:
+	function setOuterHTML(html)
+	{
+		var controller = this.__controller;
+	
+		this._removeControllerReferences({_features: "use_uuid_attribute"});
+	
+		// Create new child node
+		var tmpParent = document.createElement("div");
+		tmpParent.innerHTML = html;
+		var newChild = tmpParent.firstChild;
+	
+		// Apply content change
+		this.parentNode.replaceChild(newChild, this);
+
+		// Inherit controller property and register at controller
+		newChild.__controller = controller;
+		newChild._inheritControllerReferences({_features: ["use_uuid_attribute", "set_model_reference"]});
+	}
+});
+
+/*
+ * Node::getController
+ *
+ * Returns the controller, that is responsible for this view.
+ *
+ */
+"getController".__declare({
+	_this:		"@Node",
+	_features:	["use_uuid_attribute"],
+	
+_does:
+	function getController()
+	{
+		return this.__controller;
+	}
+});
 
 /*
  * Node::getView
@@ -117,23 +207,6 @@ _does:
 		}
 		
 		return this;
-	}
-});
-
-/*
- * Node::getController
- *
- * Returns the controller, that is responsible for this view.
- *
- */
-"getController".__declare({
-	_this:		"@Node",
-	_features:	["use_uuid_attribute"],
-	
-_does:
-	function getController()
-	{
-		return this.__controller;
 	}
 });
 
