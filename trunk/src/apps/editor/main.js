@@ -7,9 +7,10 @@
  *		content					The currently viewed document as content tree
  *		contentHash				Map from HTML node tags to content objects
  *
- *		lastFocussed			Node with the current focus
+ *		focussedView			Focussed view object
  *		focussedContent			Focussed content object
- *		currentSemantics		Current semantics selected by the user
+ *		focussedViewContext		Semantic context of the view
+ *		currentSemantics		Semantics selected by the user
  *
  * Methods:
  *		show					Visualizes the content inside the editor
@@ -22,6 +23,7 @@
  *
  * Aspects:
  *		htmlRenderAspect		Registers all viewed elements to the contentHash
+ *		htmlUpdateAspect		Updates all views after insert/remove changes in the model
  *
  * Events:
  *		onClick					Click event (changes focus)
@@ -39,7 +41,7 @@ function Editor(viewContainer)
 	
 	// Register properties
 	this.viewContainer = viewContainer;
-	this.lastFocussed = null;
+	this.focussedView = null;
 	this.focussedContent = null;
 	this.currentSemantics = null;
 
@@ -47,6 +49,10 @@ function Editor(viewContainer)
 	function renderAspectCallback() { return self.htmlRenderAspect.apply(self, arguments); }
 	renderAspectCallback.__observes("after", "name == 'view'");
 
+	function updateAspectCallback() { return self.htmlUpdateAspect.apply(self, arguments); }
+	updateAspectCallback.__observes("after", "name == 'insert'");
+	updateAspectCallback.__observes("after", "name == 'remove'");
+	
 	// Make the editor pane "contentEditable"
 	this.viewContainer.contentEditable = true;
 	
@@ -75,7 +81,7 @@ _does:
 		// We only accept those HTML views, that can set us the uuid_attribute
 		var html = content._view({_returns: ["*", "html", "text"], _features: ["?recursive_context", "keep_method_conditions", "set_uuid_attribute"]});
 
-		this.viewContainer._setInnerHTML({html: html});
+		this.viewContainer._setInnerHtml({html: html});
 	}
 
 });
@@ -141,7 +147,8 @@ _does:
 _does: 
 	function(node)
 	{
-		var uuid = node.getAttribute("uuid");
+		var uuid = node._getView().getAttribute("uuid");
+
 		var viewList = this.contentHash[uuid].views;
 		
 		if (viewList.indexOf(node) > -1) return;
@@ -168,17 +175,16 @@ _does:
 _does: 
 	function(node)
 	{
-		var uuid = node.getAttribute("uuid");
+		var uuid = node._getView().getAttribute("uuid");
+
 		var refEntry = this.contentHash[uuid];
 		var index = refEntry.views.indexOf(node);
 		
 		if (index > -1) return;
 		
 		refEntry.views.splice(index, 1);
-		
-		// Garbage-collect view table entry
-		if (refEntry.views.length == 0)
-			delete this.contentHash[uuid];
+
+// TODO: Garbage-collection of unused model objects
 	}
 });
 
@@ -192,12 +198,69 @@ _does:
  */
 Editor.prototype.htmlRenderAspect = function(aspect, method, subject, arguments, returnValue)
 {
-	var uuid = arguments.__uuid;
-		
 	this.contentHash[subject.__uuid] = ({link: subject, views: []});
 
 	return returnValue;
 }
+
+/*
+ * Editor::htmlUpdateAspect(aspect, method, subject, arguments, returnValue)
+ *
+ * Called after all insert/remove operations. It will be used to update all affected
+ * views, if a call returns "true". If a new model object was created, the new object
+ * will be automatically registered by the called view() method, which is used for the
+ * update.
+ *
+ */
+Editor.prototype.htmlUpdateAspect = function(aspect, method, subject, arguments, returnValue)
+{
+	if (returnValue == true) {
+		var uuid = subject.__uuid;
+		var views = this.contentHash[uuid].views;
+		
+		for (var idx = 0; idx < views.length; idx ++) {
+			var view = views[idx];
+			view._setOuterHtml( { html: subject._view( {parentList: view._getModelContext() } ) } );
+		}
+	}
+
+	return returnValue;
+}
+
+/*
+ * OnFocus event
+ *
+ */
+BrowserKit.PrototypeEvent({
+	jsPrototype:		"Element",
+	event:				"focus",
+	_whereas:			"this._getController() != undefined",
+
+_does:
+	function(eventDescription)
+	{
+		this.focussedView = eventDescription.targetView;
+
+		if (this.focussedView != null) {
+			this.focussedContent = eventDescription.targetModel;
+			this.focussedViewContext = eventDescription.targetViewContext;
+		
+			if (this.focussedContent) {
+				var tagArray = [];
+
+				this.currentSemantics = this.focussedContent.__getTagging();
+	
+				for (var idx = 0; idx < this.focussedViewContext.length; idx ++) {
+					if (this.focussedViewContext[idx] != null)
+						tagArray.splice(0, 0, this.focussedViewContext[idx].__getClassName() );
+				}
+				tagArray.push(this.focussedContent.__getClassName());
+				
+				document.getElementById("semantics").value = tagArray.join(" > ");
+			}
+		}
+	}
+});
 
 /*
  * OnKeyPress event
@@ -206,25 +269,47 @@ Editor.prototype.htmlRenderAspect = function(aspect, method, subject, arguments,
 BrowserKit.PrototypeEvent({
 	jsPrototype:		"Element",
 	event:				"keypress",
-	_whereas:			"this.relatedEditor != undefined",
+	_whereas:			"this._getController() != undefined",
 
 _does:
 	function(eventDescription)
 	{
 		if ((eventDescription.keyCode >= 33) && (eventDescription.keyCode <= 40))
 			return;
-		
+
 		if (eventDescription.charCode) {
-			var insertedText = String.fromCharCode(eventDescription.charCode);
-		
-			this.content._insertChild({newChild: insertedText, 
-									   context: eventDescription.targetViewContext, 
-									   contextPosition: 0, 
-									   insertOffset: eventDescription.anchorOffset
-									  });
+			var insertedText = String.fromCharCode(eventDescription.charCode).__tag("important_text", "text");
+			
+			var translatedOffset = eventDescription.selection.anchorNode._translateOffset({anchorOffset: eventDescription.selection.anchorOffset});
+
+			eventDescription.targetViewPath[0]._insert({path: 		eventDescription.targetViewPath, 
+														offset: 	translatedOffset,
+													    child:		insertedText
+					  								  });
+
+			window._caretMoveForward();
 		}
-		
 				
 		eventDescription._stopPropagation();
 	}
 });
+
+/*
+ * OnKeyUp event
+ *
+ */
+BrowserKit.PrototypeEvent({
+	jsPrototype:		"Element",
+	event:				"keyup",
+	_whereas:			"this._getController() != undefined",
+
+_does:
+	function(eventDescription)
+	{
+		if ((eventDescription.keyCode >= 33) && (eventDescription.keyCode <= 40))
+			return;	
+
+		eventDescription._stopPropagation();
+	}
+});
+

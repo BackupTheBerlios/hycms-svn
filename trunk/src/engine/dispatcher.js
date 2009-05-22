@@ -7,9 +7,10 @@
  * Published under the terms of the GNU General Public License v2
  *
  */
-function MethodNotExistsError(message, args)
+function MethodNotExistsError(message, methodName, args)
 {
 	this.message = message;
+	this.methodName = methodName;
 	if (traceEvals == true) {console.log(args); console.trace();}
 }
 MethodNotExistsError.prototype = new Error();
@@ -122,11 +123,7 @@ function __getParameterPredicate(object, setting)
 {
 	if (typeof(setting.valueOf()) == 'string') {
 	
-		if ((setting[0] != "@") && (setting[0] != "~")) {
-			// Just a single element of a tagging
-			setting = [setting];
-		}
-		 else if (setting[0] == "@") {
+	 	if (setting[0] == "@") {
 		 	// A instanceof predicate
 		 	return "( ( " +object+" instanceof "+setting.substr(1) + ") || (typeof("+object+") == '"+setting.substr(1).toLowerCase()+"' )) ? 0 : -1";
 		}
@@ -135,6 +132,10 @@ function __getParameterPredicate(object, setting)
 		}
 		 else if (setting == "?") {
 		 	return "(0)";
+		}
+		 else {
+			// Just a single element of a tagging
+			setting = [setting];
 		}
 	}
 	
@@ -680,7 +681,7 @@ function __callMethod(methodName, object, args)
 	if (traceEvals) console.group(methodName);
 
 	if (methodHash[methodName] == null)
-		throw new MethodNotExistsError("Method not known: "+methodName);
+		throw new MethodNotExistsError("Method not known: "+methodName, methodName);
 
 	// Autodefine arguments
 	if (args == null) args = ({});	
@@ -765,7 +766,7 @@ function __callMethod(methodName, object, args)
 
 	// No method found...
 	if (maxFunction.length == 0)
-		throw new MethodNotExistsError("Method not available: "+methodName, args)	
+		throw new MethodNotExistsError("Method not available: "+methodName, methodName,args)	
 
 	// Select method
 	var method = methodHash[methodName][maxFunction[maxBoolFunc]];

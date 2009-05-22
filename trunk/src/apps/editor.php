@@ -11,6 +11,7 @@
 	<script type='text/javascript' src='editor/main.js' charset='UTF-8'></script>
 </head>
 <body>
+<div id='menuBar'> <input type='text' size='160' id='semantics' /> </div>
 <div id='container'>
  Loading and rendering content...
 </div>

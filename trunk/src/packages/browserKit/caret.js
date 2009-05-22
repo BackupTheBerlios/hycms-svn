@@ -26,7 +26,7 @@ _does:
 		var selection = this.getSelection();
 		selection.collapse(anchorNode, anchorOffset);
 	
-//		this._switchFocus(this._makeDescription(null));
+		this._updateFocus();
 	}
 
 });
@@ -67,15 +67,15 @@ _does:
 "saveCaret".__declare({
 	/* Due to a bug in WebKit, where window is not instanceof Window */
 	//_this:			"@Window",
-	_whereas:			"this == window",
+	_whereas:		"this == window",
 	
-	_output:	"list",
+	_output:		"list",
 
-	anchorNode:		"@Element",
+	anchorNode:		"@Node",
 	anchorOffset:	"number",
 		
 _does:
-	function saveCaret()
+	function saveCaret(anchorNode, anchorOffset)
 	{
 		var path = [anchorOffset];
 		var current = anchorNode;
@@ -96,10 +96,11 @@ _does:
 
 });
 
+// Version without parameters
 "saveCaret".__declare({
 	/* Due to a bug in WebKit, where window is not instanceof Window */
-	//_this:			"@Window",
-	_whereas:			"this == window",
+	//_this:	"@Window",
+	_whereas:	"this == window",
 	
 	_output:	"list",
 	
@@ -108,7 +109,7 @@ _does:
 	{
 		var selection = this._getCaret();
 	
-		return this._setCaret(selection.anchorNode, selection.anchorOffset);
+		return this._saveCaret({anchorNode: selection.anchorNode, anchorOffset: selection.anchorOffset});
 	}
 });
 
@@ -153,9 +154,220 @@ _does:
 
 			current = child;
 		}
-	
-		this._setCaret(current, path[0]);
+
+		this._setCaret({anchorNode: current, anchorOffset:  path[0]});
 	}
 
 });
 
+/*
+ * Window::clearFocus()
+ *
+ * Clears the focus, without blur notification.
+ *
+ */
+"clearFocus".__declare({
+	/* Due to a bug in WebKit, where window is not instanceof Window */
+	//_this:			"@Window",
+	_whereas:			"this == window",
+
+_does:
+	function clearFocus()
+	{
+		this.lastFocus = null;
+	}
+
+});
+
+/*
+ * Window::isFocussed(node)
+ *
+ * Tests, whether the given node has the current focus or not.
+ *
+ */
+"isFocussed".__declare({
+	/* Due to a bug in WebKit, where window is not instanceof Window */
+	//_this:			"@Window",
+	_whereas:			"this == window",
+	
+	node:				"@Node",
+	_output:			"boolean",
+
+_does:
+	function isFocussed(node)
+	{
+		var focussed = this.lastFocus;
+		
+		while (focussed != null) {
+			if (focussed == node) return true;
+			
+			focussed = focussed.parentNode;
+		}
+		
+		return false;
+	}
+
+});
+
+/*
+ * Window::updateFocus()
+ *
+ * Updates the focus according to the current caret position. This
+ * method will trigger a focus and blur event as required.
+ *
+ */
+"updateFocus".__declare({
+	/* Due to a bug in WebKit, where window is not instanceof Window */
+	//_this:			"@Window",
+	_whereas:			"this == window",
+
+_does:
+
+	function updateFocus()
+	{
+		var blurViewList = [];
+		var focusViewList = [];
+		var commonIdxFocus = -1;
+		var commonIdxBlur = -1;
+
+		var destNode = window._getCaret().anchorNode;
+		var destView = destNode._getView();
+	
+		// Identical => no event...
+		if (destView == window.lastFocus) return;
+
+		// No view => no event...	
+		if (destView == null) return;
+
+		// Get parent list of destination element
+		var view = destView;
+
+		while (view != null) {
+			focusViewList.push(view);
+		
+			view = view.parentNode._getView();
+		}
+
+		if (window.lastFocus != null) {
+			// Get parent list of blur element
+			var view = window.lastFocus;
+
+			while (view != null) {
+				blurViewList.push(view);
+
+				view = view.parentNode._getView();
+			
+				if ((focusViewList.indexOf(view) > -1) && (commonIdxFocus == -1)) {
+					commonIdxFocus = focusViewList.indexOf(view);
+					commonIdxBlur = blurViewList.length;
+				}
+			}
+
+			// Create event description
+			var eventDescription = ["event_description", "structure"]._construct({eventType: "blur", eventTarget: destNode});
+
+				
+			// Bubble "blur" event to blur and its parent (unless they are not common to both elements)
+			for (idx = 0; idx < blurViewList.length && idx != commonIdxBlur; idx++) {
+				var view = blurViewList[idx];
+
+				try {	
+					if (view["_on"+eventDescription.type])	
+						view["_on"+eventDescription.type]({eventDescription: eventDescription});
+				} catch (e) {
+				if (!((e instanceof MethodNotExistsError) && (e.methodName == "_on"+eventDescription.type))) {
+						console.log(e);
+						break;
+					}
+				}
+			
+				try {	
+					BrowserKit.__raiseBKEvent(view, blur, eventDescription);
+				} catch (e) {
+				if (!((e instanceof MethodNotExistsError) && (e.methodName == "_onblur"))) {
+						console.log(e);
+						break;
+					}
+				}
+
+					
+				if (eventDescription.__propagationStopped) return;
+			
+				eventDescription.parentNotification = true;
+			}
+		}
+
+		// Bubble focus event
+		var eventDescription = ["event_description", "structure"]._construct({eventType: "focus", eventTarget: destNode});
+
+		for (idx = 0; idx < focusViewList.length; idx++) {
+			var view = focusViewList[idx];
+
+			if (commonIdxFocus == idx)
+				eventDescription.focusChangedInside = true;
+
+			try {							
+				if (view["_on"+eventDescription.type])	
+					view["_on"+eventDescription.type]({eventDescription: eventDescription});
+
+			} catch (e) {
+				if (!(e instanceof MethodNotExistsError)) {
+					console.log(e);
+					break;
+				}
+			}
+
+			try {
+				BrowserKit.__raiseBKEvent(view, blur, eventDescription);		
+			} catch (e) {
+				if (!((e instanceof MethodNotExistsError) && (e.methodName == "_onfocus"))) {
+					console.log(e);
+					break;
+				}
+			}
+		
+			if (eventDescription.__propagationStopped) return;
+		
+			eventDescription.parentNotification = true;
+		}
+	
+		window.lastFocus = destView;	
+	}
+});
+
+/*
+ * Window::caretMoveForward([offset = 1])
+ *
+ * Moves the caret "offset" steps forward and updates the focus.
+ *
+ */
+"caretMoveForward".__declare({
+	/* Due to a bug in WebKit, where window is not instanceof Window */
+	//_this:			"@Window",
+	_whereas:			"this == window",
+	
+	_optional_offset:		"number",
+	_default_offset:		1,
+
+_does:
+	function caretMoveForward(offset)
+	{
+		var selection = window._getCaret();
+		var node = selection.anchorNode;
+		var position = selection.anchorOffset + offset;
+
+		while (position > node.nodeValue.length) {
+			var xmlResult = document.evaluate("following::text()[position()=1]", node, null, XPathResult.ANY_TYPE, null);
+			var nextNode = xmlResult.iterateNext();   
+
+			position -= node.length;
+			node = nextNode;
+		}
+
+		this._setCaret({anchorNode: node, anchorOffset: position});
+		this._updateFocus();
+		
+		return;
+	}
+
+});

@@ -13,17 +13,21 @@ BrowserKit.DOMHandledEvents = ["click", "mousedown", "mouseup", "keypress", "key
 BrowserKit.BrowserKitHandledEvents = ["focus", "blur"];
 BrowserKit.FocusEvents = ["focus", "blur"];
  
+BrowserKit.TargetIsFocus = ["keyup", "keydown", "keypress"];
+ 
 BrowserKit.__protoEvent =({
 							selection:		{anchorNode:	null,	anchorOffset: -1},
 						
 							type:			"unknown",
 							
-							lastFocus:		null,
+							lastFocus:				null,
+							focusChangedInside:		false,
 							
 							targetNode:			null,
 							targetView:			null,
 							targetModel:		null,
 							targetViewContext:	null,
+							targetViewPath:		null,
 							
 							parentNotification:	false,
 							
@@ -43,6 +47,30 @@ BrowserKit.__protoEvent =({
 						 }).__tag("event_description", "structure");
  
 /*
+ * [private] BrowserKit.__eventFromTarget
+ *
+ * Initializes an event descriptor using a dom target node.
+ *
+ */
+BrowserKit.__eventFromTarget = function(initializer, dom_target)
+{
+	initializer.lastFocus = window.lastFocus;
+	initializer.selection = window._getCaret();
+
+	initializer.targetNode = dom_target;
+	initializer.targetView = initializer.targetNode._getView();
+
+	
+	if (initializer.targetView != null) {
+		initializer.targetModel = initializer.targetView._getModel();
+		initializer.targetViewContext = initializer.targetView._getModelContext();
+
+		initializer.targetViewPath = initializer.targetViewContext.reverse();
+		initializer.targetViewPath.push(initializer.targetModel);
+	}
+}
+ 
+/*
  * [constructor] event_description(domEvent)
  *
  * Creates a new "event_description" based on the given DOM-Event.
@@ -53,19 +81,18 @@ Model.Construct({
 		initializer:	BrowserKit.__protoEvent,
 
 		domEvent:	"@Event",
-
+		
+		_optional_domTarget:		"?",
+		
 _does:
-	function(domEvent, initializer)
+	function(domEvent, domTarget, initializer)
 	{
+		var target = (domTarget == null) ? domEvent.target : domTarget;
+
 		initializer.type = domEvent.type.toLowerCase();
 		
-		initializer.lastFocus = window.lastFocus;
+		BrowserKit.__eventFromTarget(initializer, target);
 
-		initializer.targetNode = domEvent.target;
-		initializer.targetView = initializer.targetNode._getView();
-		initializer.targetModel = initializer.targetView._getModel();
-		initializer.targetViewContext = initializer.targetView._getModelContext();
-		
 		initializer.keyCode = domEvent.keyCode;
 		initializer.charCode = domEvent.charCode;
 		
@@ -82,6 +109,29 @@ _does:
 		return initializer;
 	}
 });
+
+/*
+ * [constructor] event_description(type, target)
+ *
+ * Creates a new "event_description" based on the given DOM-Event.
+ *
+ */
+Model.Construct({
+		type:			["event_description", "structure"],
+		eventType:		"text",
+		eventTarget:	"@Node",
+		
+		initializer:	BrowserKit.__protoEvent,
+_does:
+	function(eventType, eventTarget, initializer)
+	{
+		initializer.type = eventType;
+		BrowserKit.__eventFromTarget(initializer, eventTarget);
+
+		return initializer;
+	}
+});
+
 
 /*
  * [constructor] event_description()
@@ -349,16 +399,23 @@ BrowserKit.__raiseBKEvent = function(view, type, eventDescription)
  */
 BrowserKit.__globalHandler = function(event)
 {
-	var eventDescription = ["event_description", "structure"]._construct({domEvent: event});
-	var view = eventDescription.targetView;
+	var eventDescription, view, protoTarget;
+
+	if (BrowserKit.TargetIsFocus.indexOf(event.type) > -1)
+		protoTarget = window.lastFocus;
+	else
+		protoTarget = null;
+		
+	eventDescription = ["event_description", "structure"]._construct({domEvent: event, domTarget: protoTarget});	
+
+	view = eventDescription.targetView;
 
 	while ((view != null) && (!eventDescription.__propagationStopped)) {
-
 		try {
 			if (view["_on"+eventDescription.type])	
 				view["_on"+eventDescription.type]({eventDescription: eventDescription});
 		} catch (e) {
-			if (!(e instanceof MethodNotExistsError)) {
+			if (!((e instanceof MethodNotExistsError) && (e.methodName == "_on"+eventDescription.type))) {
 				console.log(e);
 				break;
 			}
@@ -382,117 +439,7 @@ BrowserKit.__globalHandler = function(event)
  */
 BrowserKit.__focusTracking = function(event) 
 {
-	var blurViewList = [];
-	var focusViewList = [];
-	var commonIdxFocus = -1;
-	var commonIdxBlur = -1;
-
-	//var destView = event.target._getView();
-	var destView = window._getCaret().anchorNode._getView();
-
-	// Identical => no event...
-	if (destView == window.lastFocus) return;
-
-	// No view => no event...	
-	if (destView == null) return;
-
-	// Get parent list of destination element
-	var view = destView;
-
-	while (view != null) {
-		focusViewList.push(view);
-		
-		view = view.parentNode._getView();
-	}
-
-	if (window.lastFocus != null) {
-		// Get parent list of blur element
-		var view = window.lastFocus;
-		
-		while (view != null) {
-			blurViewList.push(view);
-
-			view = view.parentNode._getView();
-			
-			if ((focusViewList.indexOf(view) > -1) && (commonIdxFocus == -1)) {
-				commonIdxFocus = focusViewList.indexOf(view);
-				commonIdxBlur = blurViewList.length;
-			}
-		}
-
-		// Create event description
-		var eventDescription = ["event_description", "structure"]._construct();
-		
-		eventDescription.type = "blur";
-		eventDescription.targetNode = event.target;
-		eventDescription.targetView = destView;
-		
-		// Bubble "blur" event to blur and its parent (unless they are not common to both elements)
-		for (idx = 0; idx < blurViewList.length && idx != commonIdxBlur; idx++) {
-			var view = blurViewList[idx];
-
-			try {	
-				if (view["_on"+eventDescription.type])	
-					view["_on"+eventDescription.type]({eventDescription: eventDescription});
-			} catch (e) {
-				if (!(e instanceof MethodNotExistsError)) {
-					console.log(e);
-					break;
-				}
-			}
-			
-			try {	
-				BrowserKit.__raiseBKEvent(view, blur, eventDescription);
-			} catch (e) {
-				if (!(e instanceof MethodNotExistsError)) {
-					console.log(e);
-					break;
-				}
-			}
-
-					
-			if (eventDescription.__propagationStopped) return;
-			
-			eventDescription.parentNotification = true;
-		}
-	}
-	
-	// Bubble focus event
-	var eventDescription = ["event_description", "structure"]._construct();
-
-	eventDescription.type = "focus";
-	eventDescription.targetNode = event.target;
-	eventDescription.targetView = destView;	
-
-	for (idx = 0; idx < focusViewList.length && idx != commonIdxFocus; idx++) {
-		var view = focusViewList[idx];
-
-		try {							
-			if (view["_on"+eventDescription.type])	
-				view["_on"+eventDescription.type]({eventDescription: eventDescription});
-
-		} catch (e) {
-			if (!(e instanceof MethodNotExistsError)) {
-				console.log(e);
-				break;
-			}
-		}
-
-		try {
-			BrowserKit.__raiseBKEvent(view, blur, eventDescription);		
-		} catch (e) {
-			if (!(e instanceof MethodNotExistsError)) {
-				console.log(e);
-				break;
-			}
-		}
-		
-		if (eventDescription.__propagationStopped) return;
-		
-		eventDescription.parentNotification = true;
-	}
-	
-	window.lastFocus = destView;
+	window._updateFocus();
 }
 
 

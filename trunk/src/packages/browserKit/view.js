@@ -98,13 +98,13 @@ _does:
 });
 
 /*
- * Element::setInnerHTML
+ * Element::setInnerHtml
  *
  * Changes the inner HTML of a view and inherits the controller reference
  * to all child nodes. Also the model reference will be set up.
  *
  */
-"setInnerHTML".__declare({
+"setInnerHtml".__declare({
 	html:		["*", "?html", "text"],
 
 	_this:		"@Element",
@@ -113,7 +113,7 @@ _does:
 	_whereas:	["this.__controller != undefined"],
 	
 _does:
-	function setInnerHTML(html)
+	function setInnerHtml(html)
 	{
 		var controller = this.__controller;
 		
@@ -126,13 +126,13 @@ _does:
 });
 
 /*
- * Element::setOuterHTML
+ * Element::setOuterHtml
  *
  * Changes the entire HTML of a view and restores/inherits the controller reference to
  * all child nodes. Also the model references will be set up.
  *
  */
-"setOuterHTML".__declare({
+"setOuterHtml".__declare({
 	html:		["*", "?html", "text"],
 
 	_this:		"@Element",
@@ -141,12 +141,19 @@ _does:
 	_whereas:	["this.__controller != undefined"],
 	
 _does:
-	function setOuterHTML(html)
+	function setOuterHtml(html)
 	{
 		var controller = this.__controller;
 	
 		this._removeControllerReferences({_features: "use_uuid_attribute"});
 	
+		// Save caret
+		var savedCaret = window._saveCaret();	
+		
+		if (window._isFocussed({node: this})) {
+			window._clearFocus();
+		}
+
 		// Create new child node
 		var tmpParent = document.createElement("div");
 		tmpParent.innerHTML = html;
@@ -158,6 +165,9 @@ _does:
 		// Inherit controller property and register at controller
 		newChild.__controller = controller;
 		newChild._inheritControllerReferences({_features: ["use_uuid_attribute", "set_model_reference"]});
+
+		// Restore caret
+		window._restoreCaret({path: savedCaret});
 	}
 });
 
@@ -252,10 +262,14 @@ _does:
 
 		while (view.parentNode != null) {
 			var parentView = view.parentNode._getView();
+			var model;
 			
 			if (parentView == null) break;
 		
-			list.push(parentView._getModel());
+			model = parentView._getModel();
+		
+			if (model != null)
+				list.push( model );
 			
 			view = parentView;
 		}
