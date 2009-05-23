@@ -104,10 +104,31 @@ Model.Remove({
 	
 _does:
 	function removeText(path, offset, count, pathAt)
-	{console.log(path, offset, count, pathAt);
+	{
 		var newText = this.substr(0, offset) + this.substr(offset + count);
 		
-		return [newText.__tag(this.__getTagging())];
+		if (newText.length == 0)
+			return [];
+		else
+			return [newText.__tag(this.__getTagging())];
+	}
+});
+
+/*
+ * <"*", "text">::getLength()
+ *
+ * Returns the highest possible offset inside a text node.
+ *
+ * See: <declarator> Model.GetLength
+ *
+ */
+Model.GetLength({
+	type:				["*", "text"],
+	
+_does:
+	function getLength()
+	{
+		return this.length;
 	}
 });
 

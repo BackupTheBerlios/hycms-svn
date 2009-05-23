@@ -357,8 +357,7 @@ _does:
 		var position = selection.anchorOffset + offset;
 
 		while (position > node.nodeValue.length) {
-			var xmlResult = document.evaluate("following::text()[position()=1]", node, null, XPathResult.ANY_TYPE, null);
-			var nextNode = xmlResult.iterateNext();   
+			var nextNode = node._getNeighbourView();
 
 			position -= node.length;
 			node = nextNode;

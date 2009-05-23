@@ -274,18 +274,16 @@ BrowserKit.PrototypeEvent({
 _does:
 	function(eventDescription)
 	{
-		if ((eventDescription.keyCode >= 33) && (eventDescription.keyCode <= 40))
+		if (BrowserKit.MoveKeys.indexOf(eventDescription.keyCode) > -1)
 			return;
 
 		if (eventDescription.charCode) {
 			var insertedText = String.fromCharCode(eventDescription.charCode).__tag("important_text", "text");
-			
-			var translatedOffset = eventDescription.selection.anchorNode._translateOffset({anchorOffset: eventDescription.selection.anchorOffset});
 
-			eventDescription.targetViewPath[0]._insert({path: 		eventDescription.targetViewPath, 
-														offset: 	translatedOffset,
-													    child:		insertedText
-					  								  });
+			eventDescription.targetRootView._insert({path: 		eventDescription.targetViewPath, 
+											 		 offset: 	eventDescription.targetModelOffset,
+													 child:		insertedText
+					  								});
 
 			window._caretMoveForward();
 		}
@@ -306,8 +304,22 @@ BrowserKit.PrototypeEvent({
 _does:
 	function(eventDescription)
 	{
-		if ((eventDescription.keyCode >= 33) && (eventDescription.keyCode <= 40))
+		if (BrowserKit.MoveKeys.indexOf(eventDescription.keyCode) > -1)
 			return;	
+
+		if (eventDescription.keyCode == KeyEvent.DOM_VK_DELETE) {
+			eventDescription.targetRootView._remove({path: 		eventDescription.targetViewPath, 
+											 		 offset: 	eventDescription.targetModelOffset,
+													 count:		1
+					  								});	
+		}
+
+		if (eventDescription.keyCode == KeyEvent.DOM_VK_BACK_SPACE) {
+			eventDescription.targetRootView._remove({path: 		eventDescription.targetViewPath, 
+											 		 offset: 	eventDescription.targetModelOffset - 1,
+													 count:		1
+					  								});
+		}
 
 		eventDescription._stopPropagation();
 	}

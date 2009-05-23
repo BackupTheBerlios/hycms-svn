@@ -86,7 +86,7 @@ _does:
 });
 
 /*
- * <"*", "text">::remove(path, offset, count, pathAt)
+ * <"*", "list">::remove(path, offset, count, pathAt)
  *
  * Removes "count" elements of a list, if the list is the
  * destination element of the given path.
@@ -109,7 +109,7 @@ _does:
 });
 
 /*
- * <"*", "text">::remove(path, offset, count, pathAt)
+ * <"*", "list">::remove(path, offset, count, pathAt)
  *
  * Delegates the remove operation to a child object of a list.
  * If the child object changes, this operation will replace its
@@ -137,6 +137,24 @@ _does:
 		 else {
 		 	return false;
 		}
+	}
+});
+
+/*
+ * <"*", "list">::getLength()
+ *
+ * Returns the highest possible offset inside a text node.
+ *
+ * See: <declarator> Model.GetLength
+ *
+ */
+Model.GetLength({
+	type:				["*", "list"],
+	
+_does:
+	function getLength()
+	{
+		return this.length;
 	}
 });
 

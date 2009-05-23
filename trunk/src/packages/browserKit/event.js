@@ -13,6 +13,17 @@ BrowserKit.DOMHandledEvents = ["click", "mousedown", "mouseup", "keypress", "key
 BrowserKit.BrowserKitHandledEvents = ["focus", "blur"];
 BrowserKit.FocusEvents = ["focus", "blur"];
  
+BrowserKit.MoveKeys = [
+					   KeyEvent.DOM_VK_PAGE_UP, 
+					   KeyEvent.DOM_VK_PAGE_DOWN,
+					   KeyEvent.DOM_VK_END,
+					   KeyEvent.DOM_VK_HOME,
+					   KeyEvent.DOM_VK_LEFT,
+					   KeyEvent.DOM_VK_UP,
+					   KeyEvent.DOM_VK_RIGHT,
+					   KeyEvent.DOM_VK_DOWN
+					  ];
+ 
 BrowserKit.TargetIsFocus = ["keyup", "keydown", "keypress"];
  
 BrowserKit.__protoEvent =({
@@ -28,6 +39,8 @@ BrowserKit.__protoEvent =({
 							targetModel:		null,
 							targetViewContext:	null,
 							targetViewPath:		null,
+							targetModelOffset:	null,
+							targetRootView:		null,
 							
 							parentNotification:	false,
 							
@@ -65,8 +78,10 @@ BrowserKit.__eventFromTarget = function(initializer, dom_target)
 		initializer.targetModel = initializer.targetView._getModel();
 		initializer.targetViewContext = initializer.targetView._getModelContext();
 
-		initializer.targetViewPath = initializer.targetViewContext.reverse();
-		initializer.targetViewPath.push(initializer.targetModel);
+		initializer.targetViewPath = initializer.targetViewContext.concat([initializer.targetModel]);
+
+		initializer.targetModelOffset = dom_target._translateOffset({anchorOffset: initializer.selection.anchorOffset});
+		initializer.targetRootView = initializer.targetViewPath[0];
 	}
 }
  

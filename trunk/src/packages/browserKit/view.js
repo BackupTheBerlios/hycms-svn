@@ -269,7 +269,7 @@ _does:
 			model = parentView._getModel();
 		
 			if (model != null)
-				list.push( model );
+				list.unshift( model );
 			
 			view = parentView;
 		}
@@ -277,4 +277,21 @@ _does:
 		return list;
 	}
 });
- 
+
+/*
+ * Node::getNeighbourView
+ *
+ * Returns the view that is the optical neighbour of the current view.
+ *
+ */
+"getNeighbourView".__declare({
+	_this:		"@Node",
+	
+_does:
+	function getNeighbourView()
+	{
+		var xmlResult = document.evaluate("following::text()[position()=1]", this, null, XPathResult.ANY_TYPE, null);
+		return xmlResult.iterateNext();   
+	}
+});
+

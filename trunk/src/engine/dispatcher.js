@@ -534,15 +534,17 @@ function __precompile(functionList, inputList)
 }
 
 /*
- * [static] __argsToArray(inputAll, argument_object[, defaults])
+ * [static] __argsToArray(inputAll, argument_object[, defaults, fakes])
  *
  * Converts an argument object to an array according to the
  * order in "inputAll_def". The function will preset all
  * undefined arguments to a copy of a value in "defaults". Additionally
  * the 'argument_object' will be added as the last element of the list.
  *
+ * If "fakes" is given, all elements of "fakes" will overwrite the elements
+ * of "argument_object".
  */
-function __argsToArray(inputAll, argument_object, defaults)
+function __argsToArray(inputAll, argument_object, defaults, fakes)
 {
 	var list = [];
 
@@ -551,14 +553,22 @@ function __argsToArray(inputAll, argument_object, defaults)
 	for (var idx = 0; idx < inputAll.length; idx ++) {
 		var selector = inputAll[idx];
 
-		if (argument_object[selector] == undefined) {
-			if (defaults[selector] != null)
-				list.push(defaults[selector].__clone());
-			else
-				list.push(null);
+		if ((fakes != null) && (fakes[selector] != undefined)) {
+			// Using a faked parameters
+			list.push(fakes[selector])
 		}
-		else {
-			list.push(argument_object[selector]);
+ 		 else {
+			if (argument_object[selector] == undefined) {
+				// Using a default parameter
+				if (defaults[selector] != null)
+					list.push(defaults[selector].__clone());
+				else
+					list.push(null);
+			}
+			else {
+				// Using the given parameter
+				list.push(argument_object[selector]);
+			}
 		}
 	}
 	
@@ -621,7 +631,7 @@ function __prototypeDelegation(callerRequest, methodName, object, arguments)
 {
 	var newArgs;
 	var proto;
-	var pars;
+	var pars, param_list;
 	var lastRequest = callerRequest;
 
 	// Called from outside a method
@@ -636,15 +646,27 @@ function __prototypeDelegation(callerRequest, methodName, object, arguments)
 	proto = lastRequest._method.prototypes[methodName];
 	newArgs = ({});
 	
-	pars = lastRequest._parameters.concat([lastRequest._returns, lastRequest._features]);
+	// Copy parameters
+	pars = ({});
 	
+	for (var idx in lastRequest._parameters) {
+		if (idx[0] == "_") continue;
+		
+		pars[idx] = lastRequest._parameters[idx];
+	}
+	
+	pars._returns = lastRequest._returns;
+	pars._features = lastRequest._features;
+
+	param_list = __argsToArray(lastRequest._method.inputAll, pars, lastRequest._method.defaults);
+
 	// Apply prototypes
 	for (var idx in proto) {
 
 		if ((idx[0] == "_") && (idx != "_features") && (idx != "_returns")) continue;
 
 		if ((proto[idx] != null) && (arguments[idx] == undefined))
-			newArgs[idx] = proto[idx].apply(object, pars);
+			newArgs[idx] = proto[idx].apply(object, param_list);
 	}
 	
 	// Apply arguments
@@ -658,15 +680,16 @@ function __prototypeDelegation(callerRequest, methodName, object, arguments)
 }
 
 /*
- * [static] __callMethod(methodName, object, arguments)
+ * [static] __callMethod(methodName, object, arguments[, fakes])
  *
  * Calls a given method "methodName" for the object "object" as THIS and the
- * given argument list.
+ * given argument list. The optional parameter "fakes" describes parameter values,
+ * that should be passed to the method predicates instead of the real parameters.
  *
  */
 var traceEvals = false; 
 
-function __callMethod(methodName, object, args)
+function __callMethod(methodName, object, args, fakes)
 {
 	var arguments;
 	var returnRequest = null;
@@ -700,7 +723,12 @@ function __callMethod(methodName, object, args)
 	if ((featureRequest != null) && (!(featureRequest instanceof Array)))
 		featureRequest = [featureRequest];
 
+	// Delegate "this", if fake is given
+	var testObject = object;
 
+	if ((fakes != null) && (fakes._this != undefined)) 
+		testObject = fakes._this;
+	
 	// Find best method
 	for (var idx = 0; idx < methodHash[methodName].length; idx ++) {
 		var method = methodHash[methodName][idx];
@@ -728,16 +756,16 @@ function __callMethod(methodName, object, args)
 		if (missing == true) continue;
 
 		// Set parameter array
-		var testArgs = __argsToArray(method.inputAll, args, method.defaults);
+		var testArgs = __argsToArray(method.inputAll, args, method.defaults, fakes);
 
 		// If any boolean condition evaluates to false, ignore the function
-		boolCount = __evaluateBoolConditions(method, object, testArgs);
+		boolCount = __evaluateBoolConditions(method, testObject, testArgs);
 
 		if (boolCount == -1)
 			continue;
 
 		// Maximize any conditions
-		var tmpValue = __evaluateMaxConditions(method, object, testArgs);
+		var tmpValue = __evaluateMaxConditions(method, testObject, testArgs);
 
 		if (tmpValue == -1)
 			continue;
@@ -771,14 +799,14 @@ function __callMethod(methodName, object, args)
 	// Select method
 	var method = methodHash[methodName][maxFunction[maxBoolFunc]];
 
-	// Prepare request parameter
-	var methodArgs = __argsToArray(method.inputAll, args, method.defaults);
-
 	// Call before aspects
-	methodArgs = __callBeforeAspects(method, object, methodArgs);
+	args = __callBeforeAspects(method, object, args);
 	
 	// Set request stack
-	requestStack.push({_returns: returnRequest, _features: featureRequest, _parameters: methodArgs, _method: method});
+	requestStack.push({_returns: returnRequest, _features: featureRequest, _parameters: args, _method: method, _object: object});
+
+	// Prepare request parameter
+	var methodArgs = __argsToArray(method.inputAll, args, method.defaults);
 
 	// Call method
 	var retval = method.does.apply(object, methodArgs);
@@ -787,7 +815,7 @@ function __callMethod(methodName, object, args)
 	requestStack.pop(args);
 
 	// Call after aspects
-	retval = __callAfterAspects(method, object, methodArgs, retval);
+	retval = __callAfterAspects(method, object, args, retval);
 
 	// Apply return value
 	if (retval != null) {
@@ -903,14 +931,14 @@ function __evaluateMaxConditions(method, object, args)
  *		aspect		-	The descriptor of the aspect
  *		method		-	The descriptor of the message
  *		subject		-	The 'this' parameter of the method
- *		arguments	-	List of argumetns passed to the watched function
+ *		arguments	-	Dictionary of argumetns passed to the watched function
  * It has to return "arguments" or a modified version of arguments. 
  *
  * The function for the before advice receives the following parameters:
  *		aspect		-	The descriptor of the aspect
  *		method		-	The descriptor of the message
  *		subject		-	The 'this' parameter of the method
- *		arguments	-	List of argumest passed to the watched function
+ *		arguments	-	Dictionary of argumetns passed to the watched function
  *		returnValue	-	The value returned from the watched function
  * It has to return the returnValue of the watched function or a modified
  * version of it.
@@ -1113,5 +1141,19 @@ Object.prototype.__with = function(request)
 	}
 	
 	return newObj;
+}
+
+/*
+ * __delegate(fakes)
+ *
+ * Delegates the current method call to another method. The
+ * predicates of the method can be deceived by the parameter list "fake".
+ *
+ */
+function __delegate(fakes)
+{
+	var lastRequest = topRequest();
+
+	return __callMethod(lastRequest._method.name, lastRequest._object, lastRequest._parameters, fakes);
 }
 

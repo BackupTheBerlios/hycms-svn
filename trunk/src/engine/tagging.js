@@ -394,3 +394,20 @@ Object.prototype.__getTagging = function()
 		
 	return this.__def.__clone();
 }
+
+/*
+ * Object::__fakeClass(tagging)
+ *
+ * Returns a copy of a given object with a faked 
+ * class specifier.
+ *
+ */
+Object.prototype.__fakeClass = function()
+{
+	var obj = this.__clone();
+
+	obj.__def = null;
+
+	return obj.__tag.apply(obj, arguments);
+}
+

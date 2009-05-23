@@ -193,9 +193,11 @@ Model.Insert = buildDeclarator("insert",
  *
  *		FALSE		If inserting of the child object does not require an immediate update of the view
  *
- *		[list]		If the child object could not be inserted because the parent is immutable or direct
+ *		[list]		If the child object could not be modified because the parent is immutable or direct
  *					insertion is not possible for any other reason. The list contains an arbitrary number
  *					 of objects, that should replace the child object.
+ *
+ *		[]			If the child object was destroyed after the removal of the child.
  *
  * --------------------------------------------------------------------------------------------------------
  *
@@ -225,6 +227,32 @@ Model.Remove = buildDeclarator("remove",
 							
 							return {
 									_whereas:		"(path.length - pathAt - 1) == "+depth
+							};
+						}
+});
+
+/*
+ * [declarator]<type>	<type>::getLength( ) => number
+ *
+ * Declarator:
+ *		The declarator is parameterized by <type>, which specifies the type of the object which length should be retrieved.
+ *
+ * Purpose:
+ * 		Returns the highest offset number inside a model object.	
+ *
+ * Return value:
+ *		Highest possible offset number
+ *
+ * --------------------------------------------------------------------------------------------------------
+ *
+ */
+Model.GetLength = buildDeclarator("getLength", 
+{
+	_output:			"number",
+	
+	_generic_type:		function(type) {
+							return {
+									_this:						type,
 							};
 						}
 });
