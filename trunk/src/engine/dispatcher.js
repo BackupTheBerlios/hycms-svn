@@ -430,7 +430,7 @@ String.prototype.__declare = function(method)
 
 	// Register dispatcher globally for this method
 	if (Object.prototype[identifier] == null)
-		Object.prototype[identifier] = function __internalCaller() { return __callMethod(identifier.substr(1), this, arguments[0]); };
+		Object.prototype[identifier] = function __internalCaller() { return __callMethod(identifier.substr(1), this, arguments[0], arguments[1]); };
 
 	// Set all empty fields as empty arrays
 	if (method._output == null)
@@ -846,7 +846,8 @@ function __evaluateBoolConditions(method, object, args)
 
 		try {
 			if (!miniFunc.apply(object, args)) {
-				if (traceEvals) console.log("Failed bool", miniFunc.toSource());
+				if (traceEvals && (miniFunc.toSource != undefined)) console.log("Failed bool", miniFunc.toSource());
+				if (traceEvals && (miniFunc.toSource == undefined)) console.log("Failed bool", miniFunc);				
 				return -1;
 			}
 			
@@ -904,9 +905,11 @@ function __evaluateMaxConditions(method, object, args)
 		}
 
 		if (addVal == -1) {
-			if (traceEvals)
+			if (traceEvals && (miniFunc.toSource != undefined))
 				console.log("Failed max", miniFunc.toSource());
-		
+			if (traceEvals && (miniFunc.toSource != undefined))
+				console.log("Failed max", miniFunc);
+						
 			return -1;
 		}
 		else
@@ -1144,16 +1147,38 @@ Object.prototype.__with = function(request)
 }
 
 /*
- * __delegate(fakes)
+ * __delegate(parameters, fakes)
  *
- * Delegates the current method call to another method. The
- * predicates of the method can be deceived by the parameter list "fake".
+ * Delegates the current method call to another method using the same parameters,
+ * with differences. 
+ *
+ * The predicates of the method can be deceived by the parameter list "fake".
+ * All parameters given in "parameter" will overwrite the parameters
+ * of the current method call
  *
  */
-function __delegate(fakes)
+function __delegate(parameters, fakes)
 {
 	var lastRequest = topRequest();
 
-	return __callMethod(lastRequest._method.name, lastRequest._object, lastRequest._parameters, fakes);
+	var newPar = ({});
+	
+	for (var idx in lastRequest._parameters) {
+		if ((idx[0] == "_") && (idx != "_returns") && (idx != "_features"))
+			continue;
+			
+		newPar[idx] = lastRequest._parameters[idx];
+	}
+
+	if (parameters != null) {
+		for (var idx in parameters) {
+			if ((idx[0] == "_") && (idx != "_returns") && (idx != "_features"))
+				continue;
+			
+			newPar[idx] = parameters[idx];
+		}
+	}
+
+	return __callMethod(lastRequest._method.name, lastRequest._object, newPar, fakes);
 }
 

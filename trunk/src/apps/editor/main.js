@@ -220,6 +220,7 @@ Editor.prototype.htmlUpdateAspect = function(aspect, method, subject, arguments,
 		
 		for (var idx = 0; idx < views.length; idx ++) {
 			var view = views[idx];
+		
 			view._setOuterHtml( { html: subject._view( {parentList: view._getModelContext() } ) } );
 		}
 	}
@@ -274,31 +275,27 @@ BrowserKit.PrototypeEvent({
 _does:
 	function(eventDescription)
 	{
-		if (BrowserKit.MoveKeys.indexOf(eventDescription.keyCode) > -1)
-			return;
-
-		if (eventDescription.charCode) {
-			var insertedText = String.fromCharCode(eventDescription.charCode).__tag("important_text", "text");
+		if (eventDescription.charInput != "") {
+			var insertedText = eventDescription.charInput.__tag("important_text", "text");
 
 			eventDescription.targetRootView._insert({path: 		eventDescription.targetViewPath, 
 											 		 offset: 	eventDescription.targetModelOffset,
 													 child:		insertedText
 					  								});
-
-			window._caretMoveForward();
+			window._caretMove();
 		}
-				
+	 
 		eventDescription._stopPropagation();
 	}
 });
 
 /*
- * OnKeyUp event
+ * OnKeyDown event
  *
  */
 BrowserKit.PrototypeEvent({
 	jsPrototype:		"Element",
-	event:				"keyup",
+	event:				"keydown",
 	_whereas:			"this._getController() != undefined",
 
 _does:
@@ -313,12 +310,18 @@ _does:
 													 count:		1
 					  								});	
 		}
-
-		if (eventDescription.keyCode == KeyEvent.DOM_VK_BACK_SPACE) {
+		else if (eventDescription.keyCode == KeyEvent.DOM_VK_BACK_SPACE) {
+			var state =
 			eventDescription.targetRootView._remove({path: 		eventDescription.targetViewPath, 
 											 		 offset: 	eventDescription.targetModelOffset - 1,
 													 count:		1
 					  								});
+
+			if (state != null)							
+				window._caretMove({offset: -1});	
+		}
+		 else {	 
+		 	return;
 		}
 
 		eventDescription._stopPropagation();

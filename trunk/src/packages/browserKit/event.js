@@ -46,6 +46,7 @@ BrowserKit.__protoEvent =({
 							
 							keyCode:		-1,
 							charCode:		-1,
+							charInput:		"",
 							
 							altKey:			false,
 							ctrlKey:		false,
@@ -110,6 +111,9 @@ _does:
 
 		initializer.keyCode = domEvent.keyCode;
 		initializer.charCode = domEvent.charCode;
+		
+		if (initializer.charCode != 0)
+			initializer.charInput = String.fromCharCode(domEvent.charCode);
 		
 		initializer.altKey = domEvent.altKey;
 		initializer.ctrlKey = domEvent.ctrlKey;
@@ -422,6 +426,10 @@ BrowserKit.__globalHandler = function(event)
 		protoTarget = null;
 		
 	eventDescription = ["event_description", "structure"]._construct({domEvent: event, domTarget: protoTarget});	
+
+	// Never call keypress, if no charCode is given, to make Firefox behave like webkit
+	if ((event.type == "keypress") && (event.charCode == 0))
+		return;
 
 	view = eventDescription.targetView;
 

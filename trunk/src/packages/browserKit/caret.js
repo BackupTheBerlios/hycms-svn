@@ -24,8 +24,9 @@ _does:
 	function setCaret(anchorNode, anchorOffset)
 	{
 		var selection = this.getSelection();
+
 		selection.collapse(anchorNode, anchorOffset);
-	
+
 		this._updateFocus();
 	}
 
@@ -158,6 +159,106 @@ _does:
 		this._setCaret({anchorNode: current, anchorOffset:  path[0]});
 	}
 
+});
+
+/*
+ * Window::saveRelativeCaretPosition(anchor[, caretNode, caretOffset])
+ *
+ * Calculates an offset relative to the begin of "anchor". If "caretNode" and
+ * "caretOffset" is not given, the current caret position is used. If the given
+ * position is not inside the anchor, -1 will be returned.
+ *
+ */
+"saveRelativeCaretPosition".__declare({
+	//_this:			"@Window",
+	_whereas:			"this == window",
+	_output:			"number",
+	
+	anchor:					"@Node",
+	_optional_caretNode:	"@Node",
+	_optional_caretOffset:	"number",
+	
+_does:
+	function saveRelativeCaretPosition(anchor, caretNode, caretOffset)
+	{
+		if ((caretNode == null) || (caretOffset == null)) {
+			var selection = this._getCaret();
+			caretNode = selection.anchorNode;
+			caretOffset = selection.anchorOffset;
+		}
+		
+		// Test if parent node
+		var parent = caretNode;
+		var found = false;
+		
+		while (parent != null) {
+			if (parent == anchor) {
+				found = true; 
+				break;
+			}
+			
+			parent = parent.parentNode;
+		}
+		
+		if (found == false) return -1;
+		
+		// Calculate position inside anchor
+		var childs = anchor._getViewDescendants();
+		var offset = 0;
+
+		for (idx = 0; idx < childs.length; idx ++) {
+			var child = childs[idx];
+
+			if (child == caretNode)
+				break;
+
+			if (child.nodeValue != null) {
+				offset += child.nodeValue.length;
+			}
+		}
+
+		return offset + caretOffset;
+	}
+});
+
+/*
+ * Window::restoreRelativeCaretPosition(anchor, offset)
+ *
+ * Restores the position of the caret at "offset", which is relative to "anchor".
+ * If offset is "-1", the method does nothing.
+ *
+ */
+"restoreRelativeCaretPosition".__declare({
+	//_this:			"@Window",
+	_whereas:			"this == window",
+	
+	anchor:				"@Node",
+	offset:				"number",
+	
+_does:
+	function restoreRelativeCaretPosition(anchor, offset)
+	{
+		if (offset == -1) return;
+		
+		// Calculate position inside anchor
+		var childs = anchor._getViewDescendants();
+		var lastOffset = 0, testOffset = 0;
+		var destAnchor;
+				
+		for (idx = 0; idx < childs.length; idx ++) {
+			destAnchor = childs[idx];
+			
+			if (destAnchor.nodeValue != null) {
+				lastOffset = testOffset;
+				testOffset += destAnchor.nodeValue.length;
+			}
+			
+			if (testOffset > offset)
+				break;
+		}
+
+		this._setCaret({anchorNode: destAnchor, anchorOffset: offset - lastOffset});
+	}
 });
 
 /*
@@ -336,18 +437,18 @@ _does:
 });
 
 /*
- * Window::caretMoveForward([offset = 1])
+ * Window::caretMove([offset = 1] >= 0)
  *
  * Moves the caret "offset" steps forward and updates the focus.
  *
  */
-"caretMoveForward".__declare({
+"caretMove".__declare({
 	/* Due to a bug in WebKit, where window is not instanceof Window */
 	//_this:			"@Window",
-	_whereas:			"this == window",
+	_whereas:			["this == window", "offset >= 0"],
 	
-	_optional_offset:		"number",
-	_default_offset:		1,
+	_optional_offset:	"number",
+	_default_offset:	1,
 
 _does:
 	function caretMoveForward(offset)
@@ -357,16 +458,48 @@ _does:
 		var position = selection.anchorOffset + offset;
 
 		while (position > node.nodeValue.length) {
-			var nextNode = node._getNeighbourView();
+			var nextNode = node._getNextView();
 
 			position -= node.length;
 			node = nextNode;
 		}
 
 		this._setCaret({anchorNode: node, anchorOffset: position});
-		this._updateFocus();
 		
 		return;
 	}
-
 });
+
+/*
+ * Window::caretMove(offset < 0)
+ *
+ * Moves the caret "offset" steps backward and updates the focus.
+ *
+ */
+"caretMove".__declare({
+	/* Due to a bug in WebKit, where window is not instanceof Window */
+	//_this:			"@Window",
+	offset:				"number",
+	
+	_whereas:			["this == window", "offset < 0"],
+
+_does:
+	function caretMoveBackward(offset)
+	{
+		var selection = window._getCaret();
+		var node = selection.anchorNode;
+		var position = selection.anchorOffset + offset;
+
+		while (position < 0) {
+			var nextNode = node._getPreviousView();
+
+			position = nextNode.length + position;
+			node = nextNode;
+		}
+
+		this._setCaret({anchorNode: node, anchorOffset: position});
+		
+		return;
+	}
+});
+

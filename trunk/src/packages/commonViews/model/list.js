@@ -158,3 +158,36 @@ _does:
 	}
 });
 
+/*
+ * <"*", "list">::cleanupTextNodes() => number
+ *
+ * Tries to merge all text nodes, which have the same tagging.
+ *
+ * Returns the number of merged elements.
+ *
+ */
+"cleanupTextNodes".__declare({
+	_this:		["*", "list"],
+	_output:	"number",
+	
+_does:
+	function cleanupTextNodes()
+	{
+		var ctr = 0;
+
+		// Merge, if there are text nodes of the same type
+		for (var idx = 0; idx < this.length - 1; idx ++) {
+			if (this[idx].__is("text") && ( this[idx].__taggedAs(this[idx + 1].__getTagging()) > -1 )) {
+				var newNode = this[idx]._insert({path: [this[idx]], offset: this[idx]._getLength(), child: this[idx + 1]});
+				
+				this.splice.apply(this, [idx, 2].concat(newNode));
+				
+				ctr ++;
+				idx --;
+			}
+		}	
+
+		return ctr;
+	}
+});
+

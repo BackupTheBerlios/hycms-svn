@@ -106,7 +106,7 @@ _does:
 	function removeText(path, offset, count, pathAt)
 	{
 		var newText = this.substr(0, offset) + this.substr(offset + count);
-		
+
 		if (newText.length == 0)
 			return [];
 		else

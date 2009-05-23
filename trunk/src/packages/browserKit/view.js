@@ -148,7 +148,7 @@ _does:
 		this._removeControllerReferences({_features: "use_uuid_attribute"});
 	
 		// Save caret
-		var savedCaret = window._saveCaret();	
+		var savedOffset = window._saveRelativeCaretPosition({anchor: this});	
 		
 		if (window._isFocussed({node: this})) {
 			window._clearFocus();
@@ -167,7 +167,7 @@ _does:
 		newChild._inheritControllerReferences({_features: ["use_uuid_attribute", "set_model_reference"]});
 
 		// Restore caret
-		window._restoreCaret({path: savedCaret});
+		window._restoreRelativeCaretPosition({anchor: newChild, offset: savedOffset});
 	}
 });
 
@@ -279,19 +279,62 @@ _does:
 });
 
 /*
- * Node::getNeighbourView
+ * Node::getPreviousView
  *
- * Returns the view that is the optical neighbour of the current view.
+ * Returns the view that is the preceding optical neighbour of the current view.
  *
  */
-"getNeighbourView".__declare({
+"getPreviousView".__declare({
 	_this:		"@Node",
 	
 _does:
-	function getNeighbourView()
+	function getPreviousView()
+	{
+		var xmlResult = document.evaluate("preceding::text()[position()=1]", this, null, XPathResult.ANY_TYPE, null);
+		return xmlResult.iterateNext();   
+	}
+});
+
+/*
+ * Node::getNextView
+ *
+ * Returns the view that is the following optical neighbour of the current view.
+ *
+ */
+"getNextView".__declare({
+	_this:		"@Node",
+	
+_does:
+	function getNextView()
 	{
 		var xmlResult = document.evaluate("following::text()[position()=1]", this, null, XPathResult.ANY_TYPE, null);
 		return xmlResult.iterateNext();   
+	}
+});
+
+/*
+ * Node::getViewDescendants
+ *
+ * Returns all descendant nodes of a view.
+ *
+ */
+"getViewDescendants".__declare({
+	_this:		"@Node",
+	_output:	"list",
+	
+_does:
+	function getViewDescendants()
+	{
+		var xmlResult = document.evaluate("descendant::text()", this, null, XPathResult.ANY_TYPE, null);
+		var list = [];
+		var node = xmlResult.iterateNext();
+		
+		while (node != null) {
+			list.push(node);
+			node = xmlResult.iterateNext();
+		}
+		
+		return list;
 	}
 });
 
