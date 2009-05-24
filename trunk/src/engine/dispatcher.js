@@ -489,7 +489,7 @@ String.prototype.__declare = function(method)
 	newMethod.does = method._does;
 
 	// Install asspects
-	__registerAspects(method);
+	__registerAspects(newMethod);
 
 	// Register method inside the dispatcher
 	if (methodHash[identifier.substr(1)] == null)

@@ -40,6 +40,8 @@ HtmlEditor = new Package();
 HtmlEditor.TranslateOffset = buildDeclarator("translateOffset", 
 {
 	_this:			"@Node",
+
+	anchorNode:		"@Node",	
 	anchorOffset:	"number",
 
 	_output:		"number",

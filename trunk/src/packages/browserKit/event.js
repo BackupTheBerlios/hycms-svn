@@ -42,6 +42,8 @@ BrowserKit.__protoEvent =({
 							targetModelOffset:	null,
 							targetRootView:		null,
 							
+							viewInformationAvailable:	false,
+							
 							parentNotification:	false,
 							
 							keyCode:		-1,
@@ -68,22 +70,38 @@ BrowserKit.__protoEvent =({
  */
 BrowserKit.__eventFromTarget = function(initializer, dom_target)
 {
+	var viewInfoAvl = true;
+
 	initializer.lastFocus = window.lastFocus;
 	initializer.selection = window._getCaret();
 
-	initializer.targetNode = dom_target;
-	initializer.targetView = initializer.targetNode._getView();
-
+	try {
+		initializer.targetNode = dom_target;
+		initializer.targetView = initializer.targetNode._getView();
 	
-	if (initializer.targetView != null) {
-		initializer.targetModel = initializer.targetView._getModel();
-		initializer.targetViewContext = initializer.targetView._getModelContext();
+		if (initializer.targetView != null) {
+			initializer.targetModel = initializer.targetView._getModel();
+			initializer.targetViewContext = initializer.targetView._getModelContext();
 
-		initializer.targetViewPath = initializer.targetViewContext.concat([initializer.targetModel]);
+			initializer.targetViewPath = initializer.targetViewContext.concat([initializer.targetModel]);
 
-		initializer.targetModelOffset = dom_target._translateOffset({anchorOffset: initializer.selection.anchorOffset});
-		initializer.targetRootView = initializer.targetViewPath[0];
+			initializer.targetModelOffset = initializer.targetView._translateOffset({anchorNode: dom_target, anchorOffset: initializer.selection.anchorOffset});
+			initializer.targetRootView = initializer.targetViewPath[0];
+		}
 	}
+	 catch(e) {
+	 	initializer.targetModel = null;
+	 	initializer.targetViewContext = null;
+	 	initializer.targetViewPath = null;
+	 	initializer.targetViewModelOffset = null;
+	 	initializer.targetViewRootView = null;
+	 
+	 	viewInfoAvl = false;
+	 	
+	 	console.log(e);
+	}
+	
+	initializer.viewInformationAvailable = viewInfoAvl;
 }
  
 /*
@@ -214,7 +232,7 @@ BrowserKit.ViewEvent = buildDeclarator(null, {
 	_whereas:	["this.__native instanceof Event"],
 
 _does:
-	function()
+	function stopPropagation()
 	{
 		this.__propagationStopped = true;
 		this.__native.preventDefault();
@@ -450,7 +468,7 @@ BrowserKit.__globalHandler = function(event)
 		else
 			break;
 			
-		eventDescription.parentNotification = true;			
+		eventDescription.parentNotification = true;
 	}
 }
 

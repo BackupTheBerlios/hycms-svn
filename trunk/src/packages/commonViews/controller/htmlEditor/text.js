@@ -55,9 +55,10 @@ HtmlEditor.TranslateOffset({
 	type:	["*", "text"],
 	
 _does:
-	function translateOffset(anchorOffset)
+	function translateOffset(anchorNode, anchorOffset)
 	{
 		return anchorOffset;
 	}
 });
 
+//TODO: PARAGRAPH_VIEW, TRANSLATE_OFFSET richtig machen (codeview und so...)

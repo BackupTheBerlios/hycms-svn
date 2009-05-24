@@ -257,3 +257,31 @@ Model.GetLength = buildDeclarator("getLength",
 						}
 });
 
+/*
+ * [declarator]<type>	<type>::buildContentMap( map )
+ *
+ * Declarator:
+ *		The declarator is parameterized by <type>, which specifies the type of the object which should be
+ *		added to the map.
+ *
+ * Purpose:
+ * 		Adds the given object and its children to the given map. The map is of the form "uuid => object".
+ *
+ * Return value:
+ *		The map object.
+ *
+ * --------------------------------------------------------------------------------------------------------
+ *
+ */
+Model.BuildContentMap = buildDeclarator("buildContentMap", 
+{
+	map:				"structure",
+	_output:			"structure",
+	
+	_generic_type:		function(type) {
+							return {
+									_this:						type,
+							};
+						}
+});
+

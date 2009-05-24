@@ -20,7 +20,7 @@
 <script type='text/javascript' charset='UTF-8'>
 	function main(contentPath) 
 	{
-		var editor = new Editor(document.getElementById("container"));
+		var editor = ["editable_html_controller", "html_controller", "controller"]._construct({view: document.getElementById("container")});
 
 		editor._showReference({contentPath: contentPath});
 	}

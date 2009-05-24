@@ -4,6 +4,32 @@
  * Published under the terms of the Lesser GNU General Public License v2
  *
  */
+/*
+ * <"*", "paragraph", "list">::insert(path, offset, child, pathAt)
+ *
+ * Inserts an element directly or indirectly into a paragraph. After
+ * insertion, the paragraph cleans up automatically.
+ *
+ * See: <declarator> Model.Insert
+ *
+ */
+Model.Insert({
+	type:	["*", "paragraph", "list"],
+	
+	depth:	1,
+	
+_does:
+	function insertParagraph(path, offset, child, pathAt)
+	{
+		var update = false;
+
+		update = __delegate(null, {_this: this.__fakeClass("list")});
+
+		update |= (this._cleanupTextNodes() > 0);
+	
+		return update;
+	}
+});
 
 /*
  * paragraphRemove

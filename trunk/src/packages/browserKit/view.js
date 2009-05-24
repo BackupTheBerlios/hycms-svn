@@ -61,7 +61,7 @@ _does:
 		this._postOrderOperation({
 			nodeOperation:	function(node) { 
 				if ((node.getAttribute) && (node.getAttribute("uuid"))) {
-					node.__controller._unregisterView({view: node, _features: "use_uuid_attribute"});
+					node.__controller._unregisterView({node: node, _features: "use_uuid_attribute"});
 				}
 			}
 		});	
@@ -69,28 +69,33 @@ _does:
 });
 
 /*
- * Element::inheritControllerReferences
+ * Element::setupControllerReferences
  *
  * Inherits the controller references of the current node to all of its
  * children and sets the model reference.
  *
  */
-"inheritControllerReferences".__declare({
+"setupControllerReferences".__declare({
 	_this:		"@Element",
+	
+	contentMap:	"*",
+	
 	_features:	["use_uuid_attribute", "set_model_reference"],
 	
 _does:
-	function inheritControllerReferences()
+	function setupControllerReferences(contentMap)
 	{
 		var controller = this.__controller;
 	
 		this._postOrderOperation({
 				nodeOperation:	function(node) { 
 					if ((node.getAttribute) && (node.getAttribute("uuid"))) {
+						var uuid = node.getAttribute("uuid");
+					
 						node.__controller = controller; 
-						node.__controller._registerView({view: node, _features: "use_uuid_attribute"});
+						node.__model = contentMap[uuid];
 
-						node.__model = node.__controller._getModel({uuid: node.getAttribute("uuid")});
+						controller._registerView({model: node.__model, node: node, _features: "use_uuid_attribute"});
 					}
 				}
 		});
@@ -98,14 +103,15 @@ _does:
 });
 
 /*
- * Element::setInnerHtml
+ * Element::installHtmlViews
  *
- * Changes the inner HTML of a view and inherits the controller reference
- * to all child nodes. Also the model reference will be set up.
+ * Changes the inner HTML of a view and creates all connections
+ * between the model and the controller.
  *
  */
-"setInnerHtml".__declare({
+"installHtmlViews".__declare({
 	html:		["*", "?html", "text"],
+	content:	"*",
 
 	_this:		"@Element",
 	_features:	["use_uuid_attribute", "inherit_controller", "set_model_reference"],
@@ -113,27 +119,30 @@ _does:
 	_whereas:	["this.__controller != undefined"],
 	
 _does:
-	function setInnerHtml(html)
+	function installHtmlViews(html, content)
 	{
 		var controller = this.__controller;
 		
 		this._removeControllerReferences({_features: "use_uuid_attribute"});
-	
+		
 		this.innerHTML = html;
 
-		this._inheritControllerReferences({_features: ["use_uuid_attribute", "set_model_reference"]});
+		this._setupControllerReferences({contentMap: content._buildContentMap( {map: {}} ),
+										 _features: ["use_uuid_attribute", "set_model_reference"]
+									   });
 	}
 });
 
 /*
- * Element::setOuterHtml
+ * Element::updateHtmlView
  *
  * Changes the entire HTML of a view and restores/inherits the controller reference to
  * all child nodes. Also the model references will be set up.
  *
  */
-"setOuterHtml".__declare({
+"updateHtmlView".__declare({
 	html:		["*", "?html", "text"],
+	content:	"*",
 
 	_this:		"@Element",
 	_features:	["use_uuid_attribute", "inherit_controller", "set_model_reference"],
@@ -141,7 +150,7 @@ _does:
 	_whereas:	["this.__controller != undefined"],
 	
 _does:
-	function setOuterHtml(html)
+	function updateHtmlView(html, content)
 	{
 		var controller = this.__controller;
 	
@@ -164,7 +173,12 @@ _does:
 
 		// Inherit controller property and register at controller
 		newChild.__controller = controller;
-		newChild._inheritControllerReferences({_features: ["use_uuid_attribute", "set_model_reference"]});
+
+		var contentMap = content._buildContentMap( {map: {}} );
+
+		newChild._setupControllerReferences({contentMap: contentMap,
+											 _features: ["use_uuid_attribute", "set_model_reference"]
+										   });
 
 		// Restore caret
 		window._restoreRelativeCaretPosition({anchor: newChild, offset: savedOffset});

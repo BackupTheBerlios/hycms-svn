@@ -31,6 +31,30 @@ _does:
 });
 
 /*
+ * <"*", "list">::buildContentMap(map)
+ *
+ * Fills the current object into the given content map.
+ *
+ * See: <declarator> Model.BuildContentMap
+ *
+ */
+Model.BuildContentMap({
+	type:	["*", "list"],
+
+_does:
+	function list(map)
+	{
+		map[this.__uuid] = this;
+		
+		for (var idx = 0; idx < this.length; idx ++) {
+			map = this[idx]._buildContentMap( {map: map } );
+		}
+		
+		return map;
+	}
+});
+
+/*
  * <"*", "list">::insert(path, offset, child, pathAt)
  *
  * Inserts "child" into the list at "offset", if the list is the
@@ -179,7 +203,7 @@ _does:
 		for (var idx = 0; idx < this.length - 1; idx ++) {
 			if (this[idx].__is("text") && ( this[idx].__taggedAs(this[idx + 1].__getTagging()) > -1 )) {
 				var newNode = this[idx]._insert({path: [this[idx]], offset: this[idx]._getLength(), child: this[idx + 1]});
-				
+			
 				this.splice.apply(this, [idx, 2].concat(newNode));
 				
 				ctr ++;

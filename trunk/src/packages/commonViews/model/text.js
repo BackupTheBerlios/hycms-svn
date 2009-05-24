@@ -25,6 +25,26 @@ _does:
 });
 
 /*
+ * <"*", "text">::buildContentMap(map)
+ *
+ * Fills the current object into the given content map.
+ *
+ * See: <declarator> Model.BuildContentMap
+ *
+ */
+Model.BuildContentMap({
+	type:	["*", "text"],
+
+_does:
+	function text(map)
+	{
+		map[this.__uuid] = this;
+		
+		return map;
+	}
+});
+
+/*
  * <"*", "text">::insert(path, offset, child, pathAt)
  *
  * Inserts "child" into the text at "offset", if the child
@@ -77,12 +97,18 @@ Model.Insert({
 _does:
 	function insertText(path, offset, child, pathAt)
 	{
+		var outlist = [];
+		
 		var tag = this.__getTagging();
 		var part1 = this.substr(0, offset).__tag(tag);
 		var part2 = child;
 		var part3 = this.substr(offset).__tag(tag);
 		
-		return [part1, part2, part3];
+		if (part1.length > 0) outlist.push(part1);
+		if (part2 != null) outlist.push(part2);
+		if (part3.length > 0) outlist.push(part3);
+		
+		return outlist;
 	}
 });
 
