@@ -93,7 +93,7 @@ _does:
 		
 		if (eventDescription.charInput != "") {
 			var insertedText = eventDescription.charInput.__tag("important_text", "text");
-console.log(insertedText.length);
+
 			eventDescription.targetRootView._insert({path: 		eventDescription.targetViewPath, 
 											 		 offset: 	eventDescription.targetModelOffset,
 													 child:		insertedText
@@ -139,6 +139,7 @@ _does:
 			var isLastOffset =     (eventDescription.targetModel.length == offset + 1) 
 								&& (path.length > 2)
 								&& (path[path.length - 2].indexOf(path[path.length-1]) == path[path.length - 2].length);
+
 			var isFirstOffset =    (offset < 0)
 								&& (path.length > 2)
 								&& (path[path.length - 2].indexOf(path[path.length-1]) == 0);
