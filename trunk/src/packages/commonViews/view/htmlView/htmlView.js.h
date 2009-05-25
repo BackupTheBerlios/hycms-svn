@@ -237,10 +237,14 @@ _does:
 		if (this.valueOf() == "")
 			return "&nbsp;";
 	
-		return this.valueOf()
-				.replace(/\</g, "&lt;")
-				.replace(/\>/g, "&gt;")
-				.replace(/\n/g, "<br />");
+		var txt = this.valueOf()
+					  .replace(/\</g, "&lt;")
+					  .replace(/\>/g, "&gt;")
+					  .replace(/\n/g, "<br />");
+					  
+		if (txt[txt.length - 1] == " ") txt = txt.substr(0, txt.length-1)+"&nbsp;";
+		
+		return txt;
 	}
 });
 

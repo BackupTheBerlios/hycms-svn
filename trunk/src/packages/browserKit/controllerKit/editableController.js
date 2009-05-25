@@ -93,7 +93,7 @@ _does:
 		
 		if (eventDescription.charInput != "") {
 			var insertedText = eventDescription.charInput.__tag("important_text", "text");
-
+console.log(insertedText.length);
 			eventDescription.targetRootView._insert({path: 		eventDescription.targetViewPath, 
 											 		 offset: 	eventDescription.targetModelOffset,
 													 child:		insertedText
