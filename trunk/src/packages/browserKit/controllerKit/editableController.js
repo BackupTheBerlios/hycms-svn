@@ -138,13 +138,12 @@ _does:
 			// Required for correct carret placement
 			var isLastOffset =     (eventDescription.targetModel.length == offset + 1) 
 								&& (path.length > 2)
-								&& (path[path.length - 2].indexOf(path[path.length-1]) == path[path.length - 2].length);
+								&& (path[path.length - 2].indexOf(path[path.length-1]) == path[path.length - 2].length - 1);
 
 			var isFirstOffset =    (offset < 0)
 								&& (path.length > 2)
 								&& (path[path.length - 2].indexOf(path[path.length-1]) == 0);
 			
-
 			var state =
 			eventDescription.targetRootView._remove({path: 		path, 
 											 		 offset: 	offset,
