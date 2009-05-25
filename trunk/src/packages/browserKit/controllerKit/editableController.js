@@ -132,13 +132,25 @@ _does:
 			eventDescription._stopPropagation();
 		}
 		else if (eventDescription.keyCode == KeyEvent.DOM_VK_BACK_SPACE) {
+			var offset = eventDescription.targetModelOffset - 1;
+			var path = eventDescription.targetViewPath;
+			
+			// Required for correct carret placement
+			var isLastOffset =     (eventDescription.targetModel.length == offset + 1) 
+								&& (path.length > 2)
+								&& (path[path.length - 2].indexOf(path[path.length-1]) == path[path.length - 2].length);
+			var isFirstOffset =    (offset < 0)
+								&& (path.length > 2)
+								&& (path[path.length - 2].indexOf(path[path.length-1]) == 0);
+			
+
 			var state =
-			eventDescription.targetRootView._remove({path: 		eventDescription.targetViewPath, 
-											 		 offset: 	eventDescription.targetModelOffset - 1,
+			eventDescription.targetRootView._remove({path: 		path, 
+											 		 offset: 	offset,
 													 count:		1
 					  								});
 
-			if (state != null) 
+			if ((state != null) && (!isLastOffset) && (!isFirstOffset))
 				window._caretMove({offset: -1});	
 
 			eventDescription._stopPropagation();

@@ -25,6 +25,9 @@ _does:
 	{
 		var selection = this.getSelection();
 
+		if (anchorOffset > anchorNode.length)
+			anchorOffset = anchorNode.length;
+
 		selection.collapse(anchorNode, anchorOffset);
 
 		this._updateFocus();
