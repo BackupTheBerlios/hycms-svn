@@ -5,6 +5,66 @@
  *
  */
 /*
+ * splitOnNewlines(self)
+ *
+ * Splits the paragraph on all newlines
+ *
+ */
+function _splitOnNewlines(self)
+{
+	var outlist = [];
+	var lastChild = self[0];
+	var lastOffset = 0;
+
+	for (var listIdx = 0; listIdx < self.length; listIdx ++) {
+
+		if (!self[listIdx].__is("text")) continue;
+	
+		var child = self[listIdx];
+		var lastIdx = 0;
+		var curIdx = child.indexOf("\n");
+
+		if (curIdx > -1) {
+			var abort = 0;
+		
+			while (abort < 2) {
+				var newParagraph = self._duplicate({path:		[self, lastChild],
+													offset:		lastOffset,
+													endPath:	[self, child],
+													length:		curIdx - lastOffset,
+												  });
+				newParagraph._cleanupTextNodes();
+
+				// Try next...
+				var tmpIdx = curIdx + 1;
+				curIdx = child.indexOf("\n", tmpIdx);
+
+				// Next child
+				lastChild = child;
+				lastOffset = tmpIdx;
+
+				// Copy the remaining 
+				if (curIdx == -1) {
+					abort ++;
+					curIdx = lastOffset - 1;
+					child = self[self.length - 1];
+				}
+			
+				if (newParagraph.length == 0) {
+					// Fill empty paragraphs...
+					newParagraph.push("".__tag("text"));
+				}
+			
+				outlist.push(newParagraph);
+			}
+		}
+	}
+
+	return outlist;
+}
+
+ 
+/*
  * <"*", "paragraph", "list">::insert(path, offset, child, pathAt)
  *
  * Inserts an element directly or indirectly into a paragraph. After
@@ -24,10 +84,16 @@ _does:
 		var update = false;
 
 		update = __delegate(null, {_this: this.__fakeClass("list")});
-
 		update |= (this._cleanupTextNodes() > 0);
+
+		// Replace all \n to paragraph splits
+		var outlist = _splitOnNewlines(this);
 	
-		return update;
+		// Return outlist, if we has \n
+		if (outlist.length > 0)
+			return outlist;
+		else
+			return update;
 	}
 });
 
@@ -115,7 +181,6 @@ _does:
 	{
 		var idx = this.indexOf(path[pathAt + 1]);
 	
-		// Position at the begin of the paragraph, we can't handle it...
 		if (idx == 0)
 			return null;
 	

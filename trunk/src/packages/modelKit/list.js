@@ -100,7 +100,6 @@ _does:
 		
 		if (result instanceof Array) {
 			this.splice.apply(this, [this.indexOf(next), 1].concat(result));
-			
 			return true;
 		}
 		 else {
@@ -165,6 +164,56 @@ _does:
 });
 
 /*
+ * <"*", "list">::duplicate(path, offset, endPath, length, pathAt)
+ *
+ * Duplicates a list and its children
+ *
+ */
+Model.Duplicate({
+	type:		["*", "list"],
+	
+_does:
+	function duplicateList(path, offset, endPath, length, pathAt)
+	{
+		var duplicant = [].__tag(this.__getTagging());
+
+		var startIdx = this.indexOf(path[pathAt + 1]);
+		var endIdx = this.length - 1;
+		var endReached = false;
+	
+		if (startIdx == -1) startIdx = 0;
+
+		if ((endPath[pathAt] != undefined) && (endPath[pathAt] == this)) {
+			endIdx = this.indexOf(endPath[pathAt + 1]);
+			endReached = true;
+		}
+		
+		for (var idx = startIdx; idx <= endIdx; idx ++) {
+			var curLength = -1;
+		
+			if ((endReached) && (idx == endIdx))
+				curLength = length;
+		
+			path[pathAt + 1] = this[idx];
+
+			var copy = path[pathAt + 1]._duplicate({path: path, 
+													offset: offset, 
+													endPath: endPath, 
+													length: curLength, 
+													pathAt: pathAt + 1
+												  });
+
+			duplicant.push(copy);
+
+			offset = 0;
+			path.pop();
+		}
+
+		return duplicant;		
+	}
+});
+
+/*
  * <"*", "list">::getLength()
  *
  * Returns the highest possible offset inside a text node.
@@ -209,9 +258,50 @@ _does:
 				ctr ++;
 				idx --;
 			}
-		}	
+		}
+		
+		// Remove empty text nodes
+		for (var idx = 0; idx < this.length; idx ++) {
+			if (this[idx].__is("text") && ( this[idx].length == 0))
+				this.splice(idx, 1);
+				
+			ctr ++;
+		}
 
 		return ctr;
+	}
+});
+
+/*
+ * <"*", "list">::merge(other[, offset = this.length])
+ *
+ * Moves all elements of "other" into "this" at position "offset".
+ *
+ */
+"merge".__declare({
+	_this:		["*", "list"],
+	other:		["*", "list"],
+
+	_optional_offset:	"number",
+	
+_does:
+	function merge(other, offset)
+	{
+		var mover = other;
+	
+		if (offset == null)
+			offset = this.length;
+	
+		// Merge elements
+		for (var idx = 0; idx < mover.length; idx ++) {
+			var newChild = mover[idx];
+							  
+			this.splice(offset, 1, newChild);
+			mover.splice(idx, 1);
+			
+			offset ++;
+			idx --;
+		}
 	}
 });
 

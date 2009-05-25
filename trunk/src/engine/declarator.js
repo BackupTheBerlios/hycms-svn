@@ -126,11 +126,19 @@ function __execute_generic(hash, name, value, declaration)
 	if (result != null) {
 
 		// Merge max, whereas, features and extend output
-		if (result._max != null) 
-			declaration._max = declaration._max.concat(result._max);
+		if (result._max != null) {
+			if (!(result._max instanceof Array))
+				result._max = [result._max];
+			
+			declaration._max = result._max.concat(declaration._max);
+		}
 
-		if (result._whereas != null) 
-			declaration._whereas = declaration._whereas.concat(result._whereas);
+		if (result._whereas != null) {
+			if (!(result._whereas instanceof Array))
+				result._whereas = [result._whereas];
+		
+			declaration._whereas = result._whereas.concat(declaration._whereas);
+		}
 		
 		if (result._features != null) 
 			declaration._features = declaration._features.concat(result._features);

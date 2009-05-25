@@ -5,13 +5,13 @@
  *
  */
 /*
- * <"*", "text">::onfocus
+ * <"*", "code", "lines", "list">::onfocus
  *
  * Handles the focus event for text nodes.
  *
  */
 BrowserKit.ViewEvent({
-	modelType:		["*", "text"],
+	modelType:		["*", "code", "lines", "list"],
 	event:			"focus",
 
 	_whereas:		["eventDescription.parentNotification == false"],
@@ -19,20 +19,20 @@ BrowserKit.ViewEvent({
 _does:
 	function onFocus(eventDescription) 
 	{
-		this.style["outline"] = "1px solid red";
+		this.style["outline"] = "5px solid red";
 
 		return true;
 	}
 });
 
 /*
- * <"*", "text">::onblur
+ * <"*", "code", "lines", "list">::onblur
  *
  * Handles the blur event for text nodes.
  *
  */
 BrowserKit.ViewEvent({
-	modelType:		["*", "text"],
+	modelType:		["*", "code", "lines", "list"],
 	event:			"blur",
 
 _does:
@@ -45,14 +45,14 @@ _does:
 });
 
 /*
- * View<"*", "text">::translateOffset(anchorNode, anchorOffset)
+ * View<"*", "code", "lines", "list">::translateOffset(anchorNode, anchorOffset)
  *
  * Translates the anchorNode / anchorOffset position of a view
  * into a model offset position.
  *
  */
 HtmlEditor.TranslateOffset({
-	type:	["*", "text"],
+	type:	["*", "code", "lines", "list"],
 	
 _does:
 	function translateOffset(anchorNode, anchorOffset)

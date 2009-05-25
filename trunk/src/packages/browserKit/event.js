@@ -97,8 +97,6 @@ BrowserKit.__eventFromTarget = function(initializer, dom_target)
 	 	initializer.targetViewRootView = null;
 	 
 	 	viewInfoAvl = false;
-	 	
-	 	console.log(e);
 	}
 	
 	initializer.viewInformationAvailable = viewInfoAvl;
@@ -132,6 +130,12 @@ _does:
 		
 		if (initializer.charCode != 0)
 			initializer.charInput = String.fromCharCode(domEvent.charCode);
+			
+		// Handle CR
+		if (initializer.keyCode == 13) {
+			initializer.charCode = 13;
+			initializer.charInput = "\n";
+		}
 		
 		initializer.altKey = domEvent.altKey;
 		initializer.ctrlKey = domEvent.ctrlKey;
@@ -446,7 +450,7 @@ BrowserKit.__globalHandler = function(event)
 	eventDescription = ["event_description", "structure"]._construct({domEvent: event, domTarget: protoTarget});	
 
 	// Never call keypress, if no charCode is given, to make Firefox behave like webkit
-	if ((event.type == "keypress") && (event.charCode == 0))
+	if ((event.type == "keypress") && (event.charCode == 0) && (event.keyCode != 13))
 		return;
 
 	view = eventDescription.targetView;

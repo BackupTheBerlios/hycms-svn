@@ -234,6 +234,9 @@ _does:
 _does:	
 	function htmlText(text)
 	{
+		if (this.valueOf() == "")
+			return "&nbsp;";
+	
 		return this.valueOf()
 				.replace(/\</g, "&lt;")
 				.replace(/\>/g, "&gt;")

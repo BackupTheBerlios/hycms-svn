@@ -74,7 +74,7 @@ var declaratorTest =
 			console.assert(methodHash["myMethod"][0].max[0] == "foo.__taggedAs('foo_ext', 'foo', 'text')");
 			console.assert(methodHash["myMethod"][0].max[1] == "bar.__taggedAs('bar', 'text')");
 			console.assert(methodHash["myMethod"][0].max[2] == "this.__taggedAs('that', 'this', 'text')");
-			console.assert(methodHash["myMethod"][0].max[3] == "goo.__taggedAs('opt_extended', 'opt', 'text')");
+			console.assert(methodHash["myMethod"][0].max[3] == "(goo == null) ? 0 : (goo.__taggedAs('opt_extended', 'opt', 'text'))");
 
 			console.assert(methodHash["myMethod"][0].max[4] == "foo.length");
 			console.assert(methodHash["myMethod"][0].max[5] == "bar.length");
@@ -142,8 +142,8 @@ var declaratorTest =
 			console.assert(methodHash["myMethod"][0].max[1] == "bar.__taggedAs('bar', 'text')");
 			console.assert(methodHash["myMethod"][0].max[2] == "third.__taggedAs('third', 'text')");	
 			console.assert(methodHash["myMethod"][0].max[3] == "this.__taggedAs('this', 'text')");
-			console.assert(methodHash["myMethod"][0].max[4] == "goo.__taggedAs('opt', 'text')");
-			console.assert(methodHash["myMethod"][0].max[5] == "other.__taggedAs('opt_other', 'text')");			
+			console.assert(methodHash["myMethod"][0].max[4] == "(goo == null) ? 0 : (goo.__taggedAs('opt', 'text'))");
+			console.assert(methodHash["myMethod"][0].max[5] == "(other == null) ? 0 : (other.__taggedAs('opt_other', 'text'))");			
 
 			console.assert(methodHash["myMethod"][0].prototypes["bar"]._returns() == "123");
 			console.assert(methodHash["myMethod"][0].prototypes["boo"]._returns() == "456");
@@ -181,8 +181,8 @@ var declaratorTest =
 			console.assert(methodHash["myMethod"][0].inputAll[0] == "direct");
 
 			console.assert(methodHash["myMethod"][0].max[0] == "direct.__taggedAs('text')");			
-			console.assert(methodHash["myMethod"][0].max[1] == "this.__taggedAs('12', '34')");
-			console.assert(methodHash["myMethod"][0].max[2] == "this.__taggedAs('multi', 'params')");			
+			console.assert(methodHash["myMethod"][0].max[1] == "this.__taggedAs('multi', 'params')");			
+			console.assert(methodHash["myMethod"][0].max[2] == "this.__taggedAs('12', '34')");
 		}
 }
 

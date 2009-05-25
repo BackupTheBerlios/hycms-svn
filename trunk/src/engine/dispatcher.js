@@ -197,7 +197,7 @@ function __getOptionsRules(method)
 
 		selector = idx.substr(operatorLen);
 		
-		options.push("("+selector+" == null) || "+__getParameterPredicate(selector, method[idx]));	
+		options.push("("+selector+" == null) ? 0 : ("+__getParameterPredicate(selector, method[idx])+")");	
 	}
 	
 	return options;
@@ -907,7 +907,7 @@ function __evaluateMaxConditions(method, object, args)
 		if (addVal == -1) {
 			if (traceEvals && (miniFunc.toSource != undefined))
 				console.log("Failed max", miniFunc.toSource());
-			if (traceEvals && (miniFunc.toSource != undefined))
+			if (traceEvals && (miniFunc.toSource == undefined))
 				console.log("Failed max", miniFunc);
 						
 			return -1;

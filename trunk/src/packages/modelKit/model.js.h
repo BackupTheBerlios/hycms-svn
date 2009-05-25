@@ -55,6 +55,61 @@ Model.Construct = buildDeclarator("construct",
 							}
 });
 
+
+/*
+ * [declarator]<type>	<type>::getLength( ) => number
+ *
+ * Declarator:
+ *		The declarator is parameterized by <type>, which specifies the type of the object which length should be retrieved.
+ *
+ * Purpose:
+ * 		Returns the highest offset number inside a model object.	
+ *
+ * Return value:
+ *		Highest possible offset number
+ *
+ * --------------------------------------------------------------------------------------------------------
+ *
+ */
+Model.GetLength = buildDeclarator("getLength", 
+{
+	_output:			"number",
+	
+	_generic_type:		function(type) {
+							return {
+									_this:						type,
+							};
+						}
+});
+
+/*
+ * [declarator]<type>	<type>::buildContentMap( map )
+ *
+ * Declarator:
+ *		The declarator is parameterized by <type>, which specifies the type of the object which should be
+ *		added to the map.
+ *
+ * Purpose:
+ * 		Adds the given object and its children to the given map. The map is of the form "uuid => object".
+ *
+ * Return value:
+ *		The map object.
+ *
+ * --------------------------------------------------------------------------------------------------------
+ *
+ */
+Model.BuildContentMap = buildDeclarator("buildContentMap", 
+{
+	map:				"structure",
+	_output:			"structure",
+	
+	_generic_type:		function(type) {
+							return {
+									_this:						type,
+							};
+						}
+});
+
 /*
  * [declarator]<type, child_type, depth>	<type>::insert( path, offset, child, [pathAt = 0] )
  *
@@ -145,7 +200,7 @@ Model.Insert = buildDeclarator("insert",
 });
 
 /*
- * [declarator]<type, child_type, depth>	<type>::remove( path,  offset, [count = 1, pathAt = 0] )
+ * [declarator]<type, depth>	<type>::remove( path,  offset, [count = 1, pathAt = 0] )
  *
  * Declarator:
  *		The declarator is parameterized by <type>, which specifies the type of the object which has a
@@ -232,56 +287,72 @@ Model.Remove = buildDeclarator("remove",
 });
 
 /*
- * [declarator]<type>	<type>::getLength( ) => number
+ * [declarator]<type, depth>		<type>::duplicate( path, offset, endPath, length, [, pathAt = 0] ) => <type>
  *
  * Declarator:
- *		The declarator is parameterized by <type>, which specifies the type of the object which length should be retrieved.
+ *		The declarator is parameterized by <type>, which specifies the type of the object that should be
+ *		dupilcated. Whereas depth defines how far "pathAt" is away from the last element of "path".
  *
  * Purpose:
- * 		Returns the highest offset number inside a model object.	
+ *		Duplicates all objects in the range between "path" and "endPath". The current object is found
+ *		at path[pathAt]. The function returns a duplicate of the object and all of its child objects
+ *		which have an higher index then the objects as specified in "path". This should be done by
+ *		recursivly calling "duplicate" on all elements of the lower path levels begining with the element
+ *		given in "path".
+ *
+ * 		If the last element of endPath was reached, the operation stops. It will be assumed, that all element of endPath
+ *		have the same or a higher index inside their parent objects ordering than the elements in "path".
+ *
+ *		"offset" specifies at which position the last element of "path" should be copied to. "length" describes
+ *		how many characters of the last element of "endPath" should be copied. If the last element of "path" is
+ *		overwritten, because the next child was selected, "offset" has to be set to 0 for all subsequent calls.
+ *		If path[pathAt + 1] is not the same as endPath[pathAt + 1], the caller has transmit length = -1 to
+ *		the subsequent call.
+ *
+ *		The first element of path and endPath has to be identical, since they are there is a common root element
+ *		for the duplicate.
+ *
+ *		If "endPath" is empty, the entire subtree will be copied from the start position.
+ *
+ * Parameters:
+ *		path		The current / start position of the operation
+ *		offset		The current offset inside the last element of path
+ *		endPath		The path to the last element to copy
+ *		endOffset	The last position to copy from the last element of endPath
+ *
+ *		pathAt		The current position inside "path"
  *
  * Return value:
- *		Highest possible offset number
+ *		null		If duplication is not possible
+ *		<type>		The duplicated object
  *
  * --------------------------------------------------------------------------------------------------------
  *
  */
-Model.GetLength = buildDeclarator("getLength", 
+Model.Duplicate = buildDeclarator("duplicate", 
 {
-	_output:			"number",
+	path:				"list",
+	offset:				"?",
+	endPath:			"list",
+	length:				"number",
+
+	_optional_pathAt:	"number",
+	_default_pathAt:	0,
+
+	_whereas:			["offset.__is('number') || offset.__is('text')", "(path[0] == endPath[0]) || (endPath.length == 0)"],
 	
 	_generic_type:		function(type) {
 							return {
 									_this:						type,
 							};
-						}
-});
+						},
 
-/*
- * [declarator]<type>	<type>::buildContentMap( map )
- *
- * Declarator:
- *		The declarator is parameterized by <type>, which specifies the type of the object which should be
- *		added to the map.
- *
- * Purpose:
- * 		Adds the given object and its children to the given map. The map is of the form "uuid => object".
- *
- * Return value:
- *		The map object.
- *
- * --------------------------------------------------------------------------------------------------------
- *
- */
-Model.BuildContentMap = buildDeclarator("buildContentMap", 
-{
-	map:				"structure",
-	_output:			"structure",
-	
-	_generic_type:		function(type) {
+	_generic_depth:	
+						function(depth) {
+							if (depth == null) return {};
+							
 							return {
-									_this:						type,
+									_whereas:		"(path.length - pathAt - 1) == "+depth
 							};
 						}
 });
-

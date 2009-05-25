@@ -31,7 +31,6 @@ _does:
 	}
 });
 
-
 /*
  * <"*", "structure">::buildContentMap(map)
  *

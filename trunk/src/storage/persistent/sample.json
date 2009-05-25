@@ -1,5 +1,5 @@
 {
-	__def:	["article", "page", "list"],
+	__def:	["article", "page", "section", "list"],
 	__value:
 [
 	{__def:		[ "headline", "paragraph", "list" ],
@@ -9,9 +9,12 @@
 	{__def:		[ "document_information", "list"],
 	 __value:	
 		 [
-			{__def:						["author", "person", "structure"],
-			 "name":					{__def: ["name", "text"], __value: "Friedrich Gräter"},
-			 "mail_address":			{__def: ["mail_address", "address", "text"], __value: "graeter@hydrixos.org"}
+			{__def:		["author", "person", "list"],
+			 __value:
+			 	[
+					 {__def: ["name", "text"], __value: "Friedrich Gräter"},
+					 {__def: ["mail_address", "address", "text"], __value: "graeter@hydrixos.org"}
+				]
 			},
 	
 			{__def:		["german_date", "date", "text"],

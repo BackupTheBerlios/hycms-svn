@@ -448,7 +448,7 @@ var dispatcherTest =
 			console.assert( "abc"._view({standard: "def"}) == "abc-def-default" );
 		},
 
-	"Calling a method (delegation prototyping)":
+	"Calling a method (call prototyping)":
 		function()
 		{
 			methodHash = new Object();
@@ -484,6 +484,35 @@ var dispatcherTest =
 		
 			console.assert( "abc"._view({_features: "abc", standard: "non", parentList: ["xml", "text"], goo: "done"}) == "done with delegation" );
 			console.assert( "abc"._view({_features: "abc", standard: "parameter", parentList: ["xml", "text"], goo: "done"}) == "done with parameter" );
+		},
+
+	"Calling a method (call delegation)":
+		function()
+		{
+			methodHash = new Object();
+
+			"view".__declare({
+				_this:			["*", "list"],
+				a:				"text",
+				
+				_does:			function( a ) { this[0] = 2; return "primitive-"+a; }
+			});	
+		
+			"view".__declare({
+				_this:			["*", "important", "list"],
+				a:				"text",
+				
+				_does:			function( a ) { this[1] = 3; return __delegate({a: a+"b"}, {_this: this.__fakeClass("list")}) +  "-complex"; }
+			});	
+			
+		
+			var list = [5,6].__tag("important", "list");
+		
+			console.assert( list._view({a: "c"}) == "primitive-cb-complex" );
+			
+			// Just to test, that the fake is only transmitted to the predicate evaluators
+			console.assert( list[0] == 2 );
+			console.assert( list[1] == 3 );			
 		},
 
 	"Registering an aspect to a method":
@@ -532,7 +561,7 @@ var dispatcherTest =
 				_does:	function( parentList ) { return parentList; }
 			});		
 
-			function beforeAspect ( aspect, method, subject, arguments ) { arguments[0] = "before-"+subject+"-"+arguments[0]; return arguments; };
+			function beforeAspect ( aspect, method, subject, arguments ) { arguments.parentList = "before-"+subject+"-"+arguments.parentList; return arguments; };
 			beforeAspect.__observes( "before", "name == 'view'", "input.indexOf('parentList') > -1", "output.__understoodAs('html', 'text') > -1" );
 
 			function afterAspect ( aspect, method, subject, arguments, retVal ) { return retVal+"-"+subject+"-after" };

@@ -11,20 +11,16 @@
 	<script type='text/javascript' src='editor/main.js' charset='UTF-8'></script>
 </head>
 <body>
-<div id='menuBar'> <input type='text' size='160' id='semantics' /> </div>
+<div id='menuBar'>
+	<div style="margin: auto; verical-align: middle; height:1em; font-size:10px;font-weight:bold" id="semantics"> </div>
+</div>
+
 <div id='container'>
  Loading and rendering content...
 </div>
 </body>
 
 <script type='text/javascript' charset='UTF-8'>
-	function main(contentPath) 
-	{
-		var editor = ["editable_html_controller", "html_controller", "controller"]._construct({view: document.getElementById("container")});
-
-		editor._showReference({contentPath: contentPath});
-	}
-	
 	main('<?=$_GET['hycms_content']?>');
 </script>
 

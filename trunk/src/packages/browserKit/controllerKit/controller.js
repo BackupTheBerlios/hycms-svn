@@ -118,11 +118,16 @@ function htmlUpdateAspect(aspect, method, subject, arguments, returnValue)
 	if (returnValue == true) {
 		var uuid = subject.__uuid;
 		var views = subject.__views;
+
+		// No view associated with this model
+		if (views == null) return returnValue;
 		
+		// Update all views
 		for (var idx = 0; idx < views.length; idx ++) {
 			var view = views[idx];
-
-			view._updateHtmlView( { content: subject, html: subject._view( {parentList: view._getModelContext() } ) } );
+			var html = subject._view( {parentList: view._getModelContext() } );
+			
+			view._deserializeToView( { content: subject, html: html } );
 		}
 	}
 
@@ -152,7 +157,7 @@ _does:
 		// We only accept those HTML views, that can set us the uuid_attribute
 		var html = content._view({_returns: ["*", "html", "text"], _features: ["?recursive_context", "keep_method_conditions", "set_uuid_attribute"]});
 
-		this.viewContainer._installHtmlViews({html: html, content: content});
+		this.viewContainer._deserializeToViewInnerHtml({html: html, content: content});
 	}
 
 });

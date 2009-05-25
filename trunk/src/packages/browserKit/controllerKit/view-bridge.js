@@ -103,13 +103,13 @@ _does:
 });
 
 /*
- * Element::installHtmlViews
+ * Element::deserializeToViewInnerHtml
  *
  * Changes the inner HTML of a view and creates all connections
  * between the model and the controller.
  *
  */
-"installHtmlViews".__declare({
+"deserializeToViewInnerHtml".__declare({
 	html:		["*", "?html", "text"],
 	content:	"*",
 
@@ -119,7 +119,7 @@ _does:
 	_whereas:	["this.__controller != undefined"],
 	
 _does:
-	function installHtmlViews(html, content)
+	function deserializeViewInnerHtml(html, content)
 	{
 		var controller = this.__controller;
 		
@@ -134,13 +134,13 @@ _does:
 });
 
 /*
- * Element::updateHtmlView
+ * Element::deserializeToView
  *
  * Changes the entire HTML of a view and restores/inherits the controller reference to
  * all child nodes. Also the model references will be set up.
  *
  */
-"updateHtmlView".__declare({
+"deserializeToView".__declare({
 	html:		["*", "?html", "text"],
 	content:	"*",
 
@@ -150,7 +150,7 @@ _does:
 	_whereas:	["this.__controller != undefined"],
 	
 _does:
-	function updateHtmlView(html, content)
+	function deserializeView(html, content)
 	{
 		var controller = this.__controller;
 	
@@ -293,16 +293,16 @@ _does:
 });
 
 /*
- * Node::getPreviousView
+ * Node::getPreviousTextNode
  *
  * Returns the view that is the preceding optical neighbour of the current view.
  *
  */
-"getPreviousView".__declare({
+"getPreviousTextNode".__declare({
 	_this:		"@Node",
 	
 _does:
-	function getPreviousView()
+	function getPreviousTextNode()
 	{
 		var xmlResult = document.evaluate("preceding::text()[position()=1]", this, null, XPathResult.ANY_TYPE, null);
 		return xmlResult.iterateNext();   
@@ -310,21 +310,22 @@ _does:
 });
 
 /*
- * Node::getNextView
+ * Node::getNextTextNode
  *
  * Returns the view that is the following optical neighbour of the current view.
  *
  */
-"getNextView".__declare({
+"getNextTextNode".__declare({
 	_this:		"@Node",
 	
 _does:
-	function getNextView()
+	function getNextTextNode()
 	{
 		var xmlResult = document.evaluate("following::text()[position()=1]", this, null, XPathResult.ANY_TYPE, null);
 		return xmlResult.iterateNext();   
 	}
 });
+
 
 /*
  * Node::getViewDescendants

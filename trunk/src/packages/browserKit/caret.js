@@ -186,7 +186,7 @@ _does:
 			caretNode = selection.anchorNode;
 			caretOffset = selection.anchorOffset;
 		}
-		
+
 		// Test if parent node
 		var parent = caretNode;
 		var found = false;
@@ -458,7 +458,7 @@ _does:
 		var position = selection.anchorOffset + offset;
 
 		while (position > node.nodeValue.length) {
-			var nextNode = node._getNextView();
+			var nextNode = node._getNextTextNode();
 
 			position -= node.length;
 			node = nextNode;
@@ -491,7 +491,7 @@ _does:
 		var position = selection.anchorOffset + offset;
 
 		while (position < 0) {
-			var nextNode = node._getPreviousView();
+			var nextNode = node._getPreviousTextNode();
 
 			position = nextNode.length + position;
 			node = nextNode;

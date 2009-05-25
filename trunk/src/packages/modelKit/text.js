@@ -141,6 +141,31 @@ _does:
 });
 
 /*
+ * <"*", "text">::duplicate(path, offset, length, endPath, pathAt)
+ *
+ * Duplicates a text element
+ *
+ */
+Model.Duplicate({
+	type:		["*", "text"],
+	
+	depth:		0,
+	
+_does:
+	function duplicateText(path, offset, endPath, length, pathAt)
+	{
+		var newStr;
+		
+		if (length == -1)
+			length = this.length;
+
+		newStr = this.substr( offset, length )
+
+		return newStr.__tag(this.__getTagging());
+	}
+});
+
+/*
  * <"*", "text">::getLength()
  *
  * Returns the highest possible offset inside a text node.

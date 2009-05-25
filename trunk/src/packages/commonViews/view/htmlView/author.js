@@ -9,7 +9,7 @@
 // Author view
 //
 HtmlView.View({
-	_this:			["*", "author", "*", "person", "*", "structure"],
+	_this:			["*", "author", "*", "person", "*", "list"],
 
 _does:
 	function HtmlView_Author(request) 
@@ -32,10 +32,9 @@ _does:
 		}
 			
 		// Additional informations
-		for (var idx in this) {
+		for (var idx = 0; idx < this.length; idx ++) {
 			var element = this[idx];
 		
-			if (idx[0] == '_') continue;
 			if (element.__is("name") || element.__is("mail_address")) continue;
 			
 			add_output += element._view()+ "; ";			

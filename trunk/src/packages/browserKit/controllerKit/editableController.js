@@ -51,29 +51,24 @@ _does:
 BrowserKit.PrototypeEvent({
 	jsPrototype:		"Element",
 	event:				"focus",
-	_whereas:			["this._getController() != undefined",  "this._getController().__is('editable_html_controller')"],
+	_whereas:			["this.contentEditable == 'true'", "this._getController() != undefined",  "this._getController().__is('editable_html_controller')"],
 
 _does:
 	function(eventDescription)
 	{
-		this.focussedView = eventDescription.targetView;
+		var controller = this.__controller;
 
-		if (this.focussedView != null) {
-			this.focussedContent = eventDescription.targetModel;
-			this.focussedViewContext = eventDescription.targetViewContext;
-		
-			if (this.focussedContent) {
-				var tagArray = [];
+		controller.focussedView = eventDescription.targetView;
 
-				this.currentSemantics = this.focussedContent.__getTagging();
-	
-				for (var idx = 0; idx < this.focussedViewContext.length; idx ++) {
-					if (this.focussedViewContext[idx] != null)
-						tagArray.splice(0, 0, this.focussedViewContext[idx].__getClassName() );
-				}
-				tagArray.push(this.focussedContent.__getClassName());
-				
-				document.getElementById("semantics").value = tagArray.join(" > ");
+		if (controller.focussedView != null) {
+			controller.focussedContent = eventDescription.targetModel;
+			controller.focussedViewContext = eventDescription.targetViewContext;
+
+			try {
+				controller._onSelectionChanged();
+			}
+			 catch(e) {
+
 			}
 		}
 	}
@@ -91,8 +86,10 @@ BrowserKit.PrototypeEvent({
 _does:
 	function(eventDescription)
 	{
-		if (!eventDescription.viewInformationAvailable)
+		if (!eventDescription.viewInformationAvailable) {
+			eventDescription._stopPropagation();
 			return;
+		}
 		
 		if (eventDescription.charInput != "") {
 			var insertedText = eventDescription.charInput.__tag("important_text", "text");
@@ -101,7 +98,9 @@ _does:
 											 		 offset: 	eventDescription.targetModelOffset,
 													 child:		insertedText
 					  								});
-			window._caretMove();
+					  								
+			if (eventDescription.charInput != "\n")
+				window._caretMove();
 		}
 
 		eventDescription._stopPropagation();
@@ -129,7 +128,7 @@ _does:
 											 		 offset: 	eventDescription.targetModelOffset,
 													 count:		1
 					  								});	
-					  								
+				  								
 			eventDescription._stopPropagation();
 		}
 		else if (eventDescription.keyCode == KeyEvent.DOM_VK_BACK_SPACE) {
@@ -139,7 +138,7 @@ _does:
 													 count:		1
 					  								});
 
-			if (state != null)							
+			if (state != null) 
 				window._caretMove({offset: -1});	
 
 			eventDescription._stopPropagation();
